@@ -1,13 +1,17 @@
 """Ingestion use case: document -> chunks -> embeddings -> store, with cache invalidation.
 
-Re-ingesting a document with a higher version replaces its chunks atomically per
-document and invalidates every cached answer grounded on it.
+Re-ingesting a document with the same or a higher version replaces its chunks in one
+atomic store call and invalidates every cached answer grounded on it. A lower version
+is refused with `StaleDocumentVersion`, so a late or replayed update can never roll
+the index back.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass
+import threading
+from dataclasses import dataclass, field
 from pathlib import Path
 
+from aiarch.domain.errors import StaleDocumentVersion
 from aiarch.domain.models import Document
 from aiarch.ports import AnswerCache, Embedder, Tracer, VectorStore, iter_batches
 from aiarch.services.chunking import chunk_document
@@ -23,14 +27,21 @@ class IngestionService:
     chunk_overlap: int = 30
     strategy: str = "markdown"
     batch_size: int = 64
+    _lock: threading.Lock = field(default_factory=threading.Lock, repr=False)
 
     def ingest(self, doc: Document) -> int:
         with self.tracer.span("ingest.document", **{"doc.id": doc.doc_id, "doc.version": doc.version}) as sp:
             chunks = chunk_document(doc, max_tokens=self.chunk_tokens,
                                     overlap_tokens=self.chunk_overlap, strategy=self.strategy)
-            self.store.delete_doc(doc.tenant_id, doc.doc_id)
-            for batch in iter_batches(chunks, self.batch_size):
-                self.store.upsert(batch, self.embedder.embed([c.text for c in batch]))
+            vectors: list[list[float]] = []
+            for batch in iter_batches(chunks, self.batch_size):   # embed first: the slow part stays outside the swap
+                vectors.extend(self.embedder.embed([c.text for c in batch]))
+            with self._lock:   # version check and swap together, so concurrent ingests cannot interleave
+                current = self.store.doc_version(doc.tenant_id, doc.doc_id)
+                if current is not None and doc.version < current:
+                    sp.set("ingest.rejected", "stale_version")
+                    raise StaleDocumentVersion(doc.doc_id, current=current, attempted=doc.version)
+                self.store.replace_doc(doc.tenant_id, doc.doc_id, chunks, vectors)
             invalidated = self.cache.invalidate_doc(doc.doc_id)
             sp.set("ingest.chunks", len(chunks))
             sp.set("cache.invalidated", invalidated)

@@ -24,6 +24,8 @@ class InMemoryVectorStore:
     def upsert(self, chunks: Sequence[Chunk], vectors: Sequence[Sequence[float]]) -> None:
         if len(chunks) != len(vectors):
             raise ValueError("chunks and vectors length mismatch")
+        if not chunks:
+            return
         with self._lock:
             for tenant in {c.tenant_id for c in chunks}:
                 items = [(c, v) for c, v in zip(chunks, vectors, strict=True) if c.tenant_id == tenant]
@@ -42,6 +44,20 @@ class InMemoryVectorStore:
             keep = [i for i, c in enumerate(chunks) if c.doc_id != doc_id]
             self._by_tenant[tenant_id] = ([chunks[i] for i in keep], mat[keep])
             return len(chunks) - len(keep)
+
+    def replace_doc(self, tenant_id: str, doc_id: str, chunks: Sequence[Chunk],
+                    vectors: Sequence[Sequence[float]]) -> int:
+        if any(c.tenant_id != tenant_id or c.doc_id != doc_id for c in chunks):
+            raise ValueError("replace_doc: every chunk must belong to the given tenant and document")
+        with self._lock:   # one critical section: readers see the old chunks or the new ones, never neither
+            removed = self.delete_doc(tenant_id, doc_id)
+            self.upsert(chunks, vectors)
+            return removed
+
+    def doc_version(self, tenant_id: str, doc_id: str) -> int | None:
+        with self._lock:
+            chunks, _ = self._by_tenant.get(tenant_id, ([], None))
+            return max((c.doc_version for c in chunks if c.doc_id == doc_id), default=None)
 
     def acl_index(self) -> dict[str, frozenset[str]]:
         """doc_id -> ACL, for audits and the eval leak check."""

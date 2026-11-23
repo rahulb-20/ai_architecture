@@ -7,10 +7,11 @@ Every extension follows the same pattern: implement a port, then wire it in `src
 - **Native SDK** (for example the `anthropic` or `ibm-watsonx-ai` SDK): create `adapters/llm/<name>.py` with a class that has `name` and `generate(LLMRequest) -> LLMResponse`. Map SDK errors to `ProviderError(retryable=...)` / `RateLimited`, then add a `kind` branch in `container.build_llm`. Copy `tests/unit/test_openai_adapter.py` as the contract test.
 
 ## Add a vector database
-Implement `upsert`, `delete_doc`, `search(vector, principal, k)` and `all_chunks(principal)` from `aiarch.ports.VectorStore`. Rules:
+Implement `upsert`, `delete_doc`, `replace_doc`, `doc_version`, `search(vector, principal, k)` and `all_chunks(principal)` from `aiarch.ports.VectorStore`. Rules:
 1. Filter by `principal.tenant_id` and ACL inside the query (namespace or partition per tenant, plus a metadata filter on `acl`).
 2. If the store has native keyword search, return `[]` from `all_chunks` and add a sparse-search method the retriever can call.
-3. Run `tests/unit/test_retrieval_and_store.py::test_acl_and_tenant_prefilter_never_leak` against your adapter.
+3. Make `replace_doc` atomic for readers (one transaction, or write the new version then delete the old one), because ingestion relies on it to swap a document without a gap.
+4. Run `tests/unit/test_retrieval_and_store.py::test_acl_and_tenant_prefilter_never_leak` and `tests/unit/test_ingestion_versions.py` against your adapter.
 
 ## Add a reranker
 Pass any callable `(query, list[ScoredChunk]) -> list[ScoredChunk]` as `HybridRetriever(reranker=...)`. A cross-encoder from `sentence-transformers` or a hosted rerank API both fit.

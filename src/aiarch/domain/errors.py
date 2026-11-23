@@ -34,5 +34,13 @@ class GuardrailViolation(AiArchError):
         self.rule = rule
 
 
+class StaleDocumentVersion(AiArchError):
+    """An ingest carried a lower version than the one already indexed. The API maps this to 409."""
+
+    def __init__(self, doc_id: str, *, current: int, attempted: int) -> None:
+        super().__init__(f"{doc_id}: version {attempted} is older than indexed version {current}")
+        self.doc_id, self.current, self.attempted = doc_id, current, attempted
+
+
 class ToolNotAllowed(AiArchError):
     """An agent tried to call a tool outside its allowlist."""

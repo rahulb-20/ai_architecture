@@ -15,6 +15,7 @@ from pydantic import BaseModel, Field
 
 from aiarch.adapters.telemetry.tracer import configure_logging
 from aiarch.container import Container, build_container
+from aiarch.domain.errors import StaleDocumentVersion
 from aiarch.domain.models import Document, Principal
 
 
@@ -117,7 +118,11 @@ def create_app(container: Container | None = None) -> FastAPI:
             raise HTTPException(403, "kb-admin group required")
         doc = Document(body.doc_id, body.text, p.tenant_id, frozenset(body.acl), body.version,
                        {"title": body.title or body.doc_id})
-        return {"doc_id": body.doc_id, "chunks": c.ingestion.ingest(doc)}
+        try:
+            return {"doc_id": body.doc_id, "chunks": c.ingestion.ingest(doc)}
+        except StaleDocumentVersion as e:
+            raise HTTPException(409, {"error": "stale_version", "indexed_version": e.current,
+                                      "attempted_version": e.attempted}) from e
 
     return app
 
