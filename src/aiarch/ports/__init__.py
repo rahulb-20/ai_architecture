@@ -60,6 +60,16 @@ class VectorStore(Protocol):
 
     def delete_doc(self, tenant_id: str, doc_id: str) -> int: ...
 
+    def replace_doc(self, tenant_id: str, doc_id: str, chunks: Sequence[Chunk],
+                    vectors: Sequence[Sequence[float]]) -> int:
+        """Swap every chunk of one document for `chunks` in a single atomic step, so a reader
+        never sees the document missing or half-written. Returns the number of chunks removed."""
+        ...
+
+    def doc_version(self, tenant_id: str, doc_id: str) -> int | None:
+        """Highest indexed version of the document, or None if it is not indexed."""
+        ...
+
     def search(self, vector: Sequence[float], principal: Principal, k: int) -> list[ScoredChunk]:
         """MUST apply tenant and ACL filtering inside the store (pre-filter), never after."""
         ...
