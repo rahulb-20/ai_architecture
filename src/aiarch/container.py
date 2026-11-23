@@ -77,7 +77,8 @@ def build_container(settings: Settings | None = None, *, tracer: Tracer | None =
                            tracer, prices, max_input_tokens=s.max_input_tokens)
     retriever = HybridRetriever(store, embedder, tracer,
                                 RetrievalConfig(k_final=s.k_final, min_dense_score=s.min_dense_score))
-    rag = RagService(retriever, gateway, default_registry(), cache, tracer, InputGuard(), OutputGuard())
+    rag = RagService(retriever, gateway, default_registry(), cache, tracer, InputGuard(),
+                     OutputGuard(keep_source_values=s.output_keep_source_pii))
     ingestion = IngestionService(store, embedder, cache, tracer, s.chunk_tokens, s.chunk_overlap)
 
     tickets: list[dict[str, Any]] = []

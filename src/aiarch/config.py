@@ -32,6 +32,7 @@ class Settings(BaseModel):
     semantic_cache: bool = True
     cache_threshold: float = 0.92
     cache_ttl_s: float = 86_400
+    output_keep_source_pii: bool = False       # true: do not mask values that appear in the cited sources
     chunk_tokens: int = 220
     chunk_overlap: int = 30
     k_final: int = 5
