@@ -77,7 +77,8 @@ def build_container(settings: Settings | None = None, *, tracer: Tracer | None =
                            tracer, prices, max_input_tokens=s.max_input_tokens)
     retriever = HybridRetriever(store, embedder, tracer,
                                 RetrievalConfig(k_final=s.k_final, min_dense_score=s.min_dense_score))
-    rag = RagService(retriever, gateway, default_registry(), cache, tracer, InputGuard(), OutputGuard())
+    input_guard = InputGuard()
+    rag = RagService(retriever, gateway, default_registry(), cache, tracer, input_guard, OutputGuard())
     ingestion = IngestionService(store, embedder, cache, tracer, s.chunk_tokens, s.chunk_overlap)
 
     tickets: list[dict[str, Any]] = []
@@ -89,7 +90,7 @@ def build_container(settings: Settings | None = None, *, tracer: Tracer | None =
         return [{"doc_id": h.chunk.doc_id, "text": h.chunk.text[:300]} for h in retriever.retrieve(q, p)[:3]]
 
     registry.register(kb_search_tool(_search))
-    agent = Agent(registry, RulePlanner(), tracer)
+    agent = Agent(registry, RulePlanner(), tracer, input_guard=input_guard)
 
     c = Container(s, tracer, embedder, store, cache, gateway, ingestion, rag, agent, tickets)
     if seed and s.seed_folder and s.seed_folder.exists():
