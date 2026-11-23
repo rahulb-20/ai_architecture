@@ -7,7 +7,7 @@ It runs **fully offline out of the box**: no API keys, GPU, Docker or model down
 ```powershell
 git clone https://github.com/rahulb-20/ai_architecture.git; cd ai_architecture
 .\tasks.ps1 setup      # venv + install (Windows). On macOS/Linux: make setup
-.\tasks.ps1 check      # lint, type-check, 42 tests, golden-set eval gate
+.\tasks.ps1 check      # lint, type-check, 119 tests, golden-set eval gate
 .\tasks.ps1 ask "How many annual leave days can be carried forward?"
 .\tasks.ps1 serve      # API + Swagger UI at http://127.0.0.1:8000/docs
 ```
@@ -91,6 +91,8 @@ Copy `.env.example` to `.env`. Routes are tried in order, and a key is read from
 $env:AIARCH_LLM_ROUTES='[{"name":"ollama","base_url":"http://localhost:11434/v1","model":"llama3.2:3b","timeout_s":60},{"name":"fake","kind":"fake"}]'
 .\tasks.ps1 eval
 ```
+
+The agent's planner is chosen with `AIARCH_AGENT_PLANNER`: `rule` (the default, offline and with no model call) or `llm` (the model plans each step through the gateway; it needs a real route because the fake route cannot plan, and a reply that is not a valid plan stops the run with `stopped_reason` `planner_invalid`). See [ADR-0009](docs/architecture/adr/0009-agent-planner-selection.md).
 
 To add a new provider, vector DB, reranker, guardrail, tool or telemetry backend, see [docs/guides/extending.md](docs/guides/extending.md). Before going past a pilot, work through [docs/guides/production-checklist.md](docs/guides/production-checklist.md).
 
