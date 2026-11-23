@@ -76,7 +76,8 @@ def build_container(settings: Settings | None = None, *, tracer: Tracer | None =
     gateway = ModelGateway([Route(c, max_retries=retries.get(c.name, 1)) for c in clients],
                            tracer, prices, max_input_tokens=s.max_input_tokens)
     retriever = HybridRetriever(store, embedder, tracer,
-                                RetrievalConfig(k_final=s.k_final, min_dense_score=s.min_dense_score))
+                                RetrievalConfig(k_final=s.k_final, min_dense_score=s.min_dense_score,
+                                                min_term_coverage=s.min_term_coverage))
     rag = RagService(retriever, gateway, default_registry(), cache, tracer, InputGuard(), OutputGuard())
     ingestion = IngestionService(store, embedder, cache, tracer, s.chunk_tokens, s.chunk_overlap)
 
