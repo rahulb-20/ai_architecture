@@ -1,6 +1,6 @@
 # ADR-0009: The agent planner is chosen by a setting, and an LLM plan is validated or refused
 
-- Status: Proposed
+- Status: Accepted
 - Date: 2026-11-23
 
 ## Context
