@@ -89,7 +89,7 @@ def build_container(settings: Settings | None = None, *, tracer: Tracer | None =
         return [{"doc_id": h.chunk.doc_id, "text": h.chunk.text[:300]} for h in retriever.retrieve(q, p)[:3]]
 
     registry.register(kb_search_tool(_search))
-    agent = Agent(registry, RulePlanner(), tracer)
+    agent = Agent(registry, RulePlanner(), tracer, input_guard=rag.input_guard)   # same guard as /v1/ask
 
     c = Container(s, tracer, embedder, store, cache, gateway, ingestion, rag, agent, tickets)
     if seed and s.seed_folder and s.seed_folder.exists():

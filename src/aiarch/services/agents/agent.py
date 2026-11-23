@@ -1,7 +1,8 @@
 """A bounded tool-using agent (plan -> act -> observe) with explicit safety rails.
 
 Rails, all enforced here rather than in the prompt:
-- `max_steps` and a per-run token budget stop runaway loops
+- the goal passes the same `InputGuard` as `/v1/ask` (injection heuristics, PII masking) before planning
+- `max_steps` stops runaway loops
 - tools are filtered by the caller's groups before the planner ever sees them
 - side-effecting tools pause for human approval (`approve` callback; HITL)
 - tool output is wrapped as data and size-capped before going back to the planner
@@ -19,11 +20,12 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any, Protocol
 
-from aiarch.domain.errors import AllProvidersFailed, ToolNotAllowed
+from aiarch.domain.errors import AllProvidersFailed, GuardrailViolation, ToolNotAllowed
 from aiarch.domain.models import Principal
 from aiarch.ports import LLMRequest, Message, Tracer
 from aiarch.services.agents.tools import Tool, ToolRegistry
 from aiarch.services.gateway import ModelGateway
+from aiarch.services.guardrails import InputGuard
 
 
 @dataclass
@@ -94,7 +96,7 @@ class LLMPlanner:
 class AgentResult:
     final: str
     steps: list[Observation]
-    stopped_reason: str  # "final" | "max_steps" | "approval_denied" | "planner_unavailable"
+    stopped_reason: str  # "final" | "max_steps" | "approval_denied" | "planner_unavailable" | "blocked"
 
 
 @dataclass
@@ -105,11 +107,18 @@ class Agent:
     approve: Callable[[Tool, dict[str, Any], Principal], bool] = lambda t, a, p: False
     max_steps: int = 5
     max_observation_chars: int = 4_000
+    input_guard: InputGuard | None = None   # None skips the check; the container always sets one
 
     def run(self, goal: str, principal: Principal) -> AgentResult:
         tools = self.registry.for_principal(principal)
         history: list[Observation] = []
         with self.tracer.span("agent.run", **{"agent.max_steps": self.max_steps}) as sp:
+            if self.input_guard is not None:
+                try:
+                    goal = self.input_guard(goal).text
+                except GuardrailViolation as e:
+                    sp.set("guard.blocked", e.rule)
+                    return AgentResult("This request was blocked by policy.", history, "blocked")
             for i in range(self.max_steps):
                 try:
                     step = self.planner.next_step(goal, tools, history)
