@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: mockllm-backend}
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: mockllm-backend}}
+  template:
+    metadata: {labels: {app: mockllm-backend}}
+    spec:
+      terminationGracePeriodSeconds: 30
+      containers:
+      - name: server
+        image: mockllm:0.1
+        imagePullPolicy: IfNotPresent
+        env:
+        - {name: ROLE, value: backend}
+        - {name: MAX_CONCURRENCY, value: "2"}
+        - {name: WARMUP_SECONDS, value: "20"}
+        ports: [{containerPort: 8000}]
+        readinessProbe: {httpGet: {path: /readyz, port: 8000}, periodSeconds: 2}
+        livenessProbe:  {httpGet: {path: /healthz, port: 8000}, periodSeconds: 10}
+        lifecycle: {preStop: {sleep: {seconds: 5}}}
+        resources:
+          requests: {cpu: 50m, memory: 96Mi}
+          limits:   {memory: 256Mi}
+---
+apiVersion: v1
+kind: Service
+metadata: {name: mockllm-backend}
+spec:
+  selector: {app: mockllm-backend}
+  ports: [{port: 8000, targetPort: 8000}]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: mockllm-gateway}
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: mockllm-gateway}}
+  template:
+    metadata: {labels: {app: mockllm-gateway}}
+    spec:
+      containers:
+      - name: server
+        image: mockllm:0.1
+        imagePullPolicy: IfNotPresent
+        env:
+        - {name: ROLE, value: gateway}
+        - {name: BACKEND_URL, value: "http://mockllm-backend:8000"}
+        - {name: KEEPALIVE, value: "0"}
+        ports: [{containerPort: 8000}]
+        readinessProbe: {httpGet: {path: /readyz, port: 8000}, periodSeconds: 2}
+        resources:
+          requests: {cpu: 50m, memory: 96Mi}
+          limits:   {memory: 256Mi}
+---
+apiVersion: v1
+kind: Service
+metadata: {name: mockllm-gateway}
+spec:
+  selector: {app: mockllm-gateway}
+  ports: [{port: 8000, targetPort: 8000}]

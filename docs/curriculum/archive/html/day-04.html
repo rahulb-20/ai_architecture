@@ -1,0 +1,612 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>GenAI Prep · Day 4 — Hallucination Control &amp; Grounding</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+<style>
+/* Layout: single reading column (~72ch) with a sticky section index on wide screens; wide blocks (tables, code, diagram) scroll in their own frames. */
+:root{
+  --bg:#f5f7f8; --surface:#ffffff; --fg:#17212b; --muted:#5a6774; --line:#d9e0e5;
+  --accent:#0f7a6c;          /* grounded */
+  --accent-soft:#e1f2ef;
+  --warn:#b4540a; --warn-soft:#fbeee2;   /* abstain / partial */
+  --bad:#b3261e; --bad-soft:#fbe7e5;     /* hallucination */
+  --code-bg:#eef2f4;
+  --f-display:"IBM Plex Sans Condensed","Arial Narrow",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f1519; --surface:#161e24; --fg:#e3e9ed; --muted:#93a1ad; --line:#2a353e;
+  --accent:#4cc3b0; --accent-soft:#143430; --warn:#f0a35c; --warn-soft:#3a2816; --bad:#f2827a; --bad-soft:#3d1c1a;
+  --code-bg:#11191e; color-scheme:dark;}}
+:root[data-theme="dark"]{
+  --bg:#0f1519; --surface:#161e24; --fg:#e3e9ed; --muted:#93a1ad; --line:#2a353e;
+  --accent:#4cc3b0; --accent-soft:#143430; --warn:#f0a35c; --warn-soft:#3a2816; --bad:#f2827a; --bad-soft:#3d1c1a;
+  --code-bg:#11191e; color-scheme:dark;}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font:16px/1.65 var(--f-body);padding-inline:16px;padding-block:0 64px}
+.wrap{max-width:1120px;margin:0 auto;display:grid;grid-template-columns:200px minmax(0,1fr);gap:48px}
+@media (max-width:900px){.wrap{grid-template-columns:minmax(0,1fr)}nav.toc{display:none}}
+nav.toc{position:sticky;top:calc(env(safe-area-inset-top,0px) + 24px);align-self:start;padding-top:40px;font-size:13px}
+nav.toc ol{list-style:none;margin:0;padding:0;display:grid;gap:6px;counter-reset:s}
+nav.toc a{color:var(--muted);text-decoration:none}
+nav.toc a:hover,nav.toc a:focus-visible{color:var(--accent)}
+main{min-width:0;max-width:760px}
+header.hero{padding-block:40px 24px;border-bottom:1px solid var(--line)}
+.eyebrow{font:600 12px/1 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+h1{font:700 clamp(30px,5vw,44px)/1.1 var(--f-display);margin:12px 0 12px;text-wrap:balance;letter-spacing:-.01em}
+.lede{color:var(--muted);font-size:17px;margin:0;max-width:62ch}
+.meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
+.chip{font:500 12px/1 var(--f-mono);padding:6px 9px;border:1px solid var(--line);border-radius:4px;color:var(--muted);background:var(--surface)}
+section{padding-block:36px 8px}
+h2{font:600 24px/1.2 var(--f-display);margin:0 0 14px;display:flex;gap:12px;align-items:baseline;text-wrap:balance}
+h2 .n{font:500 13px var(--f-mono);color:var(--accent)}
+h3{font:600 17px/1.3 var(--f-display);margin:26px 0 8px;letter-spacing:.01em}
+p,li{max-width:68ch}
+ul,ol{padding-left:1.2em}
+li{margin-block:4px}
+a{color:var(--accent);text-underline-offset:2px}
+a:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+code{font:0.88em var(--f-mono);background:var(--code-bg);padding:1px 5px;border-radius:3px}
+strong{font-weight:600}
+.callout{border:1px solid var(--line);background:var(--surface);border-radius:6px;padding:14px 18px;margin:18px 0}
+.callout.key{border-left:3px solid var(--accent)}
+.callout p{margin:6px 0}
+.figure{margin:22px 0;background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:16px;overflow-x:auto}
+.figure svg{display:block;min-width:640px;width:100%;height:auto}
+.figure figcaption{font-size:13px;color:var(--muted);margin-top:8px}
+svg .box{fill:var(--surface);stroke:var(--line);stroke-width:1.5}
+svg .box.g{fill:var(--accent-soft);stroke:var(--accent)}
+svg .box.w{fill:var(--warn-soft);stroke:var(--warn)}
+svg .t{fill:var(--fg);font:600 13px var(--f-display)}
+svg .s{fill:var(--muted);font:11.5px var(--f-body)}
+svg .lbl{fill:var(--warn);font:500 11px var(--f-mono)}
+svg .ln{stroke:var(--muted);stroke-width:1.5;fill:none}
+svg .ln.w{stroke:var(--warn);stroke-dasharray:4 3}
+svg .ah{fill:var(--muted)} svg .ah.w{fill:var(--warn)}
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:6px;margin:18px 0;background:var(--surface)}
+table{border-collapse:collapse;width:100%;min-width:760px;font-size:14px;line-height:1.5}
+th,td{text-align:left;vertical-align:top;padding:10px 12px;border-bottom:1px solid var(--line)}
+th{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);background:var(--bg)}
+tr:last-child td{border-bottom:0}
+td:first-child{font-weight:600}
+.tag{display:inline-block;font:500 11px var(--f-mono);padding:2px 6px;border-radius:3px;white-space:nowrap}
+.tag.g{background:var(--accent-soft);color:var(--accent)}
+.tag.w{background:var(--warn-soft);color:var(--warn)}
+.tag.b{background:var(--bad-soft);color:var(--bad)}
+.code{position:relative;margin:14px 0;border:1px solid var(--line);border-radius:6px;background:var(--code-bg)}
+.code .bar{display:flex;justify-content:space-between;align-items:center;padding:6px 10px;border-bottom:1px solid var(--line);font:500 12px var(--f-mono);color:var(--muted)}
+.code button{font:500 12px var(--f-mono);color:var(--fg);background:var(--surface);border:1px solid var(--line);border-radius:4px;padding:4px 10px;cursor:pointer}
+.code button:hover{border-color:var(--accent);color:var(--accent)}
+.code pre{margin:0;padding:14px;overflow-x:auto;font:13px/1.55 var(--f-mono);tab-size:4}
+.steps{counter-reset:st;list-style:none;padding:0}
+.steps>li{counter-increment:st;position:relative;padding-left:34px;margin-block:10px}
+.steps>li::before{content:counter(st);position:absolute;left:0;top:1px;width:22px;height:22px;border-radius:50%;background:var(--accent-soft);color:var(--accent);font:600 12px/22px var(--f-mono);text-align:center}
+.repos{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr))}
+.repo{border:1px solid var(--line);border-radius:6px;padding:14px 16px;background:var(--surface);min-width:0}
+.repo a{font:500 14px var(--f-mono);word-break:break-word}
+.repo p{margin:6px 0 0;font-size:14.5px}
+.repo .m{font:12px var(--f-mono);color:var(--muted);margin-top:6px}
+details.qa{border-top:1px solid var(--line);padding-block:12px}
+details.qa:last-of-type{border-bottom:1px solid var(--line)}
+details.qa summary{cursor:pointer;font-weight:600;list-style:none;display:flex;gap:10px}
+details.qa summary::before{content:"Q" counter(q);counter-increment:q;font:500 12px/1.9 var(--f-mono);color:var(--accent);min-width:24px}
+.qs{counter-reset:q}
+details.qa .a{padding-left:34px;margin-top:6px}
+details.qa .a p{margin:6px 0}
+.adr dl{display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px 18px;margin:0}
+@media (max-width:560px){.adr dl{grid-template-columns:minmax(0,1fr)}.adr dt{margin-top:8px}}
+.adr dt{font:600 12px/1.8 var(--f-mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.adr dd{margin:0}
+.next{margin-top:28px;padding:16px 18px;border:1px dashed var(--accent);border-radius:6px}
+.sources{font-size:13.5px;color:var(--muted)}
+.sources a{word-break:break-all}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+<nav class="toc" aria-label="Sections">
+  <ol>
+    <li><a href="#why">1 · Why it matters</a></li>
+    <li><a href="#concept">2 · Concept brief</a></li>
+    <li><a href="#tradeoffs">3 · Trade-offs</a></li>
+    <li><a href="#exercise">4 · Hands-on</a></li>
+    <li><a href="#repos">5 · Repos</a></li>
+    <li><a href="#read">6 · Read</a></li>
+    <li><a href="#interview">7 · Interview</a></li>
+    <li><a href="#adr">8 · ADR</a></li>
+    <li><a href="#tomorrow">9 · Tomorrow</a></li>
+  </ol>
+</nav>
+
+<main>
+<header class="hero">
+  <div class="eyebrow">Week 1 · LLM &amp; retrieval foundations · Day 4 of 30</div>
+  <h1>Hallucination control &amp; grounding</h1>
+  <p class="lede">Citations, abstention, self-checks and constrained answers, treated as an engineering control system with measurable layers rather than a line in the system prompt.</p>
+  <div class="meta">
+    <span class="chip">Tue 13 Oct 2026</span>
+    <span class="chip">~25 min read · 75 min lab</span>
+    <span class="chip">Runs on RTX 3050 6 GB</span>
+  </div>
+</header>
+
+<section id="why">
+  <h2><span class="n">01</span>Why this matters for the JD</h2>
+  <p>The JD lists <strong>hallucination control</strong> under must-have LLM concepts and <strong>groundedness / faithfulness</strong> under evaluation, and every enterprise use case it names (doc Q&amp;A, knowledge assistants, support) fails commercially on one confident wrong answer. Responsible-AI policy enforcement in the preferred skills also depends on it. In a design review you will be asked how the system knows when it doesn't know. Your answer should name layers, thresholds and metrics.</p>
+</section>
+
+<section id="concept">
+  <h2><span class="n">02</span>Concept brief</h2>
+
+  <h3>Two kinds of wrong</h3>
+  <p><strong>Factuality</strong> errors contradict the world. <strong>Faithfulness</strong> errors contradict, or go beyond, the context you supplied. In enterprise RAG you mostly own faithfulness: the corpus is the source of truth, even when it's stale. Faithfulness errors split further:</p>
+  <ul>
+    <li><strong>Intrinsic</strong>: the answer contradicts the passage (passage says EUR 180, answer says EUR 200).</li>
+    <li><strong>Extrinsic</strong>: the answer adds facts the passage doesn't contain. These are often plausible and correct-sounding, and harder to catch.</li>
+    <li><strong>Citation hallucination</strong>: a correct-looking claim attached to the wrong source, or a quote that doesn't exist. This is the most damaging failure in a compliance context, because the citation creates false trust.</li>
+  </ul>
+
+  <h3>Where RAG hallucinations actually come from</h3>
+  <p>In post-mortems, the generator is usually not the first cause. Rough order of frequency in production systems:</p>
+  <ol>
+    <li><strong>Retrieval miss</strong>: the right chunk wasn't in the top-k, so the model fills the gap from parametric memory.</li>
+    <li><strong>Distractors and conflicts</strong>: two versions of a policy, or a near-match chunk from another region or product.</li>
+    <li><strong>False-premise questions</strong>: "Why was the cap raised to 250?" invites the model to explain a fact that isn't true.</li>
+    <li><strong>Derivation</strong>: arithmetic, date logic, or multi-hop joins across chunks. Each step is a chance to drift.</li>
+    <li><strong>Positional neglect</strong>: long contexts where the relevant span sits in the middle.</li>
+    <li><strong>Incentives</strong>: models are trained and benchmarked in ways that reward guessing over saying "I don't know" (Kalai et al., 2025). Abstention has to be designed into the system, because the model won't default to it.</li>
+  </ol>
+
+  <h3>The control loop: prevent → constrain → verify → respond</h3>
+  <figure class="figure">
+    <svg viewBox="0 0 860 300" role="img" aria-labelledby="dg-t">
+      <title id="dg-t">Layered grounding pipeline with abstention exits after each layer</title>
+      <defs>
+        <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path class="ah" d="M0,0L10,5L0,10z"/></marker>
+        <marker id="arw" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path class="ah w" d="M0,0L10,5L0,10z"/></marker>
+      </defs>
+      <rect class="box" x="10" y="40" width="120" height="74" rx="6"/>
+      <text class="t" x="70" y="70" text-anchor="middle">Query</text>
+      <text class="s" x="70" y="90" text-anchor="middle">+ user ACL</text>
+
+      <rect class="box" x="170" y="40" width="140" height="74" rx="6"/>
+      <text class="t" x="240" y="64" text-anchor="middle">L1 Retrieve</text>
+      <text class="s" x="240" y="84" text-anchor="middle">hybrid + rerank</text>
+      <text class="s" x="240" y="100" text-anchor="middle">score floor</text>
+
+      <rect class="box" x="350" y="40" width="140" height="74" rx="6"/>
+      <text class="t" x="420" y="64" text-anchor="middle">L2 Generate</text>
+      <text class="s" x="420" y="84" text-anchor="middle">JSON schema:</text>
+      <text class="s" x="420" y="100" text-anchor="middle">claims + quotes</text>
+
+      <rect class="box" x="530" y="40" width="140" height="74" rx="6"/>
+      <text class="t" x="600" y="64" text-anchor="middle">L3 + L4 Verify</text>
+      <text class="s" x="600" y="84" text-anchor="middle">quote ∈ passage</text>
+      <text class="s" x="600" y="100" text-anchor="middle">NLI / HHEM entail</text>
+
+      <rect class="box g" x="710" y="40" width="140" height="74" rx="6"/>
+      <text class="t" x="780" y="70" text-anchor="middle">Grounded answer</text>
+      <text class="s" x="780" y="90" text-anchor="middle">with citations</text>
+
+      <path class="ln" d="M130 77H166" marker-end="url(#ar)"/>
+      <path class="ln" d="M310 77H346" marker-end="url(#ar)"/>
+      <path class="ln" d="M490 77H526" marker-end="url(#ar)"/>
+      <path class="ln" d="M670 77H706" marker-end="url(#ar)"/>
+
+      <rect class="box w" x="300" y="210" width="260" height="70" rx="6"/>
+      <text class="t" x="430" y="238" text-anchor="middle">Respond safely</text>
+      <text class="s" x="430" y="258" text-anchor="middle">abstain · partial answer · escalate to human</text>
+
+      <path class="ln w" d="M240 114V170H360V206" marker-end="url(#arw)"/>
+      <text class="lbl" x="248" y="150">top score &lt; floor</text>
+      <path class="ln w" d="M420 114V206" marker-end="url(#arw)"/>
+      <text class="lbl" x="428" y="168">answerable=false</text>
+      <path class="ln w" d="M600 114V170H500V206" marker-end="url(#arw)"/>
+      <text class="lbl" x="608" y="150">claims fail</text>
+
+      <text class="s" x="10" y="22">PREVENT</text>
+      <text class="s" x="350" y="22">CONSTRAIN</text>
+      <text class="s" x="530" y="22">VERIFY</text>
+      <text class="s" x="710" y="22">RESPOND</text>
+    </svg>
+    <figcaption>Every layer has an exit to a safe response. You tune each threshold separately on a golden set and log which layer caused each abstention.</figcaption>
+  </figure>
+
+  <ul>
+    <li><strong>Prevent</strong>: retrieval quality is the largest lever (Days 6–10). Add a score floor so weak retrieval never reaches the generator. Apply ACL filtering before retrieval, never after generation.</li>
+    <li><strong>Constrain</strong>: a prompt contract (answer only from passages, say so when you can't), temperature 0, and structured output where every claim carries a <code>passage_id</code> and a verbatim quote. Constrained decoding (Day 2) guarantees the <em>shape</em> of the output, not its truth.</li>
+    <li><strong>Verify</strong>: start cheap and deterministic, then add models.
+      <ul>
+        <li>Check that each quote is a substring of the passage it cites. It runs in microseconds and catches fabricated citations.</li>
+        <li>Run an NLI or hallucination classifier (premise = passage, hypothesis = claim). Vectara HHEM-2.1-Open runs on CPU; LettuceDetect gives token-level spans.</li>
+        <li>Use an LLM-as-judge for nuanced or multi-hop cases. It's slower and costlier, and it brings its own bias.</li>
+        <li>Sampling consistency (SelfCheckGPT-style) suits cases with no context at all. It costs N extra generations.</li>
+      </ul>
+    </li>
+    <li><strong>Respond</strong>: treat abstention as a product feature. You can drop unverified claims and return a partial answer with a visible flag. You can rephrase the question and retry retrieval once. You can route to a human or a ticket. Show citations so users can verify the answer themselves.</li>
+  </ul>
+
+  <h3>Native citation features</h3>
+  <p>Some providers return citations natively. <strong>Anthropic Citations</strong> chunks documents into sentences and returns <code>char_location</code> / <code>page_location</code> spans with <code>cited_text</code>, and that cited text doesn't count as output tokens. One catch for architects: on Claude, citations and structured outputs <strong>can't be combined</strong> (the API returns a 400). That forces a design choice between native spans and a strict JSON contract. Managed groundedness checks exist on each major cloud:</p>
+  <ul>
+    <li><strong>Azure</strong>: AI Content Safety groundedness detection, with reasoning mode and a correction preview.</li>
+    <li><strong>AWS</strong>: Bedrock Guardrails contextual grounding check. It scores grounding and relevance against thresholds from 0 to 0.99. It doesn't support conversational QA.</li>
+    <li><strong>IBM</strong>: watsonx.governance faithfulness, answer relevance and "unsuccessful requests" metrics. On your InstructLab/Granite stack, this is where abstention rate becomes a governed KPI.</li>
+  </ul>
+
+  <div class="callout key">
+    <p><strong>The review-ready sentence.</strong> "We treat hallucination as a precision/coverage trade-off. Each verification layer has a threshold tuned on a golden set to hit a target precision. We monitor abstention rate and verifier-fail rate per layer in production, and anything that fails verification is either dropped with a visible flag or escalated."</p>
+  </div>
+</section>
+
+<section id="tradeoffs">
+  <h2><span class="n">03</span>Trade-offs &amp; decision table</h2>
+  <div class="tbl">
+  <table>
+    <thead><tr><th>Technique</th><th>Catches</th><th>Added latency / cost</th><th>Failure modes</th><th>Pick when</th></tr></thead>
+    <tbody>
+      <tr><td>Prompt contract only</td><td>Some extrinsic additions</td><td><span class="tag g">≈0</span></td><td>Silently ignored under pressure; no signal that it failed</td><td>Prototypes only. It's a baseline, not a control.</td></tr>
+      <tr><td>Retrieval score floor</td><td>Out-of-scope questions, retrieval misses</td><td><span class="tag g">≈0</span></td><td>Scores aren't calibrated across embedders or rerankers; one global threshold drifts</td><td>Always. Calibrate per index, and prefer reranker scores over raw cosine.</td></tr>
+      <tr><td>Structured claims + quote check</td><td>Fabricated citations, invented quotes</td><td><span class="tag g">µs</span> + ~20–40% more output tokens</td><td>Paraphrased quotes rejected (needs normalisation or fuzzy match); doesn't check claim vs quote</td><td>Compliance and regulated answers where every sentence must be traceable</td></tr>
+      <tr><td>Native citations (Anthropic)</td><td>Unattributed claims; gives span-level provenance</td><td><span class="tag g">Low</span>: cited text not billed as output</td><td>Can't combine with strict JSON on Claude; provider lock-in; a cited span can still be misread</td><td>Claude-based doc Q&amp;A where UX needs click-to-source</td></tr>
+      <tr><td>NLI / HHEM classifier</td><td>Intrinsic contradictions, most extrinsic additions</td><td><span class="tag g">20–150 ms CPU</span> per claim</td><td>Weak on arithmetic, multi-hop and tables; domain shift; length limits on older NLI models</td><td>Default runtime gate at scale, and air-gapped deployments</td></tr>
+      <tr><td>Span detector (LettuceDetect)</td><td>Which tokens are unsupported</td><td><span class="tag g">Low</span> on a GPU; ModernBERT long context</td><td>Trained on RAGTruth-style data; needs domain eval</td><td>UI highlighting, targeted regeneration</td></tr>
+      <tr><td>LLM-as-judge self-check</td><td>Nuanced, multi-hop and derived claims</td><td><span class="tag w">+1 LLM call</span>, often 0.5–3 s</td><td>Self-preference bias; non-deterministic; same blind spots as the generator</td><td>Offline eval, sampled online audits, escalation tier for borderline NLI scores</td></tr>
+      <tr><td>Sampling consistency (SelfCheckGPT)</td><td>Confabulation without context</td><td><span class="tag b">N× generation</span></td><td>Cost; consistent-but-wrong answers pass</td><td>No retrieval context (open-domain), research settings</td></tr>
+      <tr><td>Managed groundedness (Azure / Bedrock / watsonx.gov)</td><td>Ungrounded responses; some offer correction</td><td><span class="tag w">API hop + per-call fee</span></td><td>Input-size caps, regional availability, English-optimised; Bedrock excludes chat QA</td><td>Already on that cloud and you want a governed, auditable control fast</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p><strong>Cost math to quote:</strong> at 100k answers/day with 4 claims each, a CPU NLI gate is about 400k small forward passes per day, which fits on a couple of vCPUs. An LLM judge on every answer roughly doubles your LLM spend and adds a second at p95. Run the classifier on everything, and send only the ambiguous band (for example, entailment between 0.4 and 0.7) to the judge.</p>
+</section>
+
+<section id="exercise">
+  <h2><span class="n">04</span>Hands-on: a 4-layer grounded QA pipeline</h2>
+  <p><strong>Goal (75 min):</strong> build retrieval floor → schema-constrained claims → quote check → NLI entailment over a small fictional travel-policy corpus. Then compare against an unguarded baseline on five questions: three answerable, one out-of-scope and one false-premise.</p>
+
+  <h3>Setup (PowerShell, Windows 11)</h3>
+  <ol class="steps">
+    <li>Install Ollama for Windows from <a href="https://ollama.com/download">ollama.com/download</a>. No WSL2 or Docker needed. It uses your RTX 3050 automatically.</li>
+    <li>Pull the generator. <code>qwen3:4b</code> is about 2.5 GB and fits in 6 GB of VRAM with headroom. If it's slow, use <code>llama3.2:3b</code>.</li>
+    <li>Create a venv and install. The embedder and the NLI model run on CPU, about 600 MB downloaded from Hugging Face on first run.</li>
+  </ol>
+  <div class="code"><div class="bar"><span>PowerShell</span><button type="button" data-copy="c-setup">Copy</button></div>
+<pre id="c-setup">ollama pull qwen3:4b
+mkdir day04; cd day04
+py -3.13 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+python -m pip install "ollama>=0.6" "sentence-transformers>=5" "pydantic>=2.10" numpy
+# Optional: keep torch CPU-only (smaller) - install it BEFORE sentence-transformers:
+# python -m pip install torch --index-url https://download.pytorch.org/whl/cpu</pre></div>
+  <p>If <code>Activate.ps1</code> is blocked, run <code>Set-ExecutionPolicy -Scope CurrentUser RemoteSigned</code> once.</p>
+
+  <h3>Starter code: <code>grounded_qa.py</code></h3>
+  <div class="code"><div class="bar"><span>grounded_qa.py</span><button type="button" data-copy="c-main">Copy</button></div>
+<pre id="c-main">&quot;&quot;&quot;
+Day 4 - Grounded QA with layered hallucination control (runs locally on an RTX 3050 6GB).
+
+Pipeline (each layer can force an abstention):
+  L1 retrieval floor  -&gt; no passage scores above RETRIEVAL_FLOOR  =&gt; abstain without calling the LLM
+  L2 constrained gen  -&gt; JSON-schema output: answerable flag + claims, each with passage_id + verbatim quote
+  L3 quote check      -&gt; quote must literally appear in the cited passage (deterministic, ~0 ms)
+  L4 NLI check        -&gt; cross-encoder must say the cited passage ENTAILS the claim
+  Policy              -&gt; 0 supported claims =&gt; abstain; some dropped =&gt; partial answer, flagged
+
+Run:  python grounded_qa.py            (guarded pipeline)
+      python grounded_qa.py --baseline (same questions, free-text answer, no guards - compare!)
+&quot;&quot;&quot;
+
+import argparse
+import re
+import time
+
+import numpy as np
+from ollama import chat
+from pydantic import BaseModel, Field
+from sentence_transformers import CrossEncoder, SentenceTransformer
+
+LLM = &quot;qwen3:4b&quot;                     # fallback: &quot;llama3.2:3b&quot;
+EMBED_MODEL = &quot;BAAI/bge-small-en-v1.5&quot;
+NLI_MODEL = &quot;cross-encoder/nli-deberta-v3-small&quot;   # labels: [contradiction, entailment, neutral]
+TOP_K = 3
+RETRIEVAL_FLOOR = 0.55               # calibrate! print scores for in- vs out-of-domain questions
+ENTAIL_MIN = 0.50
+
+# A fictional company&#x27;s policy corpus. Small on purpose, so you can see every decision.
+CORPUS = {
+    &quot;TRV-01&quot;: &quot;Employees travelling internationally receive a daily allowance of EUR 90 for meals. &quot;
+              &quot;The allowance is reduced by 50% on days when the client provides lunch.&quot;,
+    &quot;TRV-02&quot;: &quot;Economy class is mandatory for flights under 6 hours. Business class may be booked for &quot;
+              &quot;flights of 6 hours or more with written approval from a Director.&quot;,
+    &quot;TRV-03&quot;: &quot;Hotel bookings must be made through the Northwind travel portal. The nightly cap is &quot;
+              &quot;EUR 180 in Tier-1 cities (London, Paris, New York) and EUR 120 elsewhere.&quot;,
+    &quot;EXP-01&quot;: &quot;Expense claims must be submitted within 30 days of the trip end date. Claims submitted &quot;
+              &quot;after 60 days are rejected automatically.&quot;,
+    &quot;EXP-02&quot;: &quot;Receipts are required for any single expense above EUR 25. Card statements are not &quot;
+              &quot;accepted as a substitute for itemised receipts.&quot;,
+    &quot;SEC-01&quot;: &quot;Laptops taken abroad must have full-disk encryption enabled. Travel to sanctioned &quot;
+              &quot;countries requires a loaner device issued by IT Security.&quot;,
+}
+
+QUESTIONS = [
+    &quot;What is the hotel cap in Paris?&quot;,                                   # answerable, 1 passage
+    &quot;Can I fly business class to Singapore on a 12-hour flight?&quot;,        # answerable, conditional
+    &quot;If the client buys me lunch abroad, what is my meal allowance?&quot;,    # needs arithmetic from text
+    &quot;What is the mileage rate for using my own car?&quot;,                    # NOT in corpus -&gt; abstain
+    &quot;Why was the Paris hotel cap raised to EUR 250 last year?&quot;,          # false premise -&gt; must not invent
+]
+
+
+class Claim(BaseModel):
+    text: str = Field(description=&quot;One atomic factual statement answering part of the question&quot;)
+    passage_id: str = Field(description=&quot;ID of the passage that supports this statement&quot;)
+    quote: str = Field(description=&quot;Exact, verbatim span copied from that passage&quot;)
+
+
+class GroundedAnswer(BaseModel):
+    answerable: bool = Field(description=&quot;False if the passages do not contain the answer&quot;)
+    claims: list[Claim]
+    reason_if_unanswerable: str = &quot;&quot;
+
+
+SYSTEM = (
+    &quot;You answer questions about company policy using ONLY the passages provided.\n&quot;
+    &quot;Rules:\n&quot;
+    &quot;1. Break the answer into short atomic claims. Every claim needs passage_id and a quote copied &quot;
+    &quot;verbatim from that passage.\n&quot;
+    &quot;2. If the passages do not contain the answer, set answerable=false and return no claims.\n&quot;
+    &quot;3. If the question assumes something the passages do not say, do not accept the assumption; &quot;
+    &quot;state what the passages actually say, or set answerable=false.\n&quot;
+    &quot;4. Never use outside knowledge.&quot;
+)
+
+
+def norm(s: str) -&gt; str:
+    return re.sub(r&quot;\s+&quot;, &quot; &quot;, s).strip().lower()
+
+
+class Pipeline:
+    def __init__(self) -&gt; None:
+        t = time.perf_counter()
+        self.ids = list(CORPUS)
+        self.embedder = SentenceTransformer(EMBED_MODEL)
+        self.doc_vecs = self.embedder.encode(list(CORPUS.values()), normalize_embeddings=True)
+        self.nli = CrossEncoder(NLI_MODEL)
+        print(f&quot;[init] models loaded in {time.perf_counter() - t:.1f}s&quot;)
+
+    def retrieve(self, q: str) -&gt; list[tuple[str, float]]:
+        qv = self.embedder.encode([q], normalize_embeddings=True)[0]
+        sims = self.doc_vecs @ qv
+        order = np.argsort(-sims)[:TOP_K]
+        return [(self.ids[i], float(sims[i])) for i in order]
+
+    def generate(self, q: str, hits: list[tuple[str, float]]) -&gt; GroundedAnswer:
+        ctx = &quot;\n&quot;.join(f&quot;[{pid}] {CORPUS[pid]}&quot; for pid, _ in hits)
+        resp = chat(
+            model=LLM,
+            messages=[{&quot;role&quot;: &quot;system&quot;, &quot;content&quot;: SYSTEM},
+                      {&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: f&quot;Passages:\n{ctx}\n\nQuestion: {q}&quot;}],
+            format=GroundedAnswer.model_json_schema(),   # constrained decoding (L2)
+            options={&quot;temperature&quot;: 0},
+            think=False,                                 # qwen3: skip reasoning tokens for latency
+        )
+        return GroundedAnswer.model_validate_json(resp.message.content)
+
+    def entailment(self, premise: str, hypothesis: str) -&gt; float:
+        probs = self.nli.predict([(premise, hypothesis)], apply_softmax=True)[0]
+        return float(probs[1])
+
+    def answer(self, q: str) -&gt; dict:
+        t0 = time.perf_counter()
+        hits = self.retrieve(q)
+        top = hits[0][1]
+        if top &lt; RETRIEVAL_FLOOR:                                          # L1
+            return {&quot;status&quot;: &quot;ABSTAIN&quot;, &quot;why&quot;: f&quot;retrieval floor (top={top:.2f})&quot;,
+                    &quot;hits&quot;: hits, &quot;ms&quot;: (time.perf_counter() - t0) * 1000}
+
+        ga = self.generate(q, hits)                                        # L2
+        if not ga.answerable or not ga.claims:
+            return {&quot;status&quot;: &quot;ABSTAIN&quot;, &quot;why&quot;: f&quot;model: {ga.reason_if_unanswerable or &#x27;not answerable&#x27;}&quot;,
+                    &quot;hits&quot;: hits, &quot;ms&quot;: (time.perf_counter() - t0) * 1000}
+
+        allowed = {pid for pid, _ in hits}
+        kept, dropped = [], []
+        for c in ga.claims:
+            src = CORPUS.get(c.passage_id, &quot;&quot;)
+            if c.passage_id not in allowed or norm(c.quote) not in norm(src):   # L3
+                dropped.append((c, &quot;quote not found in cited passage&quot;))
+                continue
+            p = self.entailment(src, c.text)                                   # L4
+            if p &lt; ENTAIL_MIN:
+                dropped.append((c, f&quot;not entailed (p={p:.2f})&quot;))
+                continue
+            kept.append((c, p))
+
+        status = &quot;ABSTAIN&quot; if not kept else (&quot;PARTIAL&quot; if dropped else &quot;GROUNDED&quot;)
+        return {&quot;status&quot;: status, &quot;kept&quot;: kept, &quot;dropped&quot;: dropped, &quot;hits&quot;: hits,
+                &quot;why&quot;: &quot;all claims failed verification&quot; if not kept else &quot;&quot;,
+                &quot;ms&quot;: (time.perf_counter() - t0) * 1000}
+
+
+def baseline(q: str) -&gt; str:
+    ctx = &quot;\n&quot;.join(f&quot;[{k}] {v}&quot; for k, v in CORPUS.items())
+    r = chat(model=LLM, messages=[{&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: f&quot;{ctx}\n\nQuestion: {q}&quot;}],
+             options={&quot;temperature&quot;: 0}, think=False)
+    return r.message.content.strip()
+
+
+def main() -&gt; None:
+    ap = argparse.ArgumentParser()
+    ap.add_argument(&quot;--baseline&quot;, action=&quot;store_true&quot;)
+    args = ap.parse_args()
+
+    if args.baseline:
+        for q in QUESTIONS:
+            print(f&quot;\nQ: {q}\nA: {baseline(q)}&quot;)
+        return
+
+    pipe = Pipeline()
+    tally: dict[str, int] = {}
+    for q in QUESTIONS:
+        r = pipe.answer(q)
+        tally[r[&quot;status&quot;]] = tally.get(r[&quot;status&quot;], 0) + 1
+        print(f&quot;\nQ: {q}&quot;)
+        print(&quot;   retrieval:&quot;, &quot;, &quot;.join(f&quot;{pid}={s:.2f}&quot; for pid, s in r[&quot;hits&quot;]))
+        print(f&quot;   -&gt; {r[&#x27;status&#x27;]}  ({r[&#x27;ms&#x27;]:.0f} ms) {r[&#x27;why&#x27;]}&quot;)
+        for c, p in r.get(&quot;kept&quot;, []):
+            print(f&quot;      OK  [{c.passage_id}] {c.text}   (entail={p:.2f})&quot;)
+        for c, why in r.get(&quot;dropped&quot;, []):
+            print(f&quot;      DROP [{c.passage_id}] {c.text}   &lt;- {why}&quot;)
+    print(&quot;\nSummary:&quot;, tally)
+
+
+if __name__ == &quot;__main__&quot;:
+    main()</pre></div>
+
+  <h3>Run it</h3>
+  <div class="code"><div class="bar"><span>PowerShell</span><button type="button" data-copy="c-run">Copy</button></div>
+<pre id="c-run">python grounded_qa.py --baseline   # unguarded answers first; note what it invents
+python grounded_qa.py              # guarded pipeline</pre></div>
+
+  <h3>What you should see</h3>
+  <p>Exact scores and wording will vary by model and version. The shape should look like this:</p>
+  <div class="code"><div class="bar"><span>expected output (illustrative)</span><button type="button" data-copy="c-out">Copy</button></div>
+<pre id="c-out">Q: What is the hotel cap in Paris?
+   retrieval: TRV-03=0.7x, ...
+   -&gt; GROUNDED  (~1500 ms)
+      OK  [TRV-03] The nightly hotel cap in Paris is EUR 180.   (entail=0.9x)
+
+Q: If the client buys me lunch abroad, what is my meal allowance?
+   -&gt; PARTIAL or GROUNDED
+      OK   [TRV-01] The international daily meal allowance is EUR 90.
+      DROP [TRV-01] My allowance is EUR 45.  &lt;- not entailed (p=0.3x)   # derived claim!
+
+Q: What is the mileage rate for using my own car?
+   -&gt; ABSTAIN  retrieval floor (top=0.4x)   # or model: not answerable
+
+Q: Why was the Paris hotel cap raised to EUR 250 last year?
+   -&gt; GROUNDED with a corrective claim (cap is EUR 180), or ABSTAIN
+      # the baseline often explains the fictional raise instead
+
+Summary: {'GROUNDED': 2-3, 'PARTIAL': 0-1, 'ABSTAIN': 1-2}</pre></div>
+  <div class="callout">
+    <p><strong>Things to notice and write down:</strong></p>
+    <ul>
+      <li>The derived EUR 45 claim is <em>correct</em> but often fails NLI. Verifiers punish derivation. That's a design decision, not a bug.</li>
+      <li>Print the top retrieval score for all five questions and set <code>RETRIEVAL_FLOOR</code> between the in-domain and out-of-domain clusters. That's threshold calibration in miniature.</li>
+      <li>Time each layer. NLI should be tens of milliseconds on CPU; the LLM dominates.</li>
+    </ul>
+  </div>
+
+  <h3>Stretch goals</h3>
+  <ol>
+    <li><strong>Swap the verifier for HHEM-2.1-Open</strong> (<code>AutoModelForSequenceClassification.from_pretrained("vectara/hallucination_evaluation_model", trust_remote_code=True)</code>, then <code>model.predict([(premise, hypothesis)])</code>). Compare its decisions with the DeBERTa NLI model on 20 hand-labelled claims and compute precision/recall for "hallucinated".</li>
+    <li><strong>Add a derivation lane:</strong> extend <code>Claim</code> with <code>kind: Literal["extracted","derived"]</code> and <code>inputs: list[str]</code>. Verify extracted claims with NLI, and verify derived claims by re-computing them in Python from the cited numbers. That's the pattern for policy math such as allowances, SLAs and dates.</li>
+  </ol>
+</section>
+
+<section id="repos">
+  <h2><span class="n">05</span>GitHub repos to study</h2>
+  <div class="repos">
+    <div class="repo"><a href="https://github.com/vectara/hallucination-leaderboard">vectara/hallucination-leaderboard</a>
+      <p>Read the methodology section: how the summarisation prompt is fixed and how hallucination rate and answer rate are reported together. Answer rate is the abstention trade-off in one number.</p>
+      <div class="m">~3.3k ★ · updated May 2026 · HHEM-2.3 scoring</div></div>
+    <div class="repo"><a href="https://github.com/KRLabsOrg/LettuceDetect">KRLabsOrg/LettuceDetect</a>
+      <p>Look at <code>lettucedetect/models/inference.py</code> for the span-level output format and the RAGTruth training setup. It's a good template for a token-level verifier service.</p>
+      <div class="m">~600 ★ · v0.2.x releases Jun–Jul 2026 · ModernBERT/EuroBERT</div></div>
+    <div class="repo"><a href="https://github.com/confident-ai/deepeval">confident-ai/deepeval</a>
+      <p>Compare the Faithfulness and Hallucination metric implementations. Both extract claims, then judge them against context, so you'll see the claim-decomposition prompts you'd otherwise write yourself.</p>
+      <div class="m">~17.5k ★ · PyPI 4.2.x</div></div>
+    <div class="repo"><a href="https://github.com/NVIDIA/NeMo-Guardrails">NVIDIA/NeMo-Guardrails</a>
+      <p>Study the "self check facts" and "self check hallucination" output rails and the AlignScore integration. This is how grounding becomes declarative policy (Day 21 builds on it).</p>
+      <div class="m">~7.3k ★ · v0.24.1</div></div>
+  </div>
+</section>
+
+<section id="read">
+  <h2><span class="n">06</span>Read / watch</h2>
+  <ul>
+    <li><a href="https://arxiv.org/abs/2509.04664">Kalai et al., "Why Language Models Hallucinate" (2025)</a>. The argument is that accuracy-only evals reward guessing, so abstention must be scored explicitly. Use it to justify why your eval scorecard penalises confident errors more than abstentions.</li>
+    <li><a href="https://platform.claude.com/docs/en/build-with-claude/citations">Anthropic: Citations</a>. Covers the request shape, the three citation location types, cost behaviour, and the incompatibility with structured outputs. A good model of provider-native grounding.</li>
+    <li><a href="https://learn.microsoft.com/en-us/azure/ai-services/content-safety/concepts/groundedness">Azure AI Content Safety: Groundedness detection</a>, read alongside the <a href="https://docs.aws.amazon.com/bedrock/latest/userguide/guardrails-contextual-grounding-check.html">Bedrock contextual grounding check</a>. Compare the threshold semantics and limits; it's useful for a multi-cloud answer.</li>
+  </ul>
+</section>
+
+<section id="interview">
+  <h2><span class="n">07</span>Interview questions</h2>
+  <div class="qs">
+  <details class="qa"><summary>A compliance bot gave a wrong answer with a real-looking citation. Walk me through your triage.</summary>
+    <div class="a"><p>Pull the trace and classify the failure. (1) Was the correct chunk in the corpus? If not, it's a content gap. (2) Was it retrieved in the top-k? If not, it's a retrieval problem: check context recall, filters and chunking. (3) Was it retrieved but the answer contradicts it? That's a faithfulness problem: check the verifier score and why the threshold let it through. (4) Is the cited passage the wrong one? That's citation hallucination: add quote verification. Turn the case into a golden-set regression test, then fix the layer that failed rather than editing the prompt.</p></div></details>
+  <details class="qa"><summary>How do you choose an abstention threshold, and how do you defend it to the business?</summary>
+    <div class="a"><p>Frame it as cost: a wrong answer in a regulated workflow might cost 50× an "I don't know" that routes to a human. On a labelled golden set, plot precision against coverage as the threshold varies, pick the point that meets the target precision (for example, ≥ 97% on answered questions), and report the coverage that leaves. Set thresholds per domain if risk differs. In production, track abstention rate and verifier-fail rate. A rising abstention rate is an early warning of corpus drift or retrieval regression.</p></div></details>
+  <details class="qa"><summary>NLI/HHEM classifier or LLM-as-judge for runtime groundedness?</summary>
+    <div class="a"><p>Use both, in tiers. The classifier is cheap (tens of ms on CPU), deterministic, can run air-gapped and is easy to calibrate, but it's weak on arithmetic, tables and multi-hop reasoning. The judge handles nuance but adds a second or more, costs another LLM call, is non-deterministic, and may favour its own family's outputs. Gate everything with the classifier and send only the uncertain band to the judge. Use the judge offline for eval and calibration, and validate the judge itself against human labels.</p></div></details>
+  <details class="qa"><summary>Claude citations and structured outputs can't be used together. How do you design around that in a multi-provider system?</summary>
+    <div class="a"><p>Define a provider-neutral answer contract (claims with source spans) in your gateway. For Claude, either use native citations and map <code>char_location</code> into your contract, or use structured outputs with quote fields and verify the quotes yourself. For OpenAI, Gemini and open-source models, use JSON-schema output plus your own quote and NLI verification. Downstream consumers see one schema. Record which path produced each answer for audit, and run the same eval suite across providers.</p></div></details>
+  <details class="qa"><summary>Will fine-tuning or a bigger context window fix hallucinations?</summary>
+    <div class="a"><p>Not by itself. Fine-tuning on facts the model doesn't already know can increase its tendency to hallucinate (Gekhman et al., 2024). Fine-tune for behaviour, such as format, refusal style and domain tone, and keep facts in retrieval. Long context reduces retrieval misses but adds distractors and positional neglect, plus cost and latency. Neither replaces measurement: you still need faithfulness evals and runtime verification.</p></div></details>
+  </div>
+</section>
+
+<section id="adr" class="adr">
+  <h2><span class="n">08</span>Architect's lens: ADR-014 · Runtime grounding verification</h2>
+  <div class="callout">
+  <dl>
+    <dt>Status</dt><dd>Accepted · Day 4 study ADR</dd>
+    <dt>Context</dt><dd>Internal policy assistant for about 20k users on watsonx.ai with Granite, plus a fallback provider. Wrong answers carry regulatory exposure. Target p95 latency ≤ 4 s and precision on answered questions ≥ 97%. One region must run air-gapped.</dd>
+    <dt>Options</dt><dd><strong>A.</strong> Prompt contract only. <strong>B.</strong> LLM-as-judge on every answer. <strong>C.</strong> Tiered: retrieval floor, then claims with quotes, a deterministic quote check, a CPU NLI/HHEM gate, and an LLM judge only for the uncertain band. <strong>D.</strong> Managed cloud groundedness API.</dd>
+    <dt>Decision</dt><dd><strong>C.</strong> A has no measurable control. B doubles LLM cost and breaks the latency budget. D fails the air-gapped requirement and ties the control to one cloud. C runs everywhere, costs about 50–150 ms for most traffic, and produces per-layer signals for watsonx.governance dashboards.</dd>
+    <dt>Consequences</dt><dd>
+      <ul>
+        <li>About 20–40% more output tokens because of quotes.</li>
+        <li>Correct derived answers (calculations) may be dropped until a derivation lane exists.</li>
+        <li>Thresholds need recalibration whenever the embedder, reranker or verifier changes, so this is added to the CI eval gate (Day 26).</li>
+        <li>Abstentions route to an HR or Compliance queue, which needs an owner and an SLA.</li>
+      </ul>
+    </dd>
+  </dl>
+  </div>
+</section>
+
+<section id="tomorrow">
+  <h2><span class="n">09</span>Tomorrow</h2>
+  <div class="next"><strong>Day 5: Embeddings deep dive.</strong> Model choice with MTEB, dimensions, Matryoshka truncation, similarity metrics and domain adaptation. Today's retrieval floor depends directly on it.</div>
+</section>
+
+<section class="sources">
+  <h2><span class="n">—</span>Sources</h2>
+  <ul>
+    <li><a href="https://platform.claude.com/docs/en/build-with-claude/citations">https://platform.claude.com/docs/en/build-with-claude/citations</a></li>
+    <li><a href="https://arxiv.org/abs/2509.04664">https://arxiv.org/abs/2509.04664</a></li>
+    <li><a href="https://learn.microsoft.com/en-us/azure/ai-services/content-safety/concepts/groundedness">https://learn.microsoft.com/en-us/azure/ai-services/content-safety/concepts/groundedness</a></li>
+    <li><a href="https://docs.aws.amazon.com/bedrock/latest/userguide/guardrails-contextual-grounding-check.html">https://docs.aws.amazon.com/bedrock/latest/userguide/guardrails-contextual-grounding-check.html</a></li>
+    <li><a href="https://www.ibm.com/docs/en/DSXDOC/wsj/model/wos-evaluation-metrics.html">https://www.ibm.com/docs/en/DSXDOC/wsj/model/wos-evaluation-metrics.html</a></li>
+    <li><a href="https://docs.ollama.com/capabilities/structured-outputs">https://docs.ollama.com/capabilities/structured-outputs</a></li>
+    <li><a href="https://ollama.com/library/qwen3">https://ollama.com/library/qwen3</a></li>
+    <li><a href="https://huggingface.co/vectara/hallucination_evaluation_model">https://huggingface.co/vectara/hallucination_evaluation_model</a></li>
+    <li><a href="https://huggingface.co/cross-encoder/nli-deberta-v3-small">https://huggingface.co/cross-encoder/nli-deberta-v3-small</a></li>
+    <li><a href="https://github.com/vectara/hallucination-leaderboard">https://github.com/vectara/hallucination-leaderboard</a></li>
+    <li><a href="https://github.com/KRLabsOrg/LettuceDetect">https://github.com/KRLabsOrg/LettuceDetect</a></li>
+    <li><a href="https://github.com/confident-ai/deepeval">https://github.com/confident-ai/deepeval</a></li>
+    <li><a href="https://github.com/NVIDIA/NeMo-Guardrails">https://github.com/NVIDIA/NeMo-Guardrails</a></li>
+  </ul>
+</section>
+</main>
+</div>
+
+<script>
+document.querySelectorAll('button[data-copy]').forEach(function(b){
+  b.addEventListener('click',function(){
+    var el=document.getElementById(b.getAttribute('data-copy'));
+    var txt=el.innerText;
+    function done(){b.textContent='Copied';setTimeout(function(){b.textContent='Copy'},1500);}
+    function fallback(){var r=document.createRange();r.selectNodeContents(el);var s=getSelection();s.removeAllRanges();s.addRange(r);b.textContent='Selected – press Ctrl+C';setTimeout(function(){b.textContent='Copy'},2500);}
+    try{navigator.clipboard.writeText(txt).then(done,fallback);}catch(e){fallback();}
+  });
+});
+</script>
+
+</body></html>

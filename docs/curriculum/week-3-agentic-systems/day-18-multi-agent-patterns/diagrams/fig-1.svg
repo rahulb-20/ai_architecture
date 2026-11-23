@@ -1,0 +1,40 @@
+<svg font-family="IBM Plex Sans, Segoe UI, Arial, sans-serif" aria-label="Four topologies: single agent with tools, router workflow, supervisor with sub-agents as tools, and peer handoffs" role="img" style="background:#ffffff" viewbox="0 0 960 300" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<marker id="m" markerheight="7" markerwidth="7" orient="auto-start-reverse" refx="9" refy="5" viewbox="0 0 10 10"><path class="ar" d="M0,0L10,5L0,10z"></path></marker>
+<marker id="mA" markerheight="7" markerwidth="7" orient="auto-start-reverse" refx="9" refy="5" viewbox="0 0 10 10"><path class="arA" d="M0,0L10,5L0,10z"></path></marker>
+</defs>
+<!-- A single -->
+<text class="h" x="20" y="24">A · SINGLE AGENT</text>
+<rect class="hub" height="44" rx="6" width="140" x="50" y="60"></rect><text class="t" text-anchor="middle" x="120" y="87">ReAct agent</text>
+<rect class="box" height="34" rx="4" width="60" x="20" y="170"></rect><text class="s" text-anchor="middle" x="50" y="191">tool</text>
+<rect class="box" height="34" rx="4" width="60" x="90" y="170"></rect><text class="s" text-anchor="middle" x="120" y="191">tool</text>
+<rect class="box" height="34" rx="4" width="60" x="160" y="170"></rect><text class="s" text-anchor="middle" x="190" y="191">tool</text>
+<path class="e" d="M90 104L52 168" marker-end="url(#m)"></path><path class="e" d="M120 104L120 168" marker-end="url(#m)"></path><path class="e" d="M150 104L188 168" marker-end="url(#m)"></path>
+<text class="s" x="20" y="240">1 context · LLM loops</text><text class="s" x="20" y="258">cheapest, easiest to trace</text>
+<!-- B router -->
+<text class="h" x="260" y="24">B · ROUTER / WORKFLOW</text>
+<rect class="box" height="44" rx="6" width="130" x="290" y="60"></rect><text class="t" text-anchor="middle" x="355" y="80">classify</text><text class="s" text-anchor="middle" x="355" y="96">1 structured call</text>
+<rect class="hub" height="34" rx="4" width="86" x="262" y="170"></rect><text class="t" text-anchor="middle" x="305" y="191">policy</text>
+<rect class="hub" height="34" rx="4" width="86" x="362" y="170"></rect><text class="t" text-anchor="middle" x="405" y="191">finance</text>
+<path class="e" d="M330 104L310 168" marker-end="url(#m)"></path><path class="e" d="M380 104L400 168" marker-end="url(#m)"></path>
+<path class="ea" d="M348 187L360 187" marker-end="url(#mA)"></path>
+<text class="s" x="262" y="240">code owns the edges</text><text class="s" x="262" y="258">predictable, testable paths</text>
+<!-- C supervisor -->
+<text class="h" x="500" y="24">C · SUPERVISOR</text>
+<rect class="hub" height="44" rx="6" width="140" x="540" y="60"></rect><text class="t" text-anchor="middle" x="610" y="80">supervisor</text><text class="s" text-anchor="middle" x="610" y="96">owns the user</text>
+<rect class="box" height="34" rx="4" width="95" x="505" y="170"></rect><text class="t" text-anchor="middle" x="552" y="191">sub-agent</text>
+<rect class="box" height="34" rx="4" width="95" x="620" y="170"></rect><text class="t" text-anchor="middle" x="667" y="191">sub-agent</text>
+<path class="ea" d="M585 104L556 168" marker-end="url(#mA)"></path><path class="e" d="M566 168L595 106" marker-end="url(#m)"></path>
+<path class="ea" d="M635 104L664 168" marker-end="url(#mA)"></path><path class="e" d="M654 168L625 106" marker-end="url(#m)"></path>
+<text class="s" x="505" y="240">sub-agents = tools</text><text class="s" x="505" y="258">brief in, summary out</text>
+<!-- D handoffs -->
+<text class="h" x="750" y="24">D · HANDOFFS / SWARM</text>
+<rect class="hub" height="40" rx="6" width="90" x="760" y="60"></rect><text class="t" text-anchor="middle" x="805" y="85">triage</text>
+<rect class="box" height="34" rx="4" width="90" x="750" y="170"></rect><text class="t" text-anchor="middle" x="795" y="191">billing</text>
+<rect class="box" height="34" rx="4" width="90" x="860" y="120"></rect><text class="t" text-anchor="middle" x="905" y="141">tech</text>
+<path class="ea" d="M800 100L796 168" marker-end="url(#mA)"></path><path class="ea" d="M850 85L900 118" marker-end="url(#mA)"></path>
+<path class="ea" d="M840 182L870 156" marker-end="url(#mA)"></path>
+<text class="s" x="750" y="240">active agent talks to user</text><text class="s" x="750" y="258">shared history, hard to bound</text>
+<line class="e" style="stroke-dasharray:3 4" x1="0" x2="960" y1="282" y2="282"></line>
+<text class="s" x="0" y="298">← more control in code · fewer tokens</text><text class="s" text-anchor="end" x="960" y="298">more autonomy · more tokens, more failure modes →</text>
+</svg>

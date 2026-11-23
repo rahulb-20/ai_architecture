@@ -1,0 +1,382 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>GenAI Prep · Day 7 — Vector Search Internals</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Serif:wght@500;600&display=swap">
+<style>
+/* Layout: single reading column (~72ch) with a sticky section index on wide screens; code and tables scroll in place. */
+:root{
+  --bg:#f6f7f9; --surface:#ffffff; --fg:#1a1f2b; --muted:#5a6475; --line:#dde1e8;
+  --accent:#0f62a8; --accent-soft:#e3eef9; --node:#0e8a7a; --warn:#a1532a; --code-bg:#f0f2f6;
+  --f-display:"IBM Plex Serif",Georgia,serif; --f-body:"IBM Plex Sans",system-ui,sans-serif; --f-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#11151c; --surface:#181d26; --fg:#e3e7ee; --muted:#9aa4b5; --line:#2a3240;
+  --accent:#6aaef0; --accent-soft:#1c2a3c; --node:#4cc5b2; --warn:#e3956a; --code-bg:#0d1117; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#11151c; --surface:#181d26; --fg:#e3e7ee; --muted:#9aa4b5; --line:#2a3240;
+  --accent:#6aaef0; --accent-soft:#1c2a3c; --node:#4cc5b2; --warn:#e3956a; --code-bg:#0d1117; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font:16px/1.65 var(--f-body);margin:0}
+.wrap{max-width:1120px;margin:0 auto;padding-block:40px 80px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;grid-template-columns:200px minmax(0,1fr);gap:48px}
+nav.toc{position:sticky;top:calc(env(safe-area-inset-top,0px) + 24px);align-self:start;font-size:13px}
+nav.toc a{display:block;color:var(--muted);text-decoration:none;padding:4px 0 4px 10px;border-left:2px solid var(--line)}
+nav.toc a:hover,nav.toc a:focus-visible{color:var(--accent);border-left-color:var(--accent)}
+main{min-width:0;max-width:760px}
+header .eyebrow{font:500 12px/1 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+h1{font:600 clamp(28px,4.4vw,40px)/1.15 var(--f-display);margin:.4em 0 .3em;text-wrap:balance}
+.lede{color:var(--muted);font-size:17px;margin:0}
+.meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+.chip{font:500 12px/1 var(--f-mono);padding:6px 9px;border:1px solid var(--line);border-radius:4px;color:var(--muted);background:var(--surface)}
+section{margin-top:56px}
+h2{font:600 24px/1.25 var(--f-display);margin:0 0 14px;text-wrap:balance;display:flex;gap:12px;align-items:baseline}
+h2 .n{font:500 13px/1 var(--f-mono);color:var(--accent)}
+h3{font:600 17px/1.3 var(--f-body);margin:28px 0 8px}
+p{margin:0 0 14px} ul,ol{padding-left:22px;margin:0 0 14px} li{margin:4px 0}
+a{color:var(--accent)}
+code{font:14px var(--f-mono);background:var(--code-bg);padding:1px 5px;border-radius:3px}
+.callout{background:var(--accent-soft);border-radius:6px;padding:14px 18px;margin:16px 0}
+.callout.warn{background:transparent;border:1px solid var(--warn)}
+.callout.warn strong{color:var(--warn)}
+.fig{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:16px;margin:20px 0;overflow-x:auto}
+.fig svg{display:block;width:100%;min-width:640px;height:auto}
+.fig figcaption{font-size:13px;color:var(--muted);margin-top:8px}
+.tbl{overflow-x:auto;margin:16px 0;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:14px;min-width:680px}
+th,td{text-align:left;vertical-align:top;padding:10px 12px;border-bottom:1px solid var(--line)}
+th{font:600 12px/1.3 var(--f-body);letter-spacing:.04em;text-transform:uppercase;color:var(--muted);background:var(--code-bg)}
+tr:last-child td{border-bottom:0}
+td.num{font-family:var(--f-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.code{position:relative;margin:14px 0}
+.code pre{background:var(--code-bg);border:1px solid var(--line);border-radius:8px;padding:16px;overflow-x:auto;margin:0;font:13px/1.55 var(--f-mono)}
+.code pre code{background:none;padding:0;font:inherit}
+.code .lbl{font:500 11px/1 var(--f-mono);color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
+.copy{position:absolute;top:26px;right:8px;font:500 12px var(--f-body);background:var(--surface);color:var(--fg);border:1px solid var(--line);border-radius:4px;padding:4px 10px;cursor:pointer}
+.copy:hover,.copy:focus-visible{border-color:var(--accent);color:var(--accent);outline:none}
+.repos{display:grid;gap:12px}
+.repo{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:14px 16px}
+.repo a{font:500 14px var(--f-mono)}
+.repo p{margin:4px 0 0;font-size:15px;color:var(--muted)}
+details{border-top:1px solid var(--line);padding:12px 0}
+details:last-of-type{border-bottom:1px solid var(--line)}
+summary{cursor:pointer;font-weight:600;list-style-position:outside}
+summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+details .ans{margin-top:10px;color:var(--fg)}
+.adr dt{font:600 12px/1 var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--accent);margin-top:16px}
+.adr dd{margin:6px 0 0}
+.tomorrow{margin-top:56px;padding:18px 20px;border:1px dashed var(--line);border-radius:8px;color:var(--muted)}
+.tomorrow strong{color:var(--fg)}
+@media (max-width:860px){.wrap{grid-template-columns:minmax(0,1fr)}nav.toc{display:none}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+<nav class="toc" aria-label="Sections">
+  <a href="#why">Why it matters</a><a href="#concept">Concept brief</a><a href="#tradeoffs">Trade-offs</a><a href="#lab">Hands-on lab</a><a href="#repos">Repos</a><a href="#read">Read / watch</a><a href="#interview">Interview Qs</a><a href="#adr">Architect's lens</a><a href="#tomorrow">Tomorrow</a>
+</nav>
+<main>
+<header>
+  <div class="eyebrow">Week 1 · LLM &amp; retrieval foundations · Day 7 of 30</div>
+  <h1>Vector search internals: HNSW, IVF, PQ and the recall–latency–memory triangle</h1>
+  <p class="lede">Every vector DB you will be asked to pick on Day 8 is a wrapper around a handful of index families. Today you learn what they actually do, how to tune them, and how to measure them on your own laptop with FAISS.</p>
+  <div class="meta"><span class="chip">Fri 16 Oct 2026</span><span class="chip">faiss-cpu 1.15.1</span><span class="chip">~90 min lab</span><span class="chip">Runs on CPU · 16 GB RAM</span></div>
+</header>
+
+<section id="why"><h2><span class="n">1</span>Why this matters for the JD</h2>
+<p>The JD lists <em>"embeddings, indexing, ANN, hybrid search, metadata filtering"</em> and names FAISS, Milvus, Pinecone, Azure AI Search and Elastic. In an architecture review you will be asked why retrieval p95 is 400 ms, why recall dropped after a filter was added, or why the vector tier needs 180 GB of RAM. Those answers live in the index parameters, not in the vendor brochure. It also feeds the <em>cost estimates</em> and <em>scalability</em> NFR lines directly.</p>
+</section>
+
+<section id="concept"><h2><span class="n">2</span>Concept brief</h2>
+<p>Exact k-NN (a "flat" index) compares the query to every vector: O(N·d). At 384 dims and 10M chunks that is ~15 GB scanned per query. Approximate nearest neighbour (ANN) indexes give up a little recall to avoid that scan. They do it in three orthogonal ways, which you can combine:</p>
+<ul>
+  <li><strong>Navigate</strong> a proximity graph (<strong>HNSW</strong>, DiskANN/Vamana): greedy walk toward the query.</li>
+  <li><strong>Partition</strong> the space (<strong>IVF</strong>): k-means into <code>nlist</code> cells, search only the <code>nprobe</code> nearest cells.</li>
+  <li><strong>Compress</strong> the vectors (<strong>PQ</strong>, SQ8, binary, RaBitQ): store codes instead of float32, compare approximately.</li>
+</ul>
+
+<figure class="fig">
+<svg viewBox="0 0 900 330" role="img" aria-label="Three panels: HNSW layered graph search, IVF partitions with nprobe, and product quantization compressing a vector into subvector codes">
+  <style>
+    .t{font:600 15px 'IBM Plex Sans',sans-serif;fill:var(--fg)}
+    .s{font:12px 'IBM Plex Sans',sans-serif;fill:var(--muted)}
+    .m{font:12px 'IBM Plex Mono',monospace;fill:var(--fg)}
+    .edge{stroke:var(--line);stroke-width:1.5;fill:none}
+    .path{stroke:var(--accent);stroke-width:2.5;fill:none}
+    .nd{fill:var(--surface);stroke:var(--muted);stroke-width:1.5}
+    .hot{fill:var(--accent);stroke:var(--accent)}
+    .q{fill:var(--warn);stroke:none}
+    .cell{fill:none;stroke:var(--line);stroke-width:1.5}
+    .probe{fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5}
+    .box{fill:var(--surface);stroke:var(--muted);stroke-width:1.2}
+    .code{fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.2}
+    .lay{stroke:var(--line);stroke-dasharray:4 4;stroke-width:1}
+  </style>
+  <!-- HNSW -->
+  <text class="t" x="20" y="26">HNSW · navigate</text>
+  <text class="s" x="20" y="44">enter at top layer, descend greedily</text>
+  <line class="lay" x1="20" y1="95" x2="270" y2="95"/><line class="lay" x1="20" y1="175" x2="270" y2="175"/><line class="lay" x1="20" y1="265" x2="270" y2="265"/>
+  <text class="s" x="22" y="88">L2</text><text class="s" x="22" y="168">L1</text><text class="s" x="22" y="258">L0</text>
+  <path class="edge" d="M60 95 L230 95"/>
+  <path class="edge" d="M60 175 L120 175 L180 175 L240 175"/>
+  <path class="edge" d="M50 265 L85 265 L120 265 L150 265 L180 265 L210 265 L250 265"/>
+  <path class="path" d="M60 95 L230 95 L230 175 L180 175 L180 265 L210 265"/>
+  <circle class="nd hot" cx="60" cy="95" r="7"/><circle class="nd hot" cx="230" cy="95" r="7"/>
+  <circle class="nd" cx="60" cy="175" r="6"/><circle class="nd" cx="120" cy="175" r="6"/><circle class="nd hot" cx="180" cy="175" r="6"/><circle class="nd hot" cx="230" cy="175" r="6"/>
+  <circle class="nd" cx="50" cy="265" r="5"/><circle class="nd" cx="85" cy="265" r="5"/><circle class="nd" cx="120" cy="265" r="5"/><circle class="nd" cx="150" cy="265" r="5"/><circle class="nd hot" cx="180" cy="265" r="5"/><circle class="nd hot" cx="210" cy="265" r="5"/><circle class="nd" cx="250" cy="265" r="5"/>
+  <circle class="q" cx="205" cy="290" r="6"/><text class="s" x="216" y="294">query</text>
+  <text class="m" x="20" y="318">M, efConstruction, efSearch</text>
+  <!-- IVF -->
+  <text class="t" x="320" y="26">IVF · partition</text>
+  <text class="s" x="320" y="44">k-means cells; scan nprobe nearest</text>
+  <polygon class="cell" points="320,70 420,60 440,150 340,170"/>
+  <polygon class="probe" points="420,60 540,75 530,160 440,150"/>
+  <polygon class="cell" points="540,75 580,80 580,200 530,160"/>
+  <polygon class="probe" points="340,170 440,150 450,250 330,260"/>
+  <polygon class="probe" points="440,150 530,160 520,250 450,250"/>
+  <polygon class="cell" points="530,160 580,200 580,280 520,250"/>
+  <polygon class="cell" points="330,260 450,250 460,295 320,295"/>
+  <circle class="nd" cx="370" cy="110" r="3"/><circle class="nd" cx="480" cy="100" r="3"/><circle class="nd" cx="500" cy="130" r="3"/><circle class="nd" cx="380" cy="210" r="3"/><circle class="nd" cx="410" cy="230" r="3"/><circle class="nd" cx="480" cy="200" r="3"/><circle class="nd" cx="500" cy="230" r="3"/><circle class="nd" cx="560" cy="120" r="3"/><circle class="nd" cx="555" cy="240" r="3"/>
+  <circle class="q" cx="455" cy="175" r="6"/>
+  <text class="m" x="320" y="318">nlist ≈ 4–16·√N, nprobe = 3/7</text>
+  <!-- PQ -->
+  <text class="t" x="620" y="26">PQ · compress</text>
+  <text class="s" x="620" y="44">split into m subvectors → 1-byte centroid ids</text>
+  <text class="s" x="620" y="80">float32 vector · 384 d · 1,536 B</text>
+  <rect class="box" x="620" y="90" width="260" height="30"/>
+  <line class="edge" x1="652" y1="90" x2="652" y2="120"/><line class="edge" x1="685" y1="90" x2="685" y2="120"/><line class="edge" x1="717" y1="90" x2="717" y2="120"/><line class="edge" x1="750" y1="90" x2="750" y2="120"/><line class="edge" x1="782" y1="90" x2="782" y2="120"/><line class="edge" x1="815" y1="90" x2="815" y2="120"/><line class="edge" x1="847" y1="90" x2="847" y2="120"/>
+  <text class="s" x="620" y="140">m = 48 subvectors × 8 dims</text>
+  <path class="path" d="M750 150 L750 185" marker-end="url(#ar)"/>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10z" fill="var(--accent)"/></marker></defs>
+  <text class="s" x="760" y="172">nearest of 256 centroids</text>
+  <rect class="code" x="690" y="195" width="15" height="30"/><rect class="code" x="707" y="195" width="15" height="30"/><rect class="code" x="724" y="195" width="15" height="30"/><rect class="code" x="741" y="195" width="15" height="30"/><rect class="code" x="758" y="195" width="15" height="30"/><rect class="code" x="775" y="195" width="15" height="30"/><rect class="code" x="792" y="195" width="15" height="30"/>
+  <text class="m" x="690" y="248">48 B code · 32× smaller</text>
+  <text class="s" x="620" y="276">distances via lookup tables (ADC);</text>
+  <text class="s" x="620" y="294">lossy → re-rank top candidates</text>
+  <text class="m" x="620" y="318">M (subq), nbits, k_factor</text>
+</svg>
+<figcaption>The three levers. Production indexes combine them: <code>IVF4096,PQ64</code>, <code>HNSW32,SQ8</code>, IVF with an HNSW coarse quantizer, DiskANN with PQ in RAM and full vectors on SSD.</figcaption>
+</figure>
+
+<h3>HNSW in one paragraph</h3>
+<p>A multi-layer proximity graph. Each vector gets up to <code>M</code> neighbours per layer (2·M at layer 0); higher layers are exponentially sparser, like a skip list. Search starts at the top entry point, greedily moves toward the query, drops a layer, repeats, and at layer 0 keeps a candidate heap of size <code>efSearch</code>. Recall rises with <code>efSearch</code> at query time with no rebuild. Costs: memory ≈ N·(4d + 8M) bytes plus overhead, slow builds, and deletes that leave tombstones until compaction. It is the default in pgvector, Weaviate, Qdrant, OpenSearch/Elastic, Milvus and Azure AI Search.</p>
+
+<h3>IVF in one paragraph</h3>
+<p>Train k-means on a sample, assign every vector to its nearest of <code>nlist</code> centroids, store inverted lists. A query scans only <code>nprobe</code> lists. Cheap to build and memory-lean, but it needs a representative training set; if your corpus drifts (new product line, new language) the centroids go stale and recall quietly decays. Re-train is a re-index.</p>
+
+<h3>PQ in one paragraph</h3>
+<p>Split each d-dim vector into <code>m</code> sub-vectors, learn 256 centroids per sub-space, store one byte per sub-vector. 384-d float32 (1,536 B) becomes 48 B. Distances are computed from per-query lookup tables, which is fast and cache-friendly. The catch is a <strong>recall ceiling</strong>: raising <code>nprobe</code> stops helping because the codes themselves are lossy. The fix is to over-fetch k×factor candidates and re-rank with full-precision vectors (held in RAM, on SSD, or fetched from the doc store).</p>
+
+<div class="callout"><strong>The numbers that matter in a review:</strong> recall@k against exact search (not "accuracy"), p50/p95/p99 latency at target QPS, RAM per million vectors, build/re-index time, and recall <em>under your real filters</em>. Benchmarks on uniform random data are meaningless: real embeddings sit on a low-dimensional manifold, and the lab shows what happens when they don't.</div>
+
+<h3>Filtering: where most production incidents come from</h3>
+<p><strong>Post-filtering</strong> (ANN top-k, then drop non-matching) returns fewer than k results when the filter is selective. <strong>Pre-filtering</strong> with a bitmap inside the graph walk keeps k but can disconnect the HNSW graph at low selectivity (&lt;1–5%), so engines fall back to brute force on the filtered subset. Modern engines handle this adaptively: Qdrant's filterable HNSW, Weaviate ACORN, pgvector 0.8 <em>iterative index scans</em>, Milvus partition keys. For multi-tenancy with hard isolation, prefer a partition, namespace or collection per tenant over a metadata filter.</p>
+
+<h3>watsonx and hyperscaler mapping</h3>
+<p>watsonx.data ships Milvus (HNSW, IVF_FLAT, IVF_PQ, DiskANN, GPU CAGRA), and watsonx.ai RAG patterns also use Elasticsearch dense_vector (HNSW with int8/BBQ quantization). Azure AI Search exposes HNSW and exhaustive KNN with scalar/binary quantization plus oversampling and rescoring. That is the same "compress then re-rank" idea as PQ+Refine. AWS OpenSearch Serverless/Service offers HNSW and IVF via FAISS or Lucene engines; Vertex AI Vector Search uses ScaNN (partition + anisotropic quantization).</p>
+</section>
+
+<section id="tradeoffs"><h2><span class="n">3</span>Trade-offs &amp; decision table</h2>
+<div class="tbl"><table>
+<thead><tr><th>Index</th><th>Pick when</th><th>Knobs</th><th>RAM / 1M × 768d</th><th>Failure modes</th></tr></thead>
+<tbody>
+<tr><td><strong>Flat</strong> (exact)</td><td>&lt; ~100k vectors, ground truth for evals, heavily filtered subsets</td><td>none</td><td class="num">~3.1 GB</td><td>Linear latency growth; looks fine in POC, breaks at scale</td></tr>
+<tr><td><strong>HNSW,Flat</strong></td><td>Default for ≤ tens of millions in RAM; low p99 at high recall; frequent inserts</td><td>M 16–64, efC 100–400, efSearch 32–256</td><td class="num">~3.4–3.6 GB</td><td>RAM-bound cost; slow builds; delete tombstones; recall collapse with selective pre-filters</td></tr>
+<tr><td><strong>HNSW,SQ8</strong></td><td>Same as above at ~4× less vector RAM, small recall hit</td><td>+ rescoring oversample</td><td class="num">~1 GB</td><td>Outlier dimensions clip under 8-bit; needs train sample</td></tr>
+<tr><td><strong>IVF,Flat</strong></td><td>Batch-loaded corpora, cheap fast builds, GPU search</td><td>nlist, nprobe</td><td class="num">~3.1 GB</td><td>Centroid drift after data shift; tail latency when a hot cell is huge</td></tr>
+<tr><td><strong>IVF,PQ (+Refine)</strong></td><td>100M–1B vectors, memory-bound budgets</td><td>nlist, nprobe, m, nbits, k_factor</td><td class="num">~64–100 MB codes (+ re-rank store)</td><td>Hard recall ceiling without re-rank; poor on small corpora; training cost</td></tr>
+<tr><td><strong>DiskANN / Vamana</strong></td><td>Billion-scale on SSD, cost over raw latency</td><td>R, L, PQ bytes in RAM</td><td class="num">PQ in RAM, vectors on NVMe</td><td>NVMe IOPS become the bottleneck; complex ops</td></tr>
+<tr><td><strong>Binary / RaBitQ</strong></td><td>Huge scale first-stage with mandatory rescoring</td><td>oversample factor</td><td class="num">~96 MB</td><td>Unusable without rescoring; model-dependent quality</td></tr>
+</tbody></table></div>
+<p><strong>Cost math to keep in your head:</strong> 10M chunks × 1024-d float32 = 41 GB raw. HNSW adds ~10–15%, so plan ~48 GB RAM per replica, ×2–3 replicas for HA. Halving dimensions (Matryoshka, Day 5) or SQ8 often removes a whole node tier before you touch PQ.</p>
+</section>
+
+<section id="lab"><h2><span class="n">4</span>Hands-on lab: benchmark four index families</h2>
+<p><strong>Goal (60–90 min):</strong> build Flat, HNSW, IVF-Flat and IVF-PQ over 200k × 384-d vectors, sweep the query-time knobs, and produce your own recall / latency / memory table. CPU only; peak RAM about 1.5 GB. Your RTX 3050 is not needed (and <code>faiss-gpu</code> wheels are Linux-only, so GPU FAISS would need WSL2).</p>
+
+<h3>Setup (PowerShell)</h3>
+<div class="code"><div class="lbl">PowerShell</div><button class="copy" type="button">Copy</button><pre><code>mkdir day7-ann; cd day7-ann
+py -3.13 -m venv .venv
+.\.venv\Scripts\Activate.ps1     # if blocked: Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
+python -m pip install --upgrade pip
+python -m pip install &quot;faiss-cpu==1.15.1&quot; numpy
+python -c &quot;import faiss; print(faiss.__version__, faiss.omp_get_max_threads())&quot;</code></pre></div>
+
+<h3>Starter code — <code>ann_bench.py</code></h3>
+<div class="code"><div class="lbl">python · python ann_bench.py</div><button class="copy" type="button">Copy</button><pre><code>&quot;&quot;&quot;Day 7 - ANN index benchmark: Flat vs HNSW vs IVF-Flat vs IVF-PQ (FAISS, CPU).&quot;&quot;&quot;
+import time, numpy as np, faiss
+
+rng = np.random.default_rng(42)
+N, D, NQ, K = 200_000, 384, 1_000, 10           # 384-d = MiniLM/bge-small size
+
+CENTERS = rng.standard_normal((64, 32)).astype(&quot;float32&quot;)
+PROJ = rng.standard_normal((32, D)).astype(&quot;float32&quot;) / np.sqrt(32)
+
+def make_data(n):
+    # Real embeddings have low intrinsic dimension: clustered points on a ~32-d
+    # manifold projected into 384-d, plus a little noise. (Uniform noise would make
+    # every ANN index look broken - that&#x27;s the curse of dimensionality.)
+    z = CENTERS[rng.integers(0, 64, n)] + 0.6 * rng.standard_normal((n, 32)).astype(&quot;float32&quot;)
+    x = z @ PROJ + 0.05 * rng.standard_normal((n, D)).astype(&quot;float32&quot;)
+    x = np.ascontiguousarray(x, dtype=&quot;float32&quot;)
+    faiss.normalize_L2(x)                         # cosine == inner product on unit vectors
+    return x
+
+xb, xq = make_data(N), make_data(NQ)
+
+t = time.perf_counter()
+gt_index = faiss.IndexFlatIP(D); gt_index.add(xb)
+_, gt = gt_index.search(xq, K)
+flat_ms = (time.perf_counter() - t) * 1000 / NQ
+
+def recall(I):  # recall@K vs exact search
+    return np.mean([len(set(I[i]) &amp; set(gt[i])) / K for i in range(NQ)])
+
+def bench(name, index, setter=None, values=(None,)):
+    rows = []
+    for v in values:
+        if setter: setter(index, v)
+        t = time.perf_counter(); _, I = index.search(xq, K)
+        ms = (time.perf_counter() - t) * 1000 / NQ
+        rows.append((name, v, recall(I), ms))
+    return rows
+
+def mem_mb(index):
+    return len(faiss.serialize_index(index)) / 1e6
+
+results, build, mem = [], {}, {}
+results.append((&quot;Flat (exact)&quot;, None, 1.0, flat_ms)); mem[&quot;Flat (exact)&quot;] = mem_mb(gt_index)
+
+# HNSW: graph index, no training, high memory, great recall/latency
+t = time.perf_counter()
+hnsw = faiss.IndexHNSWFlat(D, 32, faiss.METRIC_INNER_PRODUCT)
+hnsw.hnsw.efConstruction = 80
+hnsw.add(xb); build[&quot;HNSW M=32&quot;] = time.perf_counter() - t; mem[&quot;HNSW M=32&quot;] = mem_mb(hnsw)
+results += bench(&quot;HNSW M=32&quot;, hnsw, lambda i, v: setattr(i.hnsw, &quot;efSearch&quot;, v), (16, 32, 64, 128))
+
+# IVF-Flat: k-means partitions, needs training, nprobe trades recall for speed
+nlist = 1024  # ~ sqrt(N)*2
+t = time.perf_counter()
+q = faiss.IndexFlatIP(D)
+ivf = faiss.IndexIVFFlat(q, D, nlist, faiss.METRIC_INNER_PRODUCT)
+ivf.train(xb[:50_000]); ivf.add(xb)
+build[&quot;IVF1024,Flat&quot;] = time.perf_counter() - t; mem[&quot;IVF1024,Flat&quot;] = mem_mb(ivf)
+results += bench(&quot;IVF1024,Flat&quot;, ivf, lambda i, v: setattr(i, &quot;nprobe&quot;, v), (1, 8, 32, 64))
+
+# IVF-PQ: compress 384 floats (1536 B) -&gt; 48 bytes; 32x smaller, lossy
+t = time.perf_counter()
+q2 = faiss.IndexFlatIP(D)
+ivfpq = faiss.IndexIVFPQ(q2, D, nlist, 48, 8, faiss.METRIC_INNER_PRODUCT)
+ivfpq.train(xb[:50_000]); ivfpq.add(xb)
+build[&quot;IVF1024,PQ48&quot;] = time.perf_counter() - t; mem[&quot;IVF1024,PQ48&quot;] = mem_mb(ivfpq)
+results += bench(&quot;IVF1024,PQ48&quot;, ivfpq, lambda i, v: setattr(i, &quot;nprobe&quot;, v), (8, 32, 64))
+
+print(f&quot;\nN={N:,}  D={D}  queries={NQ}  k={K}  threads={faiss.omp_get_max_threads()}&quot;)
+print(f&quot;{&#x27;index&#x27;:&lt;14}{&#x27;param&#x27;:&gt;7}{&#x27;recall@10&#x27;:&gt;11}{&#x27;ms/query&#x27;:&gt;10}{&#x27;mem MB&#x27;:&gt;9}{&#x27;build s&#x27;:&gt;9}&quot;)
+for name, v, r, ms in results:
+    print(f&quot;{name:&lt;14}{str(v or &#x27;-&#x27;):&gt;7}{r:&gt;11.3f}{ms:&gt;10.3f}{mem[name]:&gt;9.0f}{build.get(name, 0):&gt;9.1f}&quot;)</code></pre></div>
+
+<h3>Expected output</h3>
+<p>Measured on a 2-thread cloud VM; your 8+ thread laptop will be faster in absolute ms but the shape should match.</p>
+<div class="code"><div class="lbl">console</div><button class="copy" type="button">Copy</button><pre><code>N=200,000  D=384  queries=1000  k=10  threads=2
+index           param  recall@10  ms/query   mem MB  build s
+Flat (exact)        -      1.000     2.637      307      0.0
+HNSW M=32          16      0.889     0.052      362     24.5
+HNSW M=32          32      0.968     0.073      362     24.5
+HNSW M=32          64      0.993     0.124      362     24.5
+HNSW M=32         128      0.996     0.188      362     24.5
+IVF1024,Flat        1      0.287     0.030      310      9.0
+IVF1024,Flat        8      0.897     0.110      310      9.0
+IVF1024,Flat       32      1.000     0.380      310      9.0
+IVF1024,Flat       64      1.000     0.706      310      9.0
+IVF1024,PQ48        8      0.542     0.037       13     17.2
+IVF1024,PQ48       32      0.560     0.079       13     17.2
+IVF1024,PQ48       64      0.560     0.135       13     17.2</code></pre></div>
+<h3>What to notice and write down</h3>
+<ul>
+  <li>HNSW reaches 0.99 recall at efSearch 64 while being ~20× faster than flat. Memory is <em>higher</em> than flat because of the graph.</li>
+  <li>IVF at nprobe 1 is fast and useless (0.29). Recall is a smooth function of nprobe, so it is easy to tune to an SLO.</li>
+  <li>IVF-PQ plateaus at ~0.56 no matter how high nprobe goes. That is the quantization ceiling. 24× less memory is the prize.</li>
+  <li>Change <code>0.6</code> noise to <code>3.0</code> in <code>make_data</code> and re-run: every ANN index degrades sharply. That's why you never trust benchmarks on random vectors.</li>
+</ul>
+
+<h3>Stretch goals</h3>
+<ol>
+  <li><strong>Break the PQ ceiling and add filters.</strong> Run the script below: IVF-PQ + exact re-rank gets back to ~0.98 recall; HNSW over SQ8 keeps ~0.97 at ~⅓ the memory; an <code>IDSelectorBatch</code> pre-filters to one tenant.
+<div class="code"><div class="lbl">python · stretch_refine.py (same folder; re-runs the benchmark once on import)</div><button class="copy" type="button">Copy</button><pre><code># Stretch: fix PQ&#x27;s recall ceiling with re-ranking, try SQ8, and filtered search
+import numpy as np, faiss, time
+from ann_bench import xb, xq, gt, recall, mem_mb, D, K   # reuses data (re-runs the benchmark once)
+
+# 1) IVF-PQ + exact re-rank of top k*factor candidates (RAM for full vectors returns!)
+idx = faiss.index_factory(D, &quot;IVF1024,PQ48,Refine(Flat)&quot;, faiss.METRIC_INNER_PRODUCT)
+idx.train(xb[:50_000]); idx.add(xb)
+params = faiss.IndexRefineSearchParameters(k_factor=8, base_index_params=faiss.SearchParametersIVF(nprobe=32))
+t = time.perf_counter(); _, I = idx.search(xq, K, params=params)
+print(f&quot;IVF-PQ+Refine  recall={recall(I):.3f}  {(time.perf_counter()-t)*1000/len(xq):.3f} ms/q&quot;)
+
+# 2) HNSW over 8-bit scalar-quantized vectors: ~4x less RAM than HNSW,Flat
+sq = faiss.index_factory(D, &quot;HNSW32,SQ8&quot;, faiss.METRIC_INNER_PRODUCT)
+sq.train(xb[:50_000]); sq.add(xb); sq.hnsw.efSearch = 64
+_, I = sq.search(xq, K)
+print(f&quot;HNSW32,SQ8     recall={recall(I):.3f}  mem={mem_mb(sq):.0f} MB&quot;)
+
+# 3) Metadata pre-filter: only search docs whose tenant_id == 7
+tenant = np.random.default_rng(0).integers(0, 20, len(xb))
+allowed = np.where(tenant == 7)[0].astype(&quot;int64&quot;)
+sel = faiss.IDSelectorBatch(allowed)
+_, I = sq.search(xq[:5], K, params=faiss.SearchParametersHNSW(sel=sel, efSearch=64))
+print(&quot;filtered hits all tenant 7:&quot;, bool(np.all(tenant[I[I &gt;= 0]] == 7)))</code></pre></div>
+  Expected: <code>IVF-PQ+Refine recall≈0.98</code>, <code>HNSW32,SQ8 recall≈0.97 mem≈131 MB</code>, <code>filtered hits all tenant 7: True</code>. Then set the filter to 0.5% selectivity and watch latency and recall.</li>
+  <li><strong>Real embeddings.</strong> Replace <code>make_data</code> with embeddings of ~20k real chunks (e.g. your compliance-bot corpus) using <code>ollama pull nomic-embed-text</code> or <code>sentence-transformers</code> with <code>BAAI/bge-small-en-v1.5</code>. Plot recall vs ms/query for HNSW and IVF and pick the operating point that meets "recall@10 ≥ 0.95, p95 &lt; 20 ms".</li>
+</ol>
+</section>
+
+<section id="repos"><h2><span class="n">5</span>GitHub repos to study</h2>
+<div class="repos">
+  <div class="repo"><a href="https://github.com/facebookresearch/faiss">facebookresearch/faiss</a><p>Read <code>faiss/impl/HNSW.cpp</code> (search_from_candidates) and the wiki page "Guidelines to choose an index" for the index_factory string grammar. v1.15 is current.</p></div>
+  <div class="repo"><a href="https://github.com/unum-cloud/usearch">unum-cloud/usearch</a><p>A compact single-header HNSW with i8/f16/binary quantization and Windows wheels; compare its API and memory against FAISS HNSW.</p></div>
+  <div class="repo"><a href="https://github.com/erikbern/ann-benchmarks">erikbern/ann-benchmarks</a><p>The reference methodology: look at how recall vs QPS Pareto fronts are produced and which datasets (glove, sift, gist) are used.</p></div>
+  <div class="repo"><a href="https://github.com/pgvector/pgvector">pgvector/pgvector</a><p>Read the README sections on HNSW vs IVFFlat, <code>hnsw.ef_search</code>, and iterative index scans for filtered queries. This is the "boring Postgres" option you'll weigh tomorrow.</p></div>
+</div>
+</section>
+
+<section id="read"><h2><span class="n">6</span>Read / watch</h2>
+<ul>
+  <li><a href="https://arxiv.org/abs/2401.08281">The Faiss library</a> (Douze et al., Meta) — the best single survey of IVF, PQ, HNSW and their compositions, written by the maintainers. Read sections 3–5.</li>
+  <li><a href="https://arxiv.org/abs/1603.09320">Malkov &amp; Yashunin, HNSW paper</a> — skim the algorithm and the heuristic neighbour selection; it explains why M and efConstruction behave as they do.</li>
+  <li><a href="https://www.pinecone.io/learn/series/faiss/">Pinecone · Faiss: The Missing Manual</a> — visual chapters on IVF, PQ, HNSW and composite indexes; good for building stakeholder explanations.</li>
+</ul>
+</section>
+
+<section id="interview"><h2><span class="n">7</span>Interview questions</h2>
+<details><summary>Retrieval p99 jumped from 30 ms to 400 ms after a product team added a <code>department</code> filter. What happened and what do you do?</summary><div class="ans">A selective filter on an HNSW index either forces post-filtering (over-fetching huge k) or breaks graph connectivity under pre-filtering, so the engine expands the search or falls back to brute force. Check selectivity per filter value. Fixes: partition or namespace by department if it is a hard boundary; use the engine's adaptive filtered search (ACORN, filterable HNSW, iterative scans); for very selective values route to exact search on the subset; add payload indexes on the filtered field.</div></details>
+<details><summary>How do you size the vector tier for 20M chunks with 1024-d embeddings and HA?</summary><div class="ans">Raw: 20M × 1024 × 4 B ≈ 82 GB. HNSW M=32 adds ~20M × 64 links × 4 B ≈ 5 GB plus overhead, so ~95 GB per replica, ×2 for HA, plus headroom for rebuilds (another full copy during re-index). Then show the levers: Matryoshka to 512-d halves it; SQ8 cuts vector bytes 4×; PQ/DiskANN for 10× more. State the recall impact of each, measured on a golden set.</div></details>
+<details><summary>HNSW vs IVF-PQ: defend a choice for a 300M-vector catalogue search.</summary><div class="ans">300M × 768-d float32 is ~920 GB, too much for in-RAM HNSW at sane cost. IVF-PQ (e.g. IVF65536 with HNSW coarse quantizer, PQ96) fits ~30 GB of codes; re-rank the top 200 with full vectors from SSD or a KV store to recover recall. Alternative: DiskANN. Accept higher build time and periodic re-training as the cost; budget for a recall regression test on every re-train.</div></details>
+<details><summary>Why can recall be fine in staging and poor in production with the same index config?</summary><div class="ans">Data distribution differs: IVF centroids trained on an old or narrow sample; production queries are out-of-distribution (short keyword-like queries vs long chunks); filters in prod but not staging; inserts after build making HNSW less well-connected or tombstone-heavy; different embedding model version for queries vs documents. Monitor online recall by shadow-running exact search on a sampled 1% of queries.</div></details>
+<details><summary>What does "recall@10 = 0.95" actually guarantee for RAG answer quality?</summary><div class="ans">Only that 95% of the exact top-10 neighbours in embedding space were returned. It says nothing about whether those neighbours are relevant: that's the embedding model's job, measured by context recall/precision against labelled data (Day 11). ANN recall is an infrastructure SLO; retrieval relevance is a quality SLO. Track both separately, and note that a reranker over top-50 is often tolerant of ANN recall 0.9.</div></details>
+</section>
+
+<section id="adr"><h2><span class="n">8</span>Architect's lens</h2>
+<dl class="adr">
+  <dt>ADR-007 · Title</dt><dd>ANN index type for the enterprise policy assistant (8M chunks, 768-d, 40 tenants, 50 QPS peak, p95 ≤ 50 ms retrieval)</dd>
+  <dt>Context</dt><dd>Corpus grows ~5% a month with daily incremental loads and occasional deletes for retention. Tenant isolation is a compliance requirement. Budget favours a single 64 GB node per replica.</dd>
+  <dt>Options</dt><dd>(a) HNSW,Flat: ~27 GB per replica, best recall/latency, slow rebuild. (b) HNSW + SQ8 with 3× oversample and full-precision rescoring: ~8 GB vectors in RAM, full vectors on disk. (c) IVF-PQ + refine: smallest footprint, needs periodic re-training, recall ceiling risk. (d) Managed (Azure AI Search / watsonx.data Milvus) with the same choice inside.</dd>
+  <dt>Decision</dt><dd>(b) HNSW over SQ8 with rescoring, M=32, efConstruction=200, efSearch tuned to recall@10 ≥ 0.97 on the golden set; tenant as partition key, never a free-form filter.</dd>
+  <dt>Consequences</dt><dd>Fits the 64 GB node with room for a parallel rebuild. Recall loss vs (a) measured at &lt;1 pt. Requires a weekly compaction job for deletes and a recall canary (1% shadow exact search). Re-evaluate at 50M chunks, when DiskANN or IVF-PQ becomes cheaper.</dd>
+</dl>
+</section>
+
+<div class="tomorrow" id="tomorrow"><strong>Tomorrow · Day 8:</strong> Vector DB selection — Pinecone vs Weaviate vs Chroma vs Milvus vs Azure AI Search vs Elastic vs pgvector; metadata filtering and multi-tenancy.</div>
+</main>
+</div>
+<script>
+document.querySelectorAll('.copy').forEach(function(b){
+  b.addEventListener('click',function(){
+    var pre=b.parentElement.querySelector('pre');var txt=pre.innerText;
+    var done=function(){b.textContent='Copied';setTimeout(function(){b.textContent='Copy'},1500)};
+    var fallback=function(){var r=document.createRange();r.selectNodeContents(pre);var s=getSelection();s.removeAllRanges();s.addRange(r);b.textContent='Selected · Ctrl+C'};
+    try{navigator.clipboard.writeText(txt).then(done,fallback)}catch(e){fallback()}
+  });
+});
+</script>
+
+</body></html>

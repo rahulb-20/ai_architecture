@@ -1,0 +1,59 @@
+# Declarative spec of an India-based enterprise's GenAI estate across 4 clouds.
+# Policy: personal data of Indian users -> processing must stay in India (stricter
+# than DPDP's default, chosen by the bank's own risk policy / RBI-style guidance).
+policy:
+  allowed_processing_geos: [IN]          # where prompts/completions may be processed
+  allowed_at_rest_geos: [IN]
+  require_private_network: true
+  forbid_static_keys: true               # managed identity / IAM roles / service IDs only
+  require_prompt_logging: true           # to YOUR log sink, in-geo
+  max_cross_region_hops: 0
+
+workloads:
+  - name: hr-policy-copilot
+    provider: azure
+    service: Microsoft Foundry (Azure OpenAI)
+    region: centralindia
+    deployment_type: GlobalStandard       # cheapest + highest quota... but processes anywhere
+    network: private_endpoint
+    auth: managed_identity
+    logging: {prompts: true, sink_region: centralindia}
+    data_class: personal
+
+  - name: claims-summariser
+    provider: aws
+    service: Amazon Bedrock
+    region: ap-south-1
+    model_id: apac.anthropic.claude-sonnet   # geographic CRIS profile
+    network: vpc_endpoint
+    auth: iam_role
+    logging: {prompts: true, sink_region: ap-south-1}
+    data_class: personal
+
+  - name: kyc-doc-extractor
+    provider: aws
+    service: Amazon Bedrock
+    region: ap-south-1
+    model_id: in.amazon.nova-pro             # India geographic profile
+    network: vpc_endpoint
+    auth: iam_role
+    logging: {prompts: true, sink_region: ap-south-1}
+    data_class: personal
+
+  - name: marketing-copy
+    provider: gcp
+    service: Gemini Enterprise Agent Platform (ex-Vertex AI)
+    region: global
+    network: public
+    auth: api_key
+    logging: {prompts: false}
+    data_class: public
+
+  - name: compliance-rag
+    provider: ibm
+    service: watsonx.ai (SaaS on AWS)
+    region: ap-south-1
+    network: private_endpoint
+    auth: service_id
+    logging: {prompts: true, sink_region: ap-south-1}
+    data_class: personal

@@ -1,0 +1,31 @@
+<svg font-family="IBM Plex Sans, Segoe UI, Arial, sans-serif" aria-label="Request path from client through AI gateway and inference-aware router to vLLM pods on GPU nodes, with KEDA, HPA and node autoscaler control loops" role="img" style="background:#ffffff" viewbox="0 0 760 330" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<marker id="a" markerheight="7" markerwidth="7" orient="auto" refx="9" refy="5" viewbox="0 0 10 10"><path class="svg-ah" d="M0,0 L10,5 L0,10 z"></path></marker>
+<marker id="ac" markerheight="7" markerwidth="7" orient="auto" refx="9" refy="5" viewbox="0 0 10 10"><path class="svg-ahc" d="M0,0 L10,5 L0,10 z"></path></marker>
+</defs>
+<!-- data path -->
+<rect class="svg-box" height="56" rx="6" width="110" x="12" y="40"></rect><text class="svg-t" text-anchor="middle" x="67" y="64">Client / app</text><text class="svg-s" text-anchor="middle" x="67" y="82">RAG, agent</text>
+<rect class="svg-box" height="56" rx="6" width="150" x="160" y="40"></rect><text class="svg-t" text-anchor="middle" x="235" y="64">AI gateway</text><text class="svg-s" text-anchor="middle" x="235" y="82">authN, quota, queue</text>
+<rect class="svg-hot" height="56" rx="6" width="170" x="348" y="40"></rect><text class="svg-t" text-anchor="middle" x="433" y="64">InferencePool + EPP</text><text class="svg-s" text-anchor="middle" x="433" y="82">KV/queue/prefix-aware</text>
+<rect class="svg-box" height="96" rx="6" width="190" x="556" y="20"></rect><text class="svg-t" text-anchor="middle" x="651" y="44">vLLM replicas</text>
+<rect class="svg-hot" height="44" rx="4" width="48" x="572" y="56"></rect><text class="svg-s" text-anchor="middle" x="596" y="83">GPU</text>
+<rect class="svg-hot" height="44" rx="4" width="48" x="628" y="56"></rect><text class="svg-s" text-anchor="middle" x="652" y="83">GPU</text>
+<rect class="svg-box" height="44" rx="4" stroke-dasharray="4 3" width="48" x="684" y="56"></rect><text class="svg-s" text-anchor="middle" x="708" y="83">new</text>
+<path class="svg-l" d="M122 68 H156" marker-end="url(#a)"></path>
+<path class="svg-l" d="M310 68 H344" marker-end="url(#a)"></path>
+<path class="svg-l" d="M518 68 H552" marker-end="url(#a)"></path>
+<!-- control plane -->
+<rect class="svg-box" height="56" rx="6" width="150" x="160" y="170"></rect><text class="svg-t" text-anchor="middle" x="235" y="194">Prometheus</text><text class="svg-s" text-anchor="middle" x="235" y="212">num_requests_waiting</text>
+<rect class="svg-box" height="56" rx="6" width="170" x="348" y="170"></rect><text class="svg-t" text-anchor="middle" x="433" y="194">KEDA → HPA</text><text class="svg-s" text-anchor="middle" x="433" y="212">pods = ⌈queue / target⌉</text>
+<rect class="svg-box" height="56" rx="6" width="190" x="556" y="170"></rect><text class="svg-t" text-anchor="middle" x="651" y="194">Karpenter / CA</text><text class="svg-s" text-anchor="middle" x="651" y="212">add GPU node (min.)</text>
+<rect class="svg-box" height="56" rx="6" width="190" x="556" y="262"></rect><text class="svg-t" text-anchor="middle" x="651" y="286">GPU Operator / DRA</text><text class="svg-s" text-anchor="middle" x="651" y="304">driver, device plugin</text>
+<path class="svg-c" d="M651 116 C 651 140, 235 130, 235 166" marker-end="url(#ac)"></path>
+<text class="svg-s" x="300" y="140">scrape /metrics</text>
+<path class="svg-c" d="M310 198 H344" marker-end="url(#ac)"></path>
+<path class="svg-c" d="M518 198 H552" marker-end="url(#ac)"></path>
+<text class="svg-s" x="520" y="160">Pending pod</text>
+<path class="svg-c" d="M708 166 V120" marker-end="url(#ac)"></path>
+<path class="svg-c" d="M651 226 V258" marker-end="url(#ac)"></path>
+<text class="svg-s" x="12" y="200">solid: request path</text>
+<text class="svg-s" x="12" y="220">dashed: control loops</text>
+</svg>

@@ -1,0 +1,39 @@
+<svg font-family="IBM Plex Sans, Segoe UI, Arial, sans-serif" aria-labelledby="fn-t" role="img" style="background:#ffffff" viewbox="0 0 880 270" xmlns="http://www.w3.org/2000/svg">
+
+<defs>
+<marker id="ar" markerheight="7" markerwidth="7" orient="auto" refx="9" refy="5" viewbox="0 0 10 10"><path class="ah" d="M0,0L10,5L0,10z"></path></marker>
+</defs>
+<text class="s" x="10" y="20">ONLINE QUERY PATH · 10M chunks · 1024-d MRL model</text>
+<rect class="box" height="80" rx="6" width="130" x="10" y="44"></rect>
+<text class="t" text-anchor="middle" x="75" y="72">Query</text>
+<text class="s" text-anchor="middle" x="75" y="92">encode_query()</text>
+<text class="s" text-anchor="middle" x="75" y="108">1 vector, ~5–20 ms</text>
+<rect class="box g" height="80" rx="6" width="190" x="180" y="44"></rect>
+<text class="t" text-anchor="middle" x="275" y="68">Stage 1 · shortlist</text>
+<text class="s" text-anchor="middle" x="275" y="88">binary 1024-d or int8 256-d</text>
+<text class="s" text-anchor="middle" x="275" y="104">ANN over all 10M in RAM</text>
+<rect class="box" height="80" rx="6" width="190" x="410" y="44"></rect>
+<text class="t" text-anchor="middle" x="505" y="68">Stage 2 · rescore</text>
+<text class="s" text-anchor="middle" x="505" y="88">fp32 1024-d, candidates only</text>
+<text class="s" text-anchor="middle" x="505" y="104">fetched from SSD / object store</text>
+<rect class="box" height="80" rx="6" width="230" x="640" y="44"></rect>
+<text class="t" text-anchor="middle" x="755" y="68">Stage 3 · rerank (Day 9)</text>
+<text class="s" text-anchor="middle" x="755" y="88">cross-encoder on top ~50</text>
+<text class="s" text-anchor="middle" x="755" y="104">→ top-k to the LLM</text>
+<path class="ln" d="M140 84H176" marker-end="url(#ar)"></path>
+<path class="ln" d="M370 84H406" marker-end="url(#ar)"></path>
+<path class="ln" d="M600 84H636" marker-end="url(#ar)"></path>
+<text class="lbl" x="374" y="76">~200–400</text>
+<text class="lbl" x="604" y="76">~50</text>
+<text class="s" x="10" y="168">RAM NEEDED FOR STAGE 1 (raw vectors, before ANN overhead)</text>
+<line class="grid" x1="180" x2="180" y1="180" y2="258"></line>
+<text class="s" x="10" y="196">fp32 1024-d</text>
+<rect class="bar m" height="14" rx="2" width="640" x="180" y="185"></rect>
+<text class="s" x="826" y="196">38.1 GiB</text>
+<text class="s" x="10" y="220">int8 256-d</text>
+<rect class="bar" height="14" rx="2" width="40" x="180" y="209"></rect>
+<text class="s" x="226" y="220">2.4 GiB</text>
+<text class="s" x="10" y="244">binary 1024-d</text>
+<rect class="bar" height="14" rx="2" width="20" x="180" y="233"></rect>
+<text class="s" x="206" y="244">1.2 GiB</text>
+</svg>

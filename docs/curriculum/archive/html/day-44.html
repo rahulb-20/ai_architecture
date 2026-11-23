@@ -1,0 +1,393 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>GenAI Prep · Day 44 — Revision: K8s + CI/CD for GenAI</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: single reading column, drill cards as disclosure rows, wide blocks scroll in place */
+:root{
+  --bg:#f6f7f9; --surface:#ffffff; --fg:#17202b; --muted:#566273; --line:#dde2ea;
+  --accent:#0f62fe; --accent-soft:#e5edff; --warn:#a15c00; --warn-soft:#fff3e0; --ok:#1f7a4a;
+  --code-bg:#eef1f5;
+  --f-display:"IBM Plex Sans Condensed","Arial Narrow",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f141b; --surface:#161d27; --fg:#e4e9f0; --muted:#98a4b5; --line:#2a3442;
+  --accent:#78a9ff; --accent-soft:#1c2a45; --warn:#f1b45c; --warn-soft:#33270f; --ok:#5fcf91; --code-bg:#0b1016; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f141b; --surface:#161d27; --fg:#e4e9f0; --muted:#98a4b5; --line:#2a3442;
+  --accent:#78a9ff; --accent-soft:#1c2a45; --warn:#f1b45c; --warn-soft:#33270f; --ok:#5fcf91; --code-bg:#0b1016; color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:16px;line-height:1.6}
+.wrap{max-width:860px;margin:0 auto;padding-block:40px 80px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:40px}
+header{display:flex;flex-direction:column;gap:10px;border-bottom:1px solid var(--line);padding-bottom:28px}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+h1{font-family:var(--f-display);font-size:clamp(28px,5vw,40px);line-height:1.1;margin:0;text-wrap:balance}
+h2{font-family:var(--f-display);font-size:24px;margin:0 0 4px;text-wrap:balance}
+h3{font-size:17px;margin:0}
+p{margin:0;max-width:68ch}
+.lede{color:var(--muted);font-size:17px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{font-family:var(--f-mono);font-size:12px;padding:3px 10px;border-radius:999px;background:var(--accent-soft);color:var(--accent)}
+section{display:flex;flex-direction:column;gap:14px;min-width:0}
+ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
+a{color:var(--accent)}
+a:focus-visible,button:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.box{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:16px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.box h3{font-family:var(--f-display);font-size:18px}
+.note{background:var(--warn-soft);color:var(--fg);border-left:3px solid var(--warn);padding:12px 14px;border-radius:4px;font-size:15px}
+details.q{background:var(--surface);border:1px solid var(--line);border-radius:8px}
+details.q summary{cursor:pointer;padding:14px 16px;display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:baseline;list-style:none;font-weight:500}
+details.q summary::-webkit-details-marker{display:none}
+.qn{font-family:var(--f-mono);font-size:13px;color:var(--accent);font-variant-numeric:tabular-nums}
+.qtag{display:block;font-family:var(--f-mono);font-size:11px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;font-weight:400;margin-top:2px}
+.ans{padding:0 16px 16px 16px;border-top:1px dashed var(--line);display:flex;flex-direction:column;gap:10px;padding-top:12px}
+.ans p,.ans li{font-size:15px}
+.trap{font-size:14px;color:var(--warn)}
+.code{position:relative;min-width:0}
+pre{margin:0;background:var(--code-bg);border:1px solid var(--line);border-radius:6px;padding:14px;overflow-x:auto;font-family:var(--f-mono);font-size:13px;line-height:1.5}
+.copy{position:absolute;top:8px;right:8px;font-family:var(--f-mono);font-size:11px;padding:4px 9px;border-radius:4px;border:1px solid var(--line);background:var(--surface);color:var(--muted);cursor:pointer}
+.copy:hover{color:var(--fg)}
+.codelabel{font-family:var(--f-mono);font-size:12px;color:var(--muted);margin-bottom:4px}
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:8px}
+table{border-collapse:collapse;width:100%;min-width:620px;font-size:14px;background:var(--surface)}
+th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:var(--f-mono);font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:500}
+tr:last-child td{border-bottom:none}
+.diagram{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:12px}
+.diagram svg{display:block;min-width:720px;width:100%;height:auto}
+code{font-family:var(--f-mono);font-size:.9em;background:var(--code-bg);padding:1px 5px;border-radius:3px}
+pre code{background:none;padding:0}
+footer{border-top:1px solid var(--line);padding-top:20px;color:var(--muted);font-size:14px;display:flex;flex-direction:column;gap:8px}
+footer ul{font-size:13px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+<header>
+  <span class="eyebrow">Day 44 · Revision drill · Sun 22 Nov 2026</span>
+  <h1>Kubernetes for GenAI + CI/CD for GenAI</h1>
+  <p class="lede">Revisits Day 25 and Day 26. You get a two-minute recap, 8 hard questions with model answers, one design scenario, and a 20-minute warm-up you can run on your laptop.</p>
+  <div class="chips"><span class="chip">Day 25 · K8s, GPUs, autoscaling</span><span class="chip">Day 26 · eval gates, versioning, rollback</span><span class="chip">JD: CI/CD &amp; productionization</span></div>
+</header>
+
+<section>
+  <h2>Two-minute recap: what changed since Day 25–26</h2>
+  <div class="grid2">
+    <div class="box"><h3>Serving on Kubernetes</h3>
+      <ul>
+        <li><b>DRA is GA</b> since Kubernetes 1.34. GPUs can be requested via ResourceClaims with attributes (model, memory, MIG profile) instead of the opaque <code>nvidia.com/gpu: 1</code> count.</li>
+        <li><b>Gateway API Inference Extension</b> (InferencePool + endpoint picker) routes on model-server state like queue depth and KV cache, not round-robin. Istio, NGINX Gateway Fabric and GKE implement it.</li>
+        <li><b>llm-d</b> (CNCF sandbox, 1.0 this year) adds prefix-cache-aware routing and prefill/decode disaggregation on top of vLLM. <b>KServe 0.18</b> integrates it through <code>LLMInferenceService</code>.</li>
+        <li><b>KEDA 2.2x</b> remains the standard way to scale on Prometheus metrics such as <code>vllm:num_requests_waiting</code>.</li>
+      </ul></div>
+    <div class="box"><h3>Shipping changes safely</h3>
+      <ul>
+        <li>The release unit is a <b>bundle</b>: prompt + model ID/snapshot + embedding model + index version + retrieval config + guardrail policy. Version it as one thing.</li>
+        <li><b>Three eval tiers:</b> PR (fast, deterministic plus a small golden set), nightly (full set plus red-team), release (online canary metrics).</li>
+        <li><b>promptfoo</b> (npm 0.126.x) ships a GitHub Action that posts before/after diffs on PRs. DeepEval runs the same checks as pytest tests.</li>
+        <li><b>Argo Rollouts</b> AnalysisTemplates can gate canary steps on Prometheus queries, including GenAI SLIs.</li>
+      </ul></div>
+  </div>
+  <p class="note">watsonx mapping: Red Hat OpenShift AI ships KServe and vLLM, so the K8s answers carry over to watsonx.ai on-prem / Cloud Pak for Data. watsonx.governance plays the role of the eval and monitoring gate on the managed side.</p>
+</section>
+
+<section>
+  <h2>Release pipeline you should be able to draw from memory</h2>
+  <div class="diagram" role="img" aria-label="Pipeline: pull request, offline eval gate, build and sign, staging with full eval, canary with online analysis, then promote or roll back">
+  <svg viewBox="0 0 760 190" xmlns="http://www.w3.org/2000/svg" font-family="IBM Plex Sans, system-ui, sans-serif">
+    <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker></defs>
+    <g font-size="12" fill="var(--fg)">
+      <rect x="10" y="40" width="110" height="64" rx="6" fill="var(--surface)" stroke="var(--line)"/>
+      <text x="65" y="66" text-anchor="middle" font-weight="600">PR</text>
+      <text x="65" y="84" text-anchor="middle" fill="var(--muted)" font-size="11">prompt / config diff</text>
+      <rect x="150" y="40" width="130" height="64" rx="6" fill="var(--accent-soft)" stroke="var(--accent)"/>
+      <text x="215" y="66" text-anchor="middle" font-weight="600">Offline eval gate</text>
+      <text x="215" y="84" text-anchor="middle" fill="var(--muted)" font-size="11">golden set vs baseline</text>
+      <rect x="310" y="40" width="110" height="64" rx="6" fill="var(--surface)" stroke="var(--line)"/>
+      <text x="365" y="66" text-anchor="middle" font-weight="600">Build + sign</text>
+      <text x="365" y="84" text-anchor="middle" fill="var(--muted)" font-size="11">image, bundle tag</text>
+      <rect x="450" y="40" width="120" height="64" rx="6" fill="var(--surface)" stroke="var(--line)"/>
+      <text x="510" y="66" text-anchor="middle" font-weight="600">Staging</text>
+      <text x="510" y="84" text-anchor="middle" fill="var(--muted)" font-size="11">full eval + red-team</text>
+      <rect x="600" y="40" width="150" height="64" rx="6" fill="var(--accent-soft)" stroke="var(--accent)"/>
+      <text x="675" y="62" text-anchor="middle" font-weight="600">Canary 5→25→100%</text>
+      <text x="675" y="80" text-anchor="middle" fill="var(--muted)" font-size="11">TTFT, cost/req, block rate,</text>
+      <text x="675" y="94" text-anchor="middle" fill="var(--muted)" font-size="11">sampled groundedness</text>
+    </g>
+    <g stroke="var(--muted)" stroke-width="1.5" fill="none" marker-end="url(#ar)">
+      <line x1="120" y1="72" x2="148" y2="72"/><line x1="280" y1="72" x2="308" y2="72"/><line x1="420" y1="72" x2="448" y2="72"/><line x1="570" y1="72" x2="598" y2="72"/>
+      <path d="M675 104 L675 150 L520 150"/>
+    </g>
+    <g font-size="12">
+      <rect x="380" y="136" width="138" height="28" rx="14" fill="var(--warn-soft)" stroke="var(--warn)"/>
+      <text x="449" y="154" text-anchor="middle" fill="var(--warn)">auto-rollback on fail</text>
+      <text x="215" y="128" text-anchor="middle" fill="var(--muted)" font-size="11">fail → block merge</text>
+      <text x="690" y="134" fill="var(--muted)" font-size="11">analysis</text>
+    </g>
+  </svg>
+  </div>
+</section>
+
+<section>
+  <h2>8 hard questions</h2>
+  <p>Answer out loud first, then open the model answer. Aim for 90 seconds each.</p>
+
+  <details class="q"><summary><span class="qn">Q1</span><span>Your vLLM pods sit at 35% CPU while users wait 20 s for the first token. HPA isn't scaling. Fix the autoscaling design.<span class="qtag">Day 25 · autoscaling</span></span></summary>
+  <div class="ans">
+    <p>CPU and even GPU utilisation are the wrong signals: a decode-bound GPU reads "busy" at low load and "busy" at overload. Scale on <b>saturation of the model server</b>: queue depth (<code>vllm:num_requests_waiting</code>) or KV-cache utilisation, through KEDA's Prometheus scaler. Target something like "average waiting requests per replica &lt; 2". Keep <code>minReplicaCount ≥ 1</code> for interactive paths, since a cold start means scheduling a GPU node plus loading weights (minutes). Pair it with the cluster autoscaler or Karpenter for GPU nodes, and set a generous scale-down stabilisation window so you don't thrash expensive nodes.</p>
+    <p class="trap">Trap: proposing scale-to-zero for a chat endpoint. It fits batch or internal tools only, behind a queue.</p>
+  </div></details>
+
+  <details class="q"><summary><span class="qn">Q2</span><span>Three teams want GPUs on one cluster: an 8B chat model, an embedding service and nightly LoRA fine-tunes. How do you allocate?<span class="qtag">Day 25 · GPU scheduling</span></span></summary>
+  <div class="ans">
+    <ul>
+      <li><b>Embeddings:</b> small and bursty. Share with MIG slices (hard isolation on A100/H100-class cards) or time-slicing where isolation matters less. Time-slicing has no memory isolation, so one OOM can take down neighbours.</li>
+      <li><b>Chat model:</b> dedicated full GPUs on a tainted node pool, with a PriorityClass above batch.</li>
+      <li><b>Fine-tunes:</b> preemptible, queued (Kueue), on spot capacity where the cloud allows, with checkpointing.</li>
+      <li>Express requests through <b>DRA ResourceClaims</b> (GA in 1.34) when the driver supports it, so a pod can ask for "≥ 40 GB, MIG 3g" instead of a bare count. Add ResourceQuotas per namespace for chargeback.</li>
+    </ul>
+  </div></details>
+
+  <details class="q"><summary><span class="qn">Q3</span><span>Why is a plain Kubernetes Service (round-robin) a poor load balancer for LLM replicas, and what replaces it?<span class="qtag">Day 25 · routing</span></span></summary>
+  <div class="ans">
+    <p>Requests vary by orders of magnitude in cost (prompt length × output length), and each replica holds a different prefix cache. Round-robin sends a 30k-token RAG prompt to an already saturated pod and throws away cache hits. Use an <b>inference-aware gateway</b>: the Gateway API Inference Extension's endpoint picker scores pods on queue depth, KV-cache use and LoRA adapters loaded. llm-d adds <b>prefix-cache-aware</b> routing, which helps RAG and agents with long shared system prompts. Measure the win as TTFT p95 and throughput per GPU, not RPS.</p>
+  </div></details>
+
+  <details class="q"><summary><span class="qn">Q4</span><span>A new replica takes 6 minutes to become ready. Break the time down and cut it.<span class="qtag">Day 25 · cold start</span></span></summary>
+  <div class="ans">
+    <ul>
+      <li><b>Node provisioning</b> (GPU VM + driver): keep warm headroom nodes, or use a buffer of low-priority placeholder pods that get evicted.</li>
+      <li><b>Image pull</b> (CUDA images run 8–15 GB): slim images, pre-pulled or streamed images, registry in-region.</li>
+      <li><b>Weight download</b>: never pull from Hugging Face at start-up. Cache on node-local NVMe or a shared PVC (KServe has a local model cache), or ship weights as an OCI artifact.</li>
+      <li><b>Load + CUDA graph capture/warm-up</b>: tune or skip graph capture for dev; send a warm-up request before readiness passes.</li>
+      <li>Use separate startup, readiness and liveness probes. A liveness probe that fires during model load creates a crash loop.</li>
+    </ul>
+  </div></details>
+
+  <details class="q"><summary><span class="qn">Q5</span><span>LLM output is non-deterministic. How do you build a CI eval gate that doesn't flake but still catches regressions?<span class="qtag">Day 26 · eval gates</span></span></summary>
+  <div class="ans">
+    <ul>
+      <li>Layer checks: deterministic asserts first (schema valid, citation present, refusal on out-of-scope, no PII), then graded metrics.</li>
+      <li>Gate on <b>delta vs. the stored baseline</b>, not an absolute score, with a tolerance band sized from repeated runs (run the set 3× once to measure variance).</li>
+      <li>Pin temperature to 0 where possible, and pin the <b>judge model snapshot</b> and judge prompt version. A judge upgrade is itself a change that needs re-baselining.</li>
+      <li>Keep the PR tier small (50–150 cases, a few minutes, cents per run). The full set runs nightly.</li>
+      <li>Make "critical" cases (safety, compliance) zero-tolerance, separate from the averaged score.</li>
+    </ul>
+    <p class="trap">Trap: one aggregate "accuracy ≥ 0.8" threshold. It hides a total failure on one slice, such as a single policy document.</p>
+  </div></details>
+
+  <details class="q"><summary><span class="qn">Q6</span><span>The team wants to swap the embedding model in the same release as a prompt change. What's your release plan?<span class="qtag">Day 26 · versioning</span></span></summary>
+  <div class="ans">
+    <p>Split them. An embedding change invalidates the whole index, because vectors from different models aren't comparable. Treat it as a <b>blue-green index migration</b>: build index v2 offline, run retrieval evals (recall@k, context precision) on v2 against v1, then switch the alias with v1 kept warm for rollback. Dual-write new documents to both until cut-over. Ship the prompt change separately, so a regression points to one cause. Record both in the bundle manifest: <code>embed=model@ver, index=kb-v2, prompt=answer@1.7</code>.</p>
+  </div></details>
+
+  <details class="q"><summary><span class="qn">Q7</span><span>What does a canary analysis for a GenAI service check that a normal web canary doesn't?<span class="qtag">Day 26 · progressive delivery</span></span></summary>
+  <div class="ans">
+    <ul>
+      <li>Latency split into <b>TTFT</b> and inter-token latency, not just total.</li>
+      <li><b>Tokens and cost per request</b>: a prompt change can double output length with no errors at all.</li>
+      <li><b>Guardrail block rate</b> and refusal rate, both directions.</li>
+      <li><b>Sampled online quality</b>: LLM-judge groundedness on 1–5% of traffic, plus thumbs-down rate.</li>
+      <li>Wire them as Argo Rollouts AnalysisTemplates on Prometheus. Size the canary step and duration so each metric gets enough samples; quality signals need far more traffic than error rates.</li>
+    </ul>
+  </div></details>
+
+  <details class="q"><summary><span class="qn">Q8</span><span>Your provider retires the model snapshot you depend on in 60 days. How does your CI/CD absorb it, and what does "rollback" mean here?<span class="qtag">Day 26 · rollback</span></span></summary>
+  <div class="ans">
+    <p>You can't roll back a provider. So: always pin dated snapshots, never floating aliases. Keep the candidate model in the routing layer (LiteLLM or an AI gateway) and run it in <b>shadow</b> on mirrored traffic, scoring offline. Re-baseline the golden set and fix prompt drift, then canary. "Rollback" means routing back to the previous model while it still exists, or to a <b>pre-qualified fallback</b> (a second provider or a self-hosted model that already passed the eval gate). Track deprecation dates in the ADR log with an owner.</p>
+  </div></details>
+</section>
+
+<section>
+  <h2>Design scenario</h2>
+  <div class="box">
+    <h3>HR policy copilot, 40k employees, two regions</h3>
+    <p>Self-hosted Granite/Llama 8B on vLLM in an AKS or OpenShift cluster, Azure OpenAI as overflow, RAG over 30k documents. Peaks at 09:30 IST (about 25 RPS). Leadership wants weekly prompt releases and zero-downtime model upgrades. Spend 25 minutes designing it, then compare with the outline.</p>
+  </div>
+  <details class="q"><summary><span class="qn">→</span><span>Model answer outline</span></summary>
+  <div class="ans">
+    <ul>
+      <li><b>Serving:</b> vLLM via KServe on a tainted GPU node pool per region. Inference gateway with an endpoint picker. LiteLLM in front for overflow and failover to Azure OpenAI (same region for data residency) once queue depth crosses a threshold.</li>
+      <li><b>Scaling:</b> KEDA on waiting requests, min 2 replicas per region, a scheduled pre-scale at 09:00 IST via a cron trigger, and a node buffer for the morning ramp.</li>
+      <li><b>Pipeline:</b> GitOps (Argo CD). A PR runs the promptfoo/DeepEval gate on about 120 golden HR questions with zero tolerance on policy-critical cases. Nightly runs the full set plus injection red-team. Release goes through an Argo Rollouts canary: 5% for 30 min, then 25% for 2 h, gated on TTFT p95, cost/request, block rate and sampled groundedness.</li>
+      <li><b>Versioning:</b> one bundle manifest in git. Index changes are blue-green behind an alias. Model upgrades go shadow, then canary.</li>
+      <li><b>NFRs to state:</b> TTFT p95 &lt; 1.5 s, availability 99.9%, RPO 24 h for the index (rebuildable), RTO 1 h via the other region, PII masked before logging.</li>
+      <li><b>Sizing check to say aloud:</b> 25 RPS × ~600 output tokens is about 15k output tok/s at peak. Benchmark per-GPU throughput for your model and quantisation, then add N+1 per region. Don't quote a number you haven't measured.</li>
+    </ul>
+  </div></details>
+</section>
+
+<section>
+  <h2>Warm-up (20 min, on your laptop)</h2>
+  <p>Build a tiny regression gate that compares a model run against a stored baseline and fails with exit code 1. That is exactly the step a GitHub Actions job runs. It needs only Ollama; no Docker or WSL2.</p>
+  <div class="code"><div class="codelabel">PowerShell</div><button class="copy" type="button">Copy</button><pre><code>ollama pull qwen2.5:1.5b
+mkdir evalgate; cd evalgate
+py -m venv .venv; .\.venv\Scripts\Activate.ps1
+python -m pip install "ollama>=0.6"
+python gate.py --write-baseline   # first run records baseline.json
+python gate.py                    # later runs compare; exit 1 on regression
+echo $LASTEXITCODE</code></pre></div>
+  <div class="code"><div class="codelabel">gate.py</div><button class="copy" type="button">Copy</button><pre><code>import json, sys, time, statistics, pathlib
+from ollama import chat
+
+MODEL = "qwen2.5:1.5b"
+PROMPT_VERSION = "hr-answer@1.0"
+SYSTEM = ("Answer only from CONTEXT. If the answer is not in CONTEXT, reply exactly: "
+          "I don't know. Keep answers under 40 words.")
+CONTEXT = ("Employees get 24 days of paid leave per year. Up to 8 unused days carry over. "
+           "Remote work is allowed 2 days per week with manager approval.")
+
+# golden set: (question, must_contain_any, critical)
+GOLDEN = [
+    ("How many paid leave days do I get?", ["24"], False),
+    ("How many unused days carry over?", ["8", "eight"], False),
+    ("How many remote days per week?", ["2", "two"], False),
+    ("What is the CEO's salary?", ["i don't know"], True),     # must abstain
+    ("Can I work remotely without approval?", ["approval", "no"], False),
+]
+BASE = pathlib.Path("baseline.json")
+TOLERANCE = 0.0   # allowed drop in pass rate vs baseline
+LAT_SLACK = 1.5   # allowed p95 latency multiplier
+
+def run():
+    results, lats = [], []
+    for q, expect, critical in GOLDEN:
+        t0 = time.perf_counter()
+        r = chat(model=MODEL, options={"temperature": 0, "seed": 7},
+                 messages=[{"role": "system", "content": SYSTEM},
+                           {"role": "user", "content": f"CONTEXT:\n{CONTEXT}\n\nQ: {q}"}])
+        lats.append(time.perf_counter() - t0)
+        text = r.message.content.strip().lower()
+        ok = any(e in text for e in expect)
+        results.append({"q": q, "ok": ok, "critical": critical, "answer": text[:120],
+                        "out_tokens": r.eval_count})
+    p95 = sorted(lats)[max(0, int(len(lats) * 0.95) - 1)]
+    return {"model": MODEL, "prompt": PROMPT_VERSION,
+            "pass_rate": sum(r["ok"] for r in results) / len(results),
+            "p95_s": round(p95, 2), "mean_out_tokens": statistics.mean(r["out_tokens"] for r in results),
+            "results": results}
+
+cur = run()
+for r in cur["results"]:
+    print(("PASS " if r["ok"] else "FAIL ") + ("[critical] " if r["critical"] else "") + r["q"])
+print(f"pass_rate={cur['pass_rate']:.2f} p95={cur['p95_s']}s out_tokens={cur['mean_out_tokens']:.0f}")
+
+if "--write-baseline" in sys.argv:
+    BASE.write_text(json.dumps(cur, indent=2)); print("baseline written"); sys.exit(0)
+
+base = json.loads(BASE.read_text())
+reasons = []
+if any(r["critical"] and not r["ok"] for r in cur["results"]):
+    reasons.append("critical case failed")
+if cur["pass_rate"] &lt; base["pass_rate"] - TOLERANCE:
+    reasons.append(f"pass_rate {cur['pass_rate']:.2f} &lt; baseline {base['pass_rate']:.2f}")
+if cur["p95_s"] &gt; base["p95_s"] * LAT_SLACK:
+    reasons.append(f"p95 {cur['p95_s']}s &gt; {LAT_SLACK}x baseline {base['p95_s']}s")
+if cur["mean_out_tokens"] &gt; base["mean_out_tokens"] * 1.3:
+    reasons.append("output tokens +30% (cost regression)")
+print("GATE: " + ("FAIL - " + "; ".join(reasons) if reasons else "PASS"))
+sys.exit(1 if reasons else 0)</code></pre></div>
+  <p><b>Expected:</b> five PASS/FAIL lines, a summary line such as <code>pass_rate=1.00 p95=0.9s out_tokens=14</code> (numbers vary on your RTX 3050), and <code>GATE: PASS</code> on the second run. Now break it: change <code>SYSTEM</code> to drop the "I don't know" rule and re-run. The critical case should fail and <code>$LASTEXITCODE</code> should be 1.</p>
+  <ul>
+    <li><b>Stretch 1:</b> add the GitHub Actions job below to a scratch repo (it needs a self-hosted runner or a hosted API model, since GitHub's hosted runners have no Ollama by default).</li>
+    <li><b>Stretch 2:</b> run the set 3× and set <code>TOLERANCE</code> from the observed spread instead of 0.0. Note how big the band gets with only 5 cases; that is your argument for a 100+ case golden set.</li>
+  </ul>
+  <div class="code"><div class="codelabel">.github/workflows/eval-gate.yml</div><button class="copy" type="button">Copy</button><pre><code>name: eval-gate
+on:
+  pull_request:
+    paths: ["prompts/**", "rag/**", "bundle.yaml"]
+jobs:
+  gate:
+    runs-on: self-hosted        # GPU box with Ollama, or swap MODEL for a hosted API
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.13" }
+      - run: python -m pip install "ollama>=0.6"
+      - run: python gate.py     # non-zero exit blocks the merge
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with: { name: eval-report, path: baseline.json }</code></pre></div>
+  <div class="code"><div class="codelabel">keda-scaledobject.yaml (for review, not for your laptop)</div><button class="copy" type="button">Copy</button><pre><code>apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata: { name: hr-copilot-vllm }
+spec:
+  scaleTargetRef: { name: hr-copilot-vllm }
+  minReplicaCount: 2
+  maxReplicaCount: 8
+  advanced:
+    horizontalPodAutoscalerConfig:
+      behavior:
+        scaleDown: { stabilizationWindowSeconds: 600 }
+  triggers:
+    - type: prometheus
+      metadata:
+        serverAddress: http://prometheus.monitoring:9090
+        query: sum(vllm:num_requests_waiting{app="hr-copilot-vllm"})
+        threshold: "4"          # target waiting requests per replica
+    - type: cron                # pre-scale for the 09:30 IST peak
+      metadata: { timezone: Asia/Kolkata, start: "0 9 * * 1-5", end: "0 11 * * 1-5", desiredReplicas: "4" }</code></pre></div>
+  <p class="note">Running the KEDA manifest locally would need Docker Desktop (WSL2 backend) plus kind, and there is no GPU passthrough worth using on a 6 GB laptop card. Read it, don't deploy it.</p>
+</section>
+
+<section>
+  <h2>Decision to defend</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>ADR-044</th><th>Autoscaling signal for self-hosted LLM endpoints</th></tr></thead>
+    <tbody>
+      <tr><td>Context</td><td>vLLM on GPU nodes; interactive traffic with a sharp morning peak; GPU nodes take minutes to provision.</td></tr>
+      <tr><td>Options</td><td>(a) HPA on CPU/GPU utilisation; (b) KEDA on queue depth; (c) KEDA on KV-cache utilisation; (d) fixed capacity plus overflow to a managed API.</td></tr>
+      <tr><td>Decision</td><td>(b) as the primary trigger, a cron pre-scale for known peaks, and (d) as a safety valve through the gateway once waiting requests stay above threshold for 60 s.</td></tr>
+      <tr><td>Consequences</td><td>Better TTFT under burst, and overflow keeps latency bounded during node provisioning. Costs: managed-API spend becomes a variable line item (needs a budget alert), the overflow model must pass the same eval gate, and data residency for the overflow region needs sign-off.</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section>
+  <h2>Read if you have 30 more minutes</h2>
+  <ul>
+    <li><a href="https://kubernetes.io/blog/2025/09/01/kubernetes-v1-34-dra-updates/" target="_blank" rel="noopener">Kubernetes v1.34: DRA has graduated to GA</a>: what ResourceClaims change for GPU requests.</li>
+    <li><a href="https://developers.redhat.com/articles/2026/04/21/kserve-llm-d-optimized-gen-ai-inference" target="_blank" rel="noopener">Red Hat Developer: KServe + llm-d for optimized GenAI inference</a>: closest to the OpenShift AI / watsonx on-prem stack.</li>
+    <li><a href="https://www.promptfoo.dev/docs/integrations/github-action" target="_blank" rel="noopener">promptfoo GitHub Action docs</a>: a production version of today's warm-up.</li>
+  </ul>
+  <h3 style="margin-top:8px">Repos to skim</h3>
+  <ul>
+    <li><a href="https://github.com/llm-d/llm-d" target="_blank" rel="noopener">llm-d/llm-d</a>: read the "well-lit paths" guides for prefix-aware routing.</li>
+    <li><a href="https://github.com/kserve/kserve" target="_blank" rel="noopener">kserve/kserve</a>: the LLMInferenceService CRD and its examples.</li>
+    <li><a href="https://github.com/kedacore/keda" target="_blank" rel="noopener">kedacore/keda</a>: the Prometheus scaler implementation and the CHANGELOG.</li>
+  </ul>
+</section>
+
+<footer>
+  <span><b>Tomorrow (Day 45):</b> revision drill on Day 27 (GenAI observability) and Day 28 (security, governance and responsible AI).</span>
+  <span>Sources</span>
+  <ul>
+    <li><a href="https://kubernetes.io/blog/2025/09/01/kubernetes-v1-34-dra-updates/" target="_blank" rel="noopener">kubernetes.io: DRA GA in v1.34</a></li>
+    <li><a href="https://kubernetes.io/blog/2025/06/05/introducing-gateway-api-inference-extension/" target="_blank" rel="noopener">kubernetes.io: Gateway API Inference Extension</a></li>
+    <li><a href="https://kserve.github.io/website/blog/kserve-0.18-release" target="_blank" rel="noopener">KServe 0.18 release</a></li>
+    <li><a href="https://www.cncf.io/projects/llm-d/" target="_blank" rel="noopener">CNCF: llm-d</a></li>
+    <li><a href="https://newreleases.io/project/github/kedacore/keda/release/v2.21.0" target="_blank" rel="noopener">KEDA 2.21.0 release</a></li>
+    <li><a href="https://www.promptfoo.dev/docs/integrations/ci-cd/" target="_blank" rel="noopener">promptfoo CI/CD integration</a></li>
+  </ul>
+</footer>
+</div>
+
+<script>
+document.querySelectorAll('.copy').forEach(function(btn){
+  btn.addEventListener('click',function(){
+    var code=btn.parentElement.querySelector('pre').innerText;
+    var done=function(){btn.textContent='Copied';setTimeout(function(){btn.textContent='Copy'},1500)};
+    if(navigator.clipboard&&navigator.clipboard.writeText){
+      navigator.clipboard.writeText(code).then(done).catch(function(){selectIt(btn)});
+    } else selectIt(btn);
+  });
+});
+function selectIt(btn){
+  var pre=btn.parentElement.querySelector('pre');var r=document.createRange();r.selectNodeContents(pre);
+  var s=window.getSelection();s.removeAllRanges();s.addRange(r);btn.textContent='Press Ctrl+C';
+}
+</script>
+
+</body></html>

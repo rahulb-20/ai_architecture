@@ -1,0 +1,22 @@
+services:
+  api:
+    build: .
+    image: genai-gateway:dev
+    ports: ["8000:8000"]
+    environment:
+      OLLAMA_HOST: http://host.docker.internal:11434   # Ollama runs natively on Windows (GPU stays simple)
+      MODEL: qwen2.5:1.5b
+      MAX_CONCURRENCY: "2"
+      API_KEY_FILE: /run/secrets/api_key
+    secrets: [api_key]
+    read_only: true                 # immutable root FS
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    stop_grace_period: 30s          # > uvicorn's 25s graceful drain
+    deploy:
+      resources:
+        limits: { cpus: "1.0", memory: 512M }
+secrets:
+  api_key:
+    file: ./secrets/api_key.txt

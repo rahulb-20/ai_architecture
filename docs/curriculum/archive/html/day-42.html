@@ -1,0 +1,457 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>GenAI Prep · Day 42 — Revision Drill: Fine-tuning vs RAG &amp; Model Serving</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Sans+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: single reading column (~72ch) with a sticky section index on wide screens; answers fold open. */
+:root{
+  --bg:#f6f7f9; --surface:#ffffff; --fg:#17202b; --muted:#566273; --line:#dde2e9;
+  --accent:#0b5cad; --accent-soft:#e3eefa; --warn:#9a5b00; --warn-soft:#fbf0dc; --ok:#1d7a4a; --code-bg:#eef1f5;
+  --display:"IBM Plex Sans Condensed","Arial Narrow",system-ui,sans-serif;
+  --body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f141b; --surface:#161d27; --fg:#e4e9f0; --muted:#9aa7b8; --line:#2a3442;
+  --accent:#6fb0f5; --accent-soft:#16283d; --warn:#f0b35a; --warn-soft:#2e2414; --ok:#5fcf8f; --code-bg:#1b2430; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f141b; --surface:#161d27; --fg:#e4e9f0; --muted:#9aa7b8; --line:#2a3442;
+  --accent:#6fb0f5; --accent-soft:#16283d; --warn:#f0b35a; --warn-soft:#2e2414; --ok:#5fcf8f; --code-bg:#1b2430; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font:16px/1.6 var(--body);margin:0}
+.wrap{max-width:1120px;margin:0 auto;padding-block:32px 80px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;grid-template-columns:200px minmax(0,1fr);gap:40px}
+@media (max-width:860px){.wrap{grid-template-columns:minmax(0,1fr)}nav.toc{display:none}}
+nav.toc{position:sticky;top:calc(env(safe-area-inset-top,0px) + 24px);align-self:start;font-size:13px}
+nav.toc a{display:block;color:var(--muted);text-decoration:none;padding:4px 0;border-left:2px solid var(--line);padding-left:10px}
+nav.toc a:hover,nav.toc a:focus-visible{color:var(--accent);border-color:var(--accent)}
+main{min-width:0;max-width:760px}
+header .eyebrow{font:500 12px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+h1{font:700 clamp(28px,4.4vw,40px)/1.12 var(--display);margin:10px 0 12px;text-wrap:balance}
+h2{font:700 24px/1.2 var(--display);margin:48px 0 12px;text-wrap:balance;scroll-margin-top:20px}
+h3{font:600 17px/1.35 var(--body);margin:24px 0 8px}
+p,li{max-width:68ch}
+.lede{color:var(--muted);font-size:17px}
+.meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.chip{font:500 12px/1 var(--mono);padding:6px 9px;border:1px solid var(--line);border-radius:4px;background:var(--surface);color:var(--muted)}
+a{color:var(--accent)}
+.callout{background:var(--warn-soft);border:1px solid color-mix(in srgb,var(--warn) 35%,transparent);border-radius:6px;padding:14px 18px;margin:18px 0}
+.callout h3{margin-top:0;color:var(--warn)}
+.callout ul{margin:0;padding-left:20px}
+table{border-collapse:collapse;width:100%;font-size:14px;font-variant-numeric:tabular-nums}
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:6px;background:var(--surface);margin:14px 0}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-weight:600;background:var(--code-bg)}
+tr:last-child td{border-bottom:0}
+details.q{background:var(--surface);border:1px solid var(--line);border-radius:6px;margin:10px 0}
+details.q summary{cursor:pointer;padding:14px 16px;font-weight:600;list-style:none;display:grid;grid-template-columns:auto minmax(0,1fr);gap:12px}
+details.q summary::-webkit-details-marker{display:none}
+details.q summary .n{font:500 13px/1.7 var(--mono);color:var(--accent)}
+details.q summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+details.q .a{padding:0 16px 14px 48px;border-top:1px dashed var(--line)}
+details.q[open] summary{color:var(--accent)}
+.tag{font:500 11px/1 var(--mono);color:var(--muted);letter-spacing:.05em;text-transform:uppercase}
+pre{margin:0;padding:14px 16px;overflow-x:auto;font:13px/1.55 var(--mono);background:var(--code-bg);color:var(--fg)}
+.code{position:relative;border:1px solid var(--line);border-radius:6px;margin:12px 0;overflow:hidden}
+.code .bar{display:flex;justify-content:space-between;align-items:center;padding:6px 10px 6px 14px;background:var(--surface);border-bottom:1px solid var(--line);font:500 12px var(--mono);color:var(--muted)}
+.code button{font:500 12px var(--mono);background:var(--accent-soft);color:var(--accent);border:1px solid transparent;border-radius:4px;padding:4px 10px;cursor:pointer}
+.code button:focus-visible{outline:2px solid var(--accent)}
+code{font-family:var(--mono);font-size:.9em;background:var(--code-bg);padding:1px 5px;border-radius:3px}
+pre code{background:none;padding:0}
+.fig{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:12px;overflow-x:auto;margin:14px 0}
+.fig svg{display:block;min-width:620px;width:100%;height:auto}
+.fig figcaption{font-size:13px;color:var(--muted);margin-top:6px}
+.scenario{background:var(--accent-soft);border-radius:6px;padding:16px 18px}
+.scenario p{margin:6px 0}
+ol.tight li,ul.tight li{margin:4px 0}
+.adr dt{font-weight:600;margin-top:10px}
+.adr dd{margin:2px 0 0 0;color:var(--fg)}
+footer{margin-top:56px;font-size:13px;color:var(--muted)}
+footer li{margin:3px 0}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
+</style>
+
+<div class="wrap">
+<nav class="toc" aria-label="Sections">
+  <a href="#changed">What changed</a>
+  <a href="#map">Mental model</a>
+  <a href="#questions">8 hard questions</a>
+  <a href="#scenario">Design scenario</a>
+  <a href="#exercise">Optional exercise</a>
+  <a href="#adr">ADR</a>
+  <a href="#sources">Sources</a>
+</nav>
+<main>
+<header>
+  <div class="eyebrow">Revision drill · Day 42 · Fri 20 Nov 2026</div>
+  <h1>Fine-tuning vs RAG &amp; Model Serving / Gateways</h1>
+  <p class="lede">Today revisits Day 3 (fine-tuning vs RAG vs prompting, LoRA/QLoRA/PEFT, InstructLab) and Day 23 (vLLM, TGI, Ollama, LiteLLM, quotas, fallback routing). The two belong together. Once you decide to tune, you have to <em>serve</em> the tuned weights, and the gateway in front of them decides what each tenant can use.</p>
+  <div class="meta"><span class="chip">JD: fine-tuning vs RAG</span><span class="chip">JD: model endpoints · scaling · cost controls</span><span class="chip">Preferred: multi-provider LLM integration</span></div>
+</header>
+
+<section id="changed">
+<h2>What changed since you studied these</h2>
+<div class="callout">
+<h3>Re-check these before an interview</h3>
+<ul class="tight">
+  <li><b>InstructLab's main repo was archived on 23 Apr 2026</b> and is read-only now. Your compliance bot was built on it, so expect the question "what's your exit plan?" (Q4 and the ADR below cover it).</li>
+  <li><b>TGI is in maintenance mode.</b> Hugging Face's README now points users to vLLM and SGLang, or to llama.cpp/MLX for local use. Stop proposing TGI for new builds.</li>
+  <li><b>LiteLLM had two supply-chain compromises this year.</b> In March, PyPI 1.82.7/1.82.8 were live for about 40 minutes. On 21 Oct, the hijacked release pipeline pushed a credential stealer as 1.107.0 to PyPI and to the Docker <code>latest</code>/<code>main-stable</code> tags. Current PyPI release: 1.110.1. LiteLLM images are signed with keyless cosign from v1.111.0-dev.3 onward.</li>
+  <li><b>vLLM v0.34.0</b> shipped 16 Nov 2026, two weeks after v0.33.0. At that pace, pin versions and re-benchmark on every upgrade. <b>PEFT</b> is at 0.22.0 on PyPI.</li>
+</ul>
+</div>
+</section>
+
+<section id="map">
+<h2>Mental model in one picture</h2>
+<figure class="fig">
+<svg viewBox="0 0 760 270" role="img" aria-label="Request flow: tenants call a gateway that checks auth, quota and cache, then routes to a self-hosted vLLM base model with LoRA adapters, or falls back to a managed provider; RAG context is added before the call.">
+  <defs><marker id="ar" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="var(--muted)"/></marker></defs>
+  <g font-family="IBM Plex Sans, system-ui, sans-serif" font-size="12" fill="var(--fg)">
+    <rect x="10" y="40" width="110" height="46" rx="5" fill="var(--surface)" stroke="var(--line)"/><text x="65" y="60" text-anchor="middle" font-weight="600">Tenant apps</text><text x="65" y="76" text-anchor="middle" fill="var(--muted)">finance · hr · ops</text>
+    <rect x="10" y="150" width="110" height="46" rx="5" fill="var(--surface)" stroke="var(--line)"/><text x="65" y="170" text-anchor="middle" font-weight="600">Retriever</text><text x="65" y="186" text-anchor="middle" fill="var(--muted)">facts + ACLs</text>
+    <rect x="170" y="20" width="230" height="200" rx="6" fill="var(--accent-soft)" stroke="var(--accent)"/>
+    <text x="285" y="42" text-anchor="middle" font-weight="700" fill="var(--accent)">AI gateway (tier-0 asset)</text>
+    <g font-size="11.5">
+      <text x="186" y="68">1 · AuthN + virtual key → tenant</text>
+      <text x="186" y="90">2 · Token quota (TPM / monthly)</text>
+      <text x="186" y="112">3 · Guardrails · PII mask</text>
+      <text x="186" y="134">4 · Cache (tenant-scoped key)</text>
+      <text x="186" y="156">5 · Router: adapter / model / region</text>
+      <text x="186" y="178">6 · Breaker + fallback chain</text>
+      <text x="186" y="200">7 · Usage + trace → cost ledger</text>
+    </g>
+    <rect x="460" y="20" width="290" height="120" rx="6" fill="var(--surface)" stroke="var(--line)"/>
+    <text x="605" y="42" text-anchor="middle" font-weight="700">vLLM · one base model on GPU</text>
+    <rect x="476" y="56" width="80" height="30" rx="4" fill="var(--code-bg)" stroke="var(--line)"/><text x="516" y="75" text-anchor="middle" font-size="11">lora: finance</text>
+    <rect x="565" y="56" width="80" height="30" rx="4" fill="var(--code-bg)" stroke="var(--line)"/><text x="605" y="75" text-anchor="middle" font-size="11">lora: hr</text>
+    <rect x="654" y="56" width="80" height="30" rx="4" fill="var(--code-bg)" stroke="var(--line)"/><text x="694" y="75" text-anchor="middle" font-size="11">lora: ops</text>
+    <text x="605" y="110" text-anchor="middle" fill="var(--muted)" font-size="11">continuous batching mixes adapters</text>
+    <text x="605" y="126" text-anchor="middle" fill="var(--muted)" font-size="11">--max-loras · --max-lora-rank</text>
+    <rect x="460" y="170" width="290" height="60" rx="6" fill="var(--surface)" stroke="var(--line)" stroke-dasharray="5 4"/>
+    <text x="605" y="194" text-anchor="middle" font-weight="700">Fallback: managed endpoint</text>
+    <text x="605" y="212" text-anchor="middle" fill="var(--muted)" font-size="11">watsonx.ai · Bedrock · Azure OpenAI (same region)</text>
+  </g>
+  <g stroke="var(--muted)" stroke-width="1.4" fill="none">
+    <path d="M120 63 H168" marker-end="url(#ar)"/>
+    <path d="M120 173 H168" marker-end="url(#ar)"/>
+    <path d="M400 90 H458" marker-end="url(#ar)"/>
+    <path d="M400 190 H458" marker-end="url(#ar)" stroke-dasharray="4 3"/>
+  </g>
+  <text x="430" y="84" font-size="10.5" text-anchor="middle" fill="var(--muted)" font-family="IBM Plex Mono, monospace">primary</text>
+  <text x="430" y="184" font-size="10.5" text-anchor="middle" fill="var(--muted)" font-family="IBM Plex Mono, monospace">on 5xx/open</text>
+</svg>
+<figcaption>Retrieval supplies the facts, a LoRA adapter shapes the behaviour, and the gateway holds the policy. Fine-tuning changes how the model answers; RAG changes what it knows at request time.</figcaption>
+</figure>
+<div class="tbl"><table>
+<thead><tr><th>Lever</th><th>Fixes</th><th>Doesn't fix</th><th>Serving cost shape</th></tr></thead>
+<tbody>
+<tr><td>Prompting / few-shot</td><td>Format, tone, simple policy</td><td>Long-tail domain style; long prompts cost every call</td><td>Input tokens × every request</td></tr>
+<tr><td>RAG</td><td>Fresh facts, citations, per-user ACLs</td><td>Output format discipline, domain reasoning style</td><td>Retrieval latency + context tokens</td></tr>
+<tr><td>LoRA / QLoRA</td><td>Behaviour, schema adherence, tool-use, distilling a big model into a small one</td><td>Facts that change; access control; "unlearning"</td><td>One-time training + eval; adapters are tens of MB, so many can share one base</td></tr>
+<tr><td>Full fine-tune</td><td>Deep domain shift, new language/modality</td><td>Same as LoRA, plus catastrophic forgetting risk</td><td>A dedicated deployment per model</td></tr>
+</tbody></table></div>
+</section>
+
+<section id="questions">
+<h2>8 hard interview questions</h2>
+<p class="tag">Answer aloud in 90 seconds first, then open the model answer.</p>
+
+<details class="q"><summary><span class="n">Q1</span><span>The client says: "Fine-tune Granite on our 40,000 policy documents so it knows them." Defend your counter-proposal.</span></summary><div class="a">
+<p>Separate <b>knowledge</b> from <b>behaviour</b>. Policies change, need citations, and are access-controlled per business unit. Weights can't hold an ACL. They can't cite a clause version, and they can't forget a withdrawn policy without retraining. So facts go through RAG: chunked by clause with metadata for version, effective date, and the BU that owns it, filtered by the caller's entitlements.</p>
+<p>Tune only where prompting can't get you there. Examples: the house answer format (clause → interpretation → action), refusal style, or a small model that matches a large model's groundedness at a third of the latency. If you do tune, use RAFT-style data: questions paired with retrieved passages that include distractors, so the model learns to read context rather than memorise it.</p>
+<p>The close: "We measure. RAG baseline first on a 200-question golden set. Tuning has to beat it on faithfulness and format adherence by an agreed margin before we pay for the training and retraining loop."</p>
+</div></details>
+
+<details class="q"><summary><span class="n">Q2</span><span>Show me the break-even math where fine-tuning beats prompting on cost.</span></summary><div class="a">
+<p>Take a 2,500-token few-shot system prompt at 3M requests a month. That is 7.5B input tokens a month spent re-teaching the format. A LoRA that internalises those instructions cuts the prompt to about 300 tokens, a saving of 6.6B tokens. Prompt caching narrows the gap: cached input is often billed at a fraction of the normal rate. So compare against the <em>cached</em> price, not the list price.</p>
+<p>Tuning costs: data curation (the expensive part), training runs, an eval suite, and a retraining cadence every time the base model or the policy changes. Add the operational cost of self-hosting, or the provider's premium for hosted custom models.</p>
+<p>The bigger payoff is usually <b>distillation</b>. If a tuned 8B model replaces a frontier model on 70% of traffic, you cut cost per token and latency at the same time. Rule of thumb: tune for cost when the volume is high, the task is narrow and stable, and you have a golden set to prove there's no regression.</p>
+</div></details>
+
+<details class="q"><summary><span class="n">Q3</span><span>LoRA vs QLoRA vs DoRA vs full fine-tune. Which do you pick, at what rank, and how do you prove you didn't break the model?</span></summary><div class="a">
+<p><b>LoRA</b> trains low-rank matrices next to frozen weights. It is cheap, swappable, and can be served many-to-one base. <b>QLoRA</b> trains LoRA on a 4-bit NF4-quantised base, so 7–8B models fit on a single consumer or mid-range GPU. You pay with slower steps and a small quality gap, and you should evaluate the adapter on the precision you will actually serve. <b>DoRA</b> splits weights into magnitude and direction and often closes part of the gap to full fine-tuning at the same rank. <b>Full FT</b> is for deep domain or language shift only, and it brings the most forgetting and the heaviest ops.</p>
+<p>Rank: start at r=8–16 on the attention projections and go higher only if the eval curve says so. Higher rank adds capacity and also overfitting. To prove no regression, keep three suites: domain golden set (task gain), a general capability probe such as instruction-following and safety prompts (forgetting), and format/tool-call validity rate. Every adapter version goes through the same CI eval gate as prompts.</p>
+</div></details>
+
+<details class="q"><summary><span class="n">Q4</span><span>Your InstructLab-based compliance bot depends on a repo that was archived in April 2026. What do you do?</span></summary><div class="a">
+<p>First, pin down the blast radius. The <b>artifacts</b> you produced (the taxonomy, the synthetic training data, the tuned checkpoints) are still yours and still run. What you lost is upstream fixes for the <b>pipeline</b> (SDG, training, CLI). There is no outage. You have a maintenance-risk problem.</p>
+<p>Actions: freeze and mirror the exact versions you depend on (wheels, container digests). Record an ADR. Move the parts you need onto maintained primitives: the taxonomy and SDG prompts become a versioned dataset, and training moves to PEFT/TRL (or the platform's tuning service on watsonx.ai). Re-run your golden set on the re-trained adapter before switching over.</p>
+<p>The architectural lesson: <b>keep the tuning recipe portable.</b> Data, eval suite, and hyperparameters should be the durable assets. The tool that runs them is replaceable.</p>
+</div></details>
+
+<details class="q"><summary><span class="n">Q5</span><span>Ten business units each want their own tuned model. How do you serve that without ten GPU deployments?</span></summary><div class="a">
+<p>One base model, ten LoRA adapters, served by vLLM with <code>--enable-lora</code>, <code>--lora-modules name=path</code>, <code>--max-loras</code> (adapters resident on the GPU at once), and <code>--max-lora-rank</code> set to the highest rank you ship. Continuous batching mixes requests for different adapters in the same batch. The client picks the adapter by passing its name as <code>model</code> on the OpenAI-compatible API, and the gateway maps tenant to adapter, so clients never choose one themselves.</p>
+<p>Trade-offs: a cold adapter must load (CPU→GPU) on first use, so size <code>--max-loras</code> for the hot set. Mixed-adapter batches carry some throughput overhead compared with a merged single model. Runtime loading (<code>/v1/load_lora_adapter</code>, gated by <code>VLLM_ALLOW_RUNTIME_LORA_UPDATING</code>) is convenient, but the docs flag it as risky in production. Prefer immutable deployments that list their adapters, with rollout by canary. Merge an adapter into its own deployment only when one tenant's traffic justifies dedicated capacity or isolation.</p>
+</div></details>
+
+<details class="q"><summary><span class="n">Q6</span><span>A team runs six TGI endpoints in production. TGI is now in maintenance mode. Give me the migration plan.</span></summary><div class="a">
+<p>There's no fire. Maintenance mode still gets minor fixes, so plan the move instead of rushing it. Target vLLM (or SGLang for structured or agentic-heavy workloads). Both expose OpenAI-compatible APIs, so put the gateway in front first and make the backend swappable.</p>
+<ol class="tight">
+<li><b>Parity inventory:</b> chat templates, stop tokens, grammar/JSON mode, quantisation format, max context, and any adapters.</li>
+<li><b>Benchmark on your own traffic shape:</b> TTFT, inter-token latency, throughput at p95 concurrency, GPU memory headroom.</li>
+<li><b>Shadow traffic</b> through the gateway. Diff outputs on the golden set. Tokeniser or template drift is the usual cause of silent quality changes.</li>
+<li><b>Canary</b> at 5% → 25% → 100%, with automatic rollback on error rate or eval-score SLOs.</li>
+<li>Decommission, and record the ADR.</li>
+</ol>
+</div></details>
+
+<details class="q"><summary><span class="n">Q7</span><span>Design the quota and fallback logic for a multi-tenant gateway. Where does naive fallback go wrong?</span></summary><div class="a">
+<p><b>Quotas are measured in tokens, not requests.</b> One request can cost 100 tokens or 100,000. Before the call, check against a pessimistic estimate (prompt tokens + max_tokens). After it, charge the actual usage. Keep a rolling TPM limit for fairness and a monthly budget for cost, with soft alerts at 80%.</p>
+<p>Where naive fallback breaks:</p>
+<ul class="tight">
+<li><b>Retry storms.</b> Every client retries, the gateway retries, and the SDK retries too. Use one retry owner, jittered backoff, and a circuit breaker per route.</li>
+<li><b>Semantic drift.</b> The fallback model has different prompt sensitivity, JSON quirks, and a different tokenizer. Keep per-model prompt variants and run the fallback route through the eval gate too.</li>
+<li><b>Mid-stream failure.</b> If a stream dies after tokens reach the user, you can't transparently restart. Fail the request clearly, or fall back only before the first token.</li>
+<li><b>Compliance.</b> A fallback to another region or provider can break data residency (DPDP, the EU AI Act's record-keeping duties). Fallback chains must stay inside approved boundaries.</li>
+<li><b>Cache leaks.</b> The cache key must include tenant and ACL scope.</li>
+</ul>
+</div></details>
+
+<details class="q"><summary><span class="n">Q8</span><span>After the LiteLLM 1.107.0 compromise, what supply-chain controls do you require for your AI gateway?</span></summary><div class="a">
+<p>The gateway holds every provider key, so treat it as a tier-0 asset. Controls:</p>
+<ul class="tight">
+<li><b>Pin with hashes</b> (<code>pip install --require-hashes</code>), install from a private mirror, and never use floating Docker tags like <code>latest</code> or <code>main-stable</code>. Deploy by digest.</li>
+<li><b>Verify signatures</b> (cosign) and keep an SBOM in CI. Hold new versions for a quarantine window of a few days before promoting them.</li>
+<li><b>Default-deny egress:</b> the gateway pod reaches only the provider endpoints, so an infostealer can't phone home.</li>
+<li><b>Short-lived credentials:</b> workload identity instead of static keys, secrets pulled from a vault, and narrowly scoped IAM roles.</li>
+<li><b>Detection:</b> watch for unexpected <code>.pth</code>/<code>sitecustomize.py</code> files and unknown processes. Alert on credential use from new IPs (the incident post says to check CloudTrail for <code>GetCallerIdentity</code>).</li>
+<li><b>Runbook:</b> if a bad version ran, rebuild from scratch rather than uninstalling, and rotate every key the gateway could read.</li>
+</ul>
+</div></details>
+</section>
+
+<section id="scenario">
+<h2>Design scenario (30 min, whiteboard it)</h2>
+<div class="scenario">
+<p><b>Brief.</b> An Indian private bank wants a shared GenAI platform for 12 business units. Requirements: data stays in India (DPDP Act plus RBI outsourcing expectations). Three units want "their own tuned model" (credit memos, collections scripts, HR policy). Budget: 4 × L40S on-prem plus one managed provider for overflow. Peak load: 150 concurrent users. p95 TTFT under 1.5 s for chat.</p>
+<p><b>Deliver:</b> serving topology, tuning vs RAG decision per unit, gateway policy, fallback rules, capacity estimate, and the two riskiest assumptions.</p>
+</div>
+<details class="q"><summary><span class="n">→</span><span>Model solution outline</span></summary><div class="a">
+<ol class="tight">
+<li><b>Default to RAG and prompting for all 12 units.</b> Only credit memos get a LoRA, for format discipline and domain reasoning style. Collections and HR are tone and policy problems: system prompts plus RAG over versioned policies. Tune later only if the golden set says so.</li>
+<li><b>Serving:</b> 2 GPUs run an 8B-class instruct base on vLLM with multi-LoRA (credit memo adapter, later others). 1 GPU runs the embedding model and reranker. 1 GPU is headroom and canary. For the 8B base in BF16, about 16 GB of the 48 GB per L40S goes to weights and the rest to KV cache. Run a load test to find whether 150 concurrent sessions meet the TTFT target at your average context length. If they don't, quantise to FP8 or reduce max context.</li>
+<li><b>Gateway:</b> one virtual key per unit, token quotas, PII masking before any external route, tenant-scoped semantic cache, OTel GenAI traces into a cost ledger. Deploy pinned images by digest with egress restricted (see Q8).</li>
+<li><b>Fallback:</b> on-prem first. The managed provider must be in an India region with zero data retention contractually confirmed. Fall back only for units whose data is classified as allowed, and only before the first token. Credit memos never leave the bank's own infrastructure. If on-prem is down, they queue.</li>
+<li><b>Riskiest assumptions:</b> (a) the managed provider's India-region offering covers the model you need, so validate it with procurement; (b) 150 concurrent users at your real context length fit in KV cache, so prove it with a load test before sign-off.</li>
+</ol>
+<p><b>watsonx mapping:</b> watsonx.ai on-prem (Cloud Pak for Data / Software Hub) for tuning and hosting custom foundation models; watsonx.governance for the model inventory and evaluation evidence the bank's auditors will ask for.</p>
+</div></details>
+</section>
+
+<section id="exercise">
+<h2>Optional exercise (45–60 min): a gateway you can reason about</h2>
+<p>Build a one-file gateway in front of Ollama with token quotas per tenant, an ordered fallback chain with a circuit breaker, a tenant-scoped cache, and p50/p95 latency per route. The first route points at a model that doesn't exist, so you watch the breaker trip and the fallback take over. It runs on your RTX 3050 laptop: 3B and 1.5B models, no Docker, no WSL2. It uses plain <code>httpx</code> rather than a gateway library. You can read every line, and given this year's incidents, the dependency footprint is part of the design.</p>
+
+<div class="code"><div class="bar"><span>PowerShell · setup</span><button type="button" data-copy>Copy</button></div><pre><code># PowerShell — Ollama for Windows installed, service running on :11434
+ollama pull llama3.2:3b
+ollama pull qwen2.5:1.5b
+mkdir gw-lite; cd gw-lite
+py -3.13 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install &quot;httpx==0.28.1&quot;
+# save gateway_lite.py here, then:
+python gateway_lite.py</code></pre></div>
+<div class="code"><div class="bar"><span>gateway_lite.py</span><button type="button" data-copy>Copy</button></div><pre><code>&quot;&quot;&quot;gateway_lite.py - a 150-line model gateway you can reason about.
+
+Routes OpenAI-compatible chat calls to Ollama with:
+  * per-tenant token budgets (TPM-style, sliding 60 s window)
+  * ordered fallback chain with a circuit breaker per route
+  * exact-match response cache
+  * latency + token accounting, printed as a p50/p95 table
+Run:  python gateway_lite.py
+&quot;&quot;&quot;
+from __future__ import annotations
+
+import hashlib
+import json
+import statistics
+import time
+from collections import defaultdict, deque
+from dataclasses import dataclass, field
+
+import httpx
+
+OLLAMA = &quot;http://localhost:11434/v1/chat/completions&quot;
+
+# Route chain: first entry is deliberately broken to prove fallback works.
+ROUTES = [
+    {&quot;name&quot;: &quot;primary-missing&quot;, &quot;model&quot;: &quot;does-not-exist:1b&quot;},
+    {&quot;name&quot;: &quot;llama3.2-3b&quot;, &quot;model&quot;: &quot;llama3.2:3b&quot;},
+    {&quot;name&quot;: &quot;qwen2.5-1.5b&quot;, &quot;model&quot;: &quot;qwen2.5:1.5b&quot;},
+]
+TENANT_TPM = {&quot;finance&quot;: 4000, &quot;hr&quot;: 400}   # tokens per rolling minute
+
+
+@dataclass
+class Breaker:
+    fails: int = 0
+    open_until: float = 0.0
+    threshold: int = 2
+    cooldown_s: float = 30.0
+
+    def allow(self) -&gt; bool:
+        return time.monotonic() &gt;= self.open_until
+
+    def record(self, ok: bool) -&gt; None:
+        if ok:
+            self.fails = 0
+            return
+        self.fails += 1
+        if self.fails &gt;= self.threshold:
+            self.open_until = time.monotonic() + self.cooldown_s
+
+
+@dataclass
+class Gateway:
+    breakers: dict = field(default_factory=lambda: defaultdict(Breaker))
+    usage: dict = field(default_factory=lambda: defaultdict(deque))  # tenant -&gt; (ts, tokens)
+    cache: dict = field(default_factory=dict)
+    stats: dict = field(default_factory=lambda: defaultdict(list))   # route -&gt; latencies
+    events: list = field(default_factory=list)
+
+    def _tokens_used(self, tenant: str) -&gt; int:
+        q, now = self.usage[tenant], time.monotonic()
+        while q and now - q[0][0] &gt; 60:
+            q.popleft()
+        return sum(t for _, t in q)
+
+    def chat(self, tenant: str, messages: list[dict], max_tokens: int = 120) -&gt; dict:
+        # 1. Quota check uses a *pessimistic* estimate: prompt chars/4 + max_tokens.
+        est = sum(len(m[&quot;content&quot;]) for m in messages) // 4 + max_tokens
+        if self._tokens_used(tenant) + est &gt; TENANT_TPM[tenant]:
+            self.events.append((tenant, &quot;429 quota&quot;))
+            return {&quot;status&quot;: 429, &quot;error&quot;: f&quot;{tenant} over {TENANT_TPM[tenant]} TPM&quot;}
+
+        # 2. Cache (exact match on tenant + messages). Tenant is in the key: never share across tenants.
+        key = hashlib.sha256(json.dumps([tenant, messages], sort_keys=True).encode()).hexdigest()
+        if key in self.cache:
+            self.events.append((tenant, &quot;cache hit&quot;))
+            return {**self.cache[key], &quot;cached&quot;: True}
+
+        # 3. Walk the fallback chain.
+        for r in ROUTES:
+            br = self.breakers[r[&quot;name&quot;]]
+            if not br.allow():
+                self.events.append((tenant, f&quot;skip {r[&#x27;name&#x27;]} (breaker open)&quot;))
+                continue
+            t0 = time.perf_counter()
+            try:
+                resp = httpx.post(OLLAMA, timeout=60, json={
+                    &quot;model&quot;: r[&quot;model&quot;], &quot;messages&quot;: messages,
+                    &quot;max_tokens&quot;: max_tokens, &quot;temperature&quot;: 0,
+                })
+                resp.raise_for_status()
+            except httpx.HTTPError as exc:
+                br.record(False)
+                self.events.append((tenant, f&quot;fail {r[&#x27;name&#x27;]}: {type(exc).__name__}&quot;))
+                continue
+            dt = time.perf_counter() - t0
+            br.record(True)
+            body = resp.json()
+            used = body.get(&quot;usage&quot;, {}).get(&quot;total_tokens&quot;, est)
+            self.usage[tenant].append((time.monotonic(), used))   # charge actual tokens
+            self.stats[r[&quot;name&quot;]].append(dt)
+            out = {&quot;status&quot;: 200, &quot;route&quot;: r[&quot;name&quot;], &quot;tokens&quot;: used, &quot;latency_s&quot;: round(dt, 2),
+                   &quot;text&quot;: body[&quot;choices&quot;][0][&quot;message&quot;][&quot;content&quot;].strip()}
+            self.cache[key] = out
+            return out
+        return {&quot;status&quot;: 503, &quot;error&quot;: &quot;all routes failed&quot;}
+
+    def report(self) -&gt; None:
+        print(&quot;\nroute            n   p50(s)  p95(s)&quot;)
+        for name, lat in self.stats.items():
+            lat = sorted(lat)
+            p95 = lat[min(len(lat) - 1, int(0.95 * len(lat)))]
+            print(f&quot;{name:&lt;15}{len(lat):&gt;3}  {statistics.median(lat):&gt;6.2f}  {p95:&gt;6.2f}&quot;)
+        for t in TENANT_TPM:
+            print(f&quot;tenant {t:&lt;8} tokens in window: {self._tokens_used(t)} / {TENANT_TPM[t]}&quot;)
+        print(&quot;\nevents:&quot;)
+        for e in self.events:
+            print(&quot;  &quot;, *e)
+
+
+if __name__ == &quot;__main__&quot;:
+    gw = Gateway()
+    qs = [
+        (&quot;finance&quot;, &quot;In one sentence: what is a LoRA adapter?&quot;),
+        (&quot;finance&quot;, &quot;In one sentence: when is RAG better than fine-tuning?&quot;),
+        (&quot;finance&quot;, &quot;In one sentence: what is a LoRA adapter?&quot;),          # cache hit
+        (&quot;hr&quot;, &quot;Summarise in 2 lines why token-based quotas beat request-based ones.&quot;),
+        (&quot;hr&quot;, &quot;List 5 risks of running an AI gateway with every provider key in it.&quot;),
+        (&quot;hr&quot;, &quot;Explain continuous batching to a CFO in 3 sentences.&quot;),   # likely 429
+    ]
+    for tenant, q in qs:
+        r = gw.chat(tenant, [{&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: q}])
+        print(tenant, r.get(&quot;status&quot;), r.get(&quot;route&quot;, &quot;&quot;), r.get(&quot;latency_s&quot;, &quot;&quot;),
+              &quot;| cached&quot; if r.get(&quot;cached&quot;) else &quot;&quot;, &quot;|&quot;, (r.get(&quot;text&quot;) or r.get(&quot;error&quot;))[:90])
+    gw.report()
+</code></pre></div>
+<div class="code"><div class="bar"><span>Expected output (latencies and text will vary)</span><button type="button" data-copy>Copy</button></div><pre><code>finance 200 llama3.2-3b 2.41  | A LoRA adapter is a small set of low-rank weight ...
+finance 200 llama3.2-3b 1.37  | RAG is better when knowledge changes often or must ...
+finance 200 llama3.2-3b 1.37 | cached | A LoRA adapter is a small set of low-rank ...
+hr 200 llama3.2-3b 1.92  | Token quotas track actual cost, since one request ...
+hr 200 llama3.2-3b 2.80  | 1. Single point of compromise for all keys ...
+hr 429    | hr over 400 TPM
+
+route            n   p50(s)  p95(s)
+llama3.2-3b      4    1.92    2.80
+tenant finance  tokens in window: ~400 / 4000
+tenant hr       tokens in window: ~330 / 400
+
+events:
+   finance fail primary-missing: HTTPStatusError
+   finance fail primary-missing: HTTPStatusError
+   finance cache hit
+   hr skip primary-missing (breaker open)
+   ...</code></pre></div>
+
+<h3>Stretch goals</h3>
+<ol class="tight">
+<li><b>Fallback before first token only.</b> Switch to <code>"stream": true</code> and fall back only if the failure happens before the first chunk. If the stream dies mid-answer, return a clear error. Then explain to yourself why this is the only safe behaviour (Q7).</li>
+<li><b>Adapter routing.</b> Create two Ollama variants of the same base with different <code>SYSTEM</code> prompts in Modelfiles (<code>ollama create fin-style -f Modelfile.fin</code>). Map tenant → variant in the gateway. This stands in for vLLM multi-LoRA routing. Then write the three-line vLLM <code>serve</code> command you would use in production instead.</li>
+</ol>
+</section>
+
+<section id="adr">
+<h2>Architect's lens: ADR-042</h2>
+<dl class="adr">
+<dt>Title</dt><dd>Serve tenant-specific behaviour as LoRA adapters on a shared vLLM base, behind a self-operated gateway</dd>
+<dt>Context</dt><dd>Several business units want customised behaviour. GPU capacity is fixed. TGI is in maintenance mode, and InstructLab's upstream is archived. Two compromises of a popular open-source gateway this year show that the gateway is a high-value target.</dd>
+<dt>Options</dt><dd>(A) One merged model per tenant on dedicated GPUs. (B) Shared base plus multi-LoRA on vLLM. (C) Managed provider custom models only. (D) Prompt-only customisation.</dd>
+<dt>Decision</dt><dd>D by default. B where an adapter beats D on the golden set by an agreed margin. C only as a residency-compliant overflow for data classified as allowed. The gateway runs pinned, signed images by digest, with egress restricted.</dd>
+<dt>Consequences</dt><dd>+ One GPU pool serves many tenants, and adapters are cheap to version and roll back. − There is cold-load latency for adapters outside the hot set. A noisy tenant can affect shared capacity, which quotas and priority classes mitigate. Each vLLM upgrade needs a re-benchmark. The tuning recipe (data, eval, hyperparameters) is kept tool-agnostic so the training stack can be replaced.</dd>
+</dl>
+</section>
+
+<section>
+<h2>Tomorrow</h2>
+<p>Day 43 revision drill: the next two topics in the rotation, again weighted toward weeks 3–4.</p>
+</section>
+
+<footer id="sources">
+<h3>Sources</h3>
+<ul>
+<li><a href="https://raw.githubusercontent.com/huggingface/text-generation-inference/main/README.md">TGI README: maintenance-mode notice</a></li>
+<li><a href="https://docs.litellm.ai/blog/security-incident-oct-21-2026.md">LiteLLM: security incident, 21 Oct 2026</a> · <a href="https://docs.litellm.ai/blog/security-update-march-2026">security update, March 2026</a></li>
+<li><a href="https://docs.vllm.ai/en/v0.15.0/features/lora/">vLLM docs: LoRA adapters</a> · <a href="https://releasealert.dev/github/vllm-project/vllm">vLLM release tracker (v0.34.0)</a></li>
+<li>Repos: <a href="https://github.com/vllm-project/vllm">vllm-project/vllm</a> · <a href="https://github.com/sgl-project/sglang">sgl-project/sglang</a> · <a href="https://github.com/huggingface/peft">huggingface/peft</a> · <a href="https://github.com/BerriAI/litellm">BerriAI/litellm</a> · <a href="https://github.com/instructlab/instructlab">instructlab/instructlab (archived)</a></li>
+<li>Papers: <a href="https://arxiv.org/abs/2106.09685">LoRA (Hu et al.)</a> · <a href="https://arxiv.org/abs/2305.14314">QLoRA (Dettmers et al.)</a></li>
+<li>Package versions checked on PyPI on 20 Nov 2026: vllm 0.34.0, litellm 1.110.1, peft 0.22.0, httpx 0.28.1.</li>
+</ul>
+</footer>
+</main>
+</div>
+<script>
+document.querySelectorAll('[data-copy]').forEach(function(btn){
+  btn.addEventListener('click',function(){
+    var pre=btn.closest('.code').querySelector('pre');
+    var txt=pre.innerText;
+    var done=function(){btn.textContent='Copied';setTimeout(function(){btn.textContent='Copy'},1500)};
+    var fallback=function(){var r=document.createRange();r.selectNodeContents(pre);var s=getSelection();s.removeAllRanges();s.addRange(r);btn.textContent='Selected — Ctrl+C'};
+    try{navigator.clipboard.writeText(txt).then(done,fallback)}catch(e){fallback()}
+  });
+});
+</script>
+
+</body></html>

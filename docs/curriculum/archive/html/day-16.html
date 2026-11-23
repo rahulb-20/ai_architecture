@@ -1,0 +1,650 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>GenAI Prep · Day 16 — Tool Calling</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: single reading column (~72ch) with a sticky section index on wide screens; study-pack, utilitarian */
+:root{
+  --bg:#f6f7f9; --surface:#ffffff; --fg:#1b2230; --muted:#5a6475; --line:#dfe3ea;
+  --accent:#1f5fbf; --accent-soft:#e6eefb; --amber:#a35a00; --amber-soft:#fbf0e1;
+  --ok:#1d7a4a; --bad:#b4322b; --code-bg:#eef1f6;
+  --f-display:"IBM Plex Sans Condensed","Arial Narrow",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#12161d; --surface:#1a2029; --fg:#e4e8ef; --muted:#9aa4b4; --line:#2c3441;
+  --accent:#7aa8f0; --accent-soft:#1e2c44; --amber:#f0b46a; --amber-soft:#33281a;
+  --ok:#5cc98e; --bad:#f08a82; --code-bg:#0e1218; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#12161d; --surface:#1a2029; --fg:#e4e8ef; --muted:#9aa4b4; --line:#2c3441;
+  --accent:#7aa8f0; --accent-soft:#1e2c44; --amber:#f0b46a; --amber-soft:#33281a;
+  --ok:#5cc98e; --bad:#f08a82; --code-bg:#0e1218; color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font:16px/1.6 var(--f-body)}
+.wrap{max-width:1120px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:32px 64px;display:grid;grid-template-columns:200px minmax(0,1fr);gap:48px}
+nav.toc{position:sticky;top:calc(env(safe-area-inset-top,0px) + 24px);align-self:start;font-size:13px}
+nav.toc ol{list-style:none;padding:0;margin:0;display:grid;gap:6px;counter-reset:s}
+nav.toc a{color:var(--muted);text-decoration:none;display:flex;gap:8px}
+nav.toc a:hover,nav.toc a:focus-visible{color:var(--accent)}
+nav.toc a span{font-family:var(--f-mono);color:var(--accent);min-width:1.4em}
+main{min-width:0;max-width:76ch}
+header.hero{margin-bottom:28px;padding-bottom:20px;border-bottom:1px solid var(--line)}
+.eyebrow{font:500 12px/1 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+h1{font:700 clamp(30px,5vw,44px)/1.1 var(--f-display);margin:10px 0 12px;text-wrap:balance;letter-spacing:-.01em}
+h2{font:600 26px/1.2 var(--f-display);margin:48px 0 12px;text-wrap:balance;display:flex;gap:12px;align-items:baseline}
+h2 .n{font:500 14px var(--f-mono);color:var(--accent)}
+h3{font:600 18px/1.3 var(--f-display);margin:24px 0 8px}
+p,li{max-width:70ch}
+.lede{color:var(--muted);font-size:17px}
+.meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.chip{font:500 12px var(--f-mono);padding:4px 9px;border-radius:4px;background:var(--accent-soft);color:var(--accent)}
+.chip.amber{background:var(--amber-soft);color:var(--amber)}
+a{color:var(--accent)}
+code{font-family:var(--f-mono);font-size:.88em;background:var(--code-bg);padding:1px 5px;border-radius:3px}
+.callout{border-left:3px solid var(--amber);background:var(--amber-soft);padding:12px 16px;border-radius:0 6px 6px 0;margin:16px 0}
+.callout strong{color:var(--amber)}
+figure{margin:20px 0;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:16px;overflow-x:auto}
+figcaption{font-size:13px;color:var(--muted);margin-top:8px}
+.tbl{overflow-x:auto;margin:16px 0;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:14px;min-width:720px}
+th,td{text-align:left;vertical-align:top;padding:10px 12px;border-bottom:1px solid var(--line)}
+th{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);background:var(--bg)}
+tr:last-child td{border-bottom:0}
+td:first-child{font-weight:600;white-space:nowrap}
+.code{position:relative;margin:14px 0;border:1px solid var(--line);border-radius:8px;background:var(--code-bg)}
+.code .bar{display:flex;justify-content:space-between;align-items:center;padding:6px 10px 6px 14px;border-bottom:1px solid var(--line);font:500 12px var(--f-mono);color:var(--muted)}
+.code pre{margin:0;padding:14px;overflow-x:auto;font:13px/1.55 var(--f-mono);max-height:560px}
+.code pre code{background:none;padding:0;font-size:inherit}
+button.copy{font:500 12px var(--f-mono);border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:4px;padding:4px 10px;cursor:pointer}
+button.copy:hover,button.copy:focus-visible{border-color:var(--accent);color:var(--accent);outline:none}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.repo{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:12px 14px;min-width:0}
+.repo a{font:500 14px var(--f-mono);word-break:break-word}
+.repo p{margin:6px 0 0;font-size:14px;color:var(--muted)}
+details{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:12px 16px;margin:10px 0}
+summary{cursor:pointer;font-weight:600}
+summary:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+details p,details ul{margin:10px 0 0;font-size:15px}
+.adr dl{display:grid;grid-template-columns:130px minmax(0,1fr);gap:8px 16px;margin:0}
+.adr dt{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);padding-top:3px}
+.adr dd{margin:0}
+.adr{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:18px}
+.out{font-size:14px}
+.tomorrow{margin-top:48px;padding:16px;border:1px dashed var(--accent);border-radius:8px;color:var(--muted)}
+.tomorrow b{color:var(--fg)}
+svg text{font-family:var(--f-mono)}
+@media (max-width:860px){.wrap{grid-template-columns:minmax(0,1fr);gap:0}nav.toc{display:none}.adr dl{grid-template-columns:minmax(0,1fr)}.adr dt{padding-top:8px}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+<nav class="toc" aria-label="Sections"><ol>
+<li><a href="#why"><span>1</span>Why it matters</a></li>
+<li><a href="#concept"><span>2</span>Concept brief</a></li>
+<li><a href="#tradeoffs"><span>3</span>Trade-offs</a></li>
+<li><a href="#exercise"><span>4</span>Hands-on</a></li>
+<li><a href="#repos"><span>5</span>Repos</a></li>
+<li><a href="#read"><span>6</span>Read / watch</a></li>
+<li><a href="#interview"><span>7</span>Interview Qs</a></li>
+<li><a href="#adr"><span>8</span>Architect's lens</a></li>
+<li><a href="#tomorrow"><span>9</span>Tomorrow</a></li>
+</ol></nav>
+<main>
+<header class="hero">
+<div class="eyebrow">Week 3 · Agentic systems · Day 16 of 30 · Sun 25 Oct 2026</div>
+<h1>Tool &amp; function calling across providers</h1>
+<p class="lede">The model only <em>proposes</em> a call. Your executor decides whether it runs, how it runs, and what the model sees back. That executor is where architecture lives: validation, parallelism, retries, approvals, budgets, and one tool contract that survives a provider switch.</p>
+<div class="meta"><span class="chip">OpenAI Responses</span><span class="chip">Anthropic Messages</span><span class="chip">Gemini</span><span class="chip">Ollama · qwen3:4b</span><span class="chip amber">~75 min exercise</span></div>
+</header>
+
+<h2 id="why"><span class="n">01</span>Why this matters for the JD</h2>
+<p>The JD's <b>agentic frameworks</b> line lists "tool calling, memory, planning, multi-agent, guardrails", and <b>multi-provider LLM integration (OpenAI/Azure OpenAI/Anthropic/Gemini/open-source)</b> is a preferred skill. Tool calling is where both meet: it is the mechanism behind copilots and workflow automation, and the place where provider APIs differ most. Expect a reviewer to ask "what happens when the model calls the refund tool twice?"</p>
+
+<h2 id="concept"><span class="n">02</span>Concept brief</h2>
+<h3>The loop, and who owns what</h3>
+<figure>
+<svg viewBox="0 0 760 300" width="100%" role="img" aria-label="Tool calling loop: app sends messages and tool schemas to the model; the model returns tool calls; the executor validates, applies policy, runs tools in parallel with timeouts and retries, and returns structured results to the model until it answers.">
+<defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0L10,5L0,10z" fill="var(--muted)"/></marker></defs>
+<g fill="var(--surface)" stroke="var(--line)" stroke-width="1.5">
+<rect x="10" y="110" width="120" height="70" rx="6"/>
+<rect x="210" y="20" width="160" height="80" rx="6" stroke="var(--accent)"/>
+<rect x="210" y="190" width="160" height="80" rx="6" stroke="var(--accent)"/>
+<rect x="450" y="40" width="300" height="220" rx="6" stroke="var(--amber)"/>
+</g>
+<g fill="var(--fg)" font-size="13">
+<text x="70" y="140" text-anchor="middle" font-weight="600">App / loop</text>
+<text x="70" y="160" text-anchor="middle" fill="var(--muted)" font-size="11">step budget</text>
+<text x="70" y="174" text-anchor="middle" fill="var(--muted)" font-size="11">loop guard</text>
+<text x="290" y="50" text-anchor="middle" font-weight="600">LLM</text>
+<text x="290" y="70" text-anchor="middle" fill="var(--muted)" font-size="11">picks tool + args</text>
+<text x="290" y="86" text-anchor="middle" fill="var(--muted)" font-size="11">(strict = constrained)</text>
+<text x="290" y="220" text-anchor="middle" font-weight="600">Tool results</text>
+<text x="290" y="240" text-anchor="middle" fill="var(--muted)" font-size="11">{ok, result | error}</text>
+<text x="290" y="256" text-anchor="middle" fill="var(--muted)" font-size="11">matched by call id</text>
+<text x="600" y="66" text-anchor="middle" font-weight="600" fill="var(--amber)">Executor (your code)</text>
+</g>
+<g font-size="12" fill="var(--fg)">
+<text x="470" y="98">1 resolve name · parse JSON</text>
+<text x="470" y="124">2 validate (Pydantic) → repair msg</text>
+<text x="470" y="150">3 policy: RBAC · approval · idempotency</text>
+<text x="470" y="176">4 run in parallel · timeout · retry</text>
+<text x="470" y="202">5 truncate/redact output</text>
+<text x="470" y="228">6 trace span + cost</text>
+</g>
+<g stroke="var(--muted)" stroke-width="1.5" fill="none" marker-end="url(#ar)">
+<path d="M130,130 L208,70"/>
+<path d="M372,60 L448,90"/>
+<path d="M448,220 L372,230"/>
+<path d="M208,230 L132,165"/>
+</g>
+<g font-size="11" fill="var(--muted)">
+<text x="120" y="88">msgs + tool schemas</text>
+<text x="380" y="62">tool_calls[]</text>
+<text x="96" y="222">append, re-call model</text>
+</g>
+</svg>
+<figcaption>The model never executes anything. Everything in the amber box is yours, and every guarantee you make in a design review lives there.</figcaption>
+</figure>
+
+<h3>Same idea, four wire formats</h3>
+<div class="tbl"><table>
+<thead><tr><th>Concern</th><th>OpenAI Responses</th><th>Anthropic Messages</th><th>Gemini</th><th>Ollama / open models</th></tr></thead>
+<tbody>
+<tr><td>Tool def</td><td><code>{type:"function", name, description, parameters, strict}</code></td><td><code>{name, description, input_schema, strict}</code></td><td>function declaration: <code>name, description, parameters</code></td><td>chat-completions style <code>{type:"function", function:{…}}</code>; or pass a Python function</td></tr>
+<tr><td>Call item</td><td><code>function_call</code> with <code>call_id</code>; <code>arguments</code> is a JSON <em>string</em></td><td><code>tool_use</code> block with <code>id</code>; <code>input</code> is an object</td><td><code>function_call</code> with <code>id</code> + args object</td><td><code>message.tool_calls[].function</code> {name, arguments}</td></tr>
+<tr><td>Return result</td><td><code>function_call_output</code> + <code>call_id</code></td><td><code>tool_result</code> + <code>tool_use_id</code>, all in <b>one</b> user message, before any text; <code>is_error</code></td><td>function result keyed by the call <code>id</code></td><td><code>{role:"tool", tool_name, content}</code></td></tr>
+<tr><td>Parallel control</td><td><code>parallel_tool_calls</code></td><td><code>tool_choice.disable_parallel_tool_use</code></td><td>parallel + compositional calling supported</td><td>model-dependent</td></tr>
+<tr><td>Schema guarantee</td><td><code>strict:true</code> (all props required, <code>additionalProperties:false</code>)</td><td><code>strict:true</code> (grammar-constrained; JSON-Schema subset)</td><td><code>validated</code> mode</td><td>none: validate yourself</td></tr>
+<tr><td>Scale features</td><td>namespaces, <code>defer_loading</code>, tool search; programmatic and async tool calling</td><td>tool search tool; MCP connector</td><td>auto function calling in SDK</td><td>—</td></tr>
+</tbody></table></div>
+<div class="callout"><strong>Gotchas reviewers probe.</strong> OpenAI reasoning models need their reasoning items passed back alongside the tool outputs. On Anthropic, splitting parallel <code>tool_result</code>s across several user messages quietly trains the model to stop parallelising, and per the docs the newest Claude models (Opus 5.5, Sonnet 5.5) don't accept the forced <code>any</code>/<code>tool</code> tool_choice. Ollama's function-to-schema helper marks parameters that have defaults as <code>required</code>, so hand-write or generate schemas for anything important. <b>watsonx.ai</b>: the chat API takes OpenAI-style <code>tools</code>/<code>tool_choice</code> for Granite and other hosted models, and Orchestrate wraps the same idea as tools/skills. The executor design below carries over unchanged.</div>
+
+<h3>Error taxonomy: who handles what</h3>
+<ul>
+<li><b>Malformed or invalid args</b>: return a compact validation error to the model and allow one repair attempt. Count these as a quality metric.</li>
+<li><b>Transient failures</b> (429, 503, timeout): the executor retries with backoff and jitter, and the model never sees it. Spending tokens on "please try again" is waste.</li>
+<li><b>Business errors</b> (order not found, amount over limit): return them to the model as data so it can explain or re-plan. Don't retry.</li>
+<li><b>Policy denials</b> (RBAC, human rejection): fail closed. Tell the model not to retry, and don't leak why the policy exists.</li>
+<li><b>Runaway loops</b>: enforce a step budget and an identical-call detector, then escalate to a human.</li>
+</ul>
+<p>Two facts carry the most weight in a review. <b>Strict decoding guarantees shape, not meaning</b>: <code>amount: 99999</code> is perfectly schema-valid. And <b>parallel calls are a concurrency problem</b>, with ordering, partial failure and duplicate side effects, so treat write tools as transactions with idempotency keys.</p>
+
+<h2 id="tradeoffs"><span class="n">03</span>Trade-offs &amp; decision table</h2>
+<div class="tbl"><table>
+<thead><tr><th>Option</th><th>Pick when</th><th>Failure mode</th><th>Cost / latency</th></tr></thead>
+<tbody>
+<tr><td>tool_choice = auto</td><td>Default for assistants: the model decides whether a tool is needed</td><td>Skips the tool and answers from parametric memory (hallucinated order status)</td><td>Lowest; one extra round-trip only when needed</td></tr>
+<tr><td>Forced / required tool</td><td>Extraction, routing, structured output via a tool</td><td>Forces a call even when the question is out of scope; not supported on some newest models</td><td>Predictable; always ≥1 round-trip</td></tr>
+<tr><td>Parallel calls ON</td><td>Independent reads (lookups, fan-out search)</td><td>Duplicate or conflicting writes; partial failure handling</td><td>Cuts wall-clock latency roughly by the fan-out factor</td></tr>
+<tr><td>Parallel OFF / serialize writes</td><td>Any tool with side effects, or ordered workflows</td><td>Slower; more turns</td><td>+1 model turn per call (~0.5–3 s each)</td></tr>
+<tr><td>Strict schema decoding</td><td>Always when supported, for small and flat schemas</td><td>Schema subset limits; first-use compile latency; still semantically wrong values</td><td>Small first-call overhead, then cached</td></tr>
+<tr><td>Validate-and-repair only</td><td>Open models (Ollama, vLLM) without constrained decoding</td><td>Repair loops burn tokens; small models give up</td><td>+1 turn per repair</td></tr>
+<tr><td>SDK auto-execution</td><td>Prototypes, notebooks</td><td>No approval gate, no idempotency, opaque retries, hard to trace</td><td>Fast to build; expensive to debug</td></tr>
+<tr><td>Own executor loop</td><td>Production</td><td>More code to own</td><td>Neutral; enables caching and budgets</td></tr>
+<tr><td>Many tools in context (&gt;20–30)</td><td>Rarely; only if they are all hot</td><td>Selection accuracy drops; schema tokens on every turn</td><td>Schemas billed each turn (mitigate with prompt caching)</td></tr>
+<tr><td>Tool search / deferred loading / routing</td><td>Large catalogs (MCP servers, enterprise APIs)</td><td>Retrieval misses the right tool</td><td>Extra search step; far fewer prompt tokens</td></tr>
+<tr><td>Programmatic tool calling</td><td>Loops over many items, data-heavy chains</td><td>Harder to audit; sandbox needed; vendor-specific</td><td>Fewer model turns; intermediate data stays out of context</td></tr>
+</tbody></table></div>
+
+<h2 id="exercise"><span class="n">04</span>Hands-on: a provider-neutral tool harness</h2>
+<p><b>Goal (60–90 min):</b> build a support-copilot executor with one canonical tool registry. It renders schemas for four providers, runs locally on Ollama, and enforces validation, parallel execution, retry with backoff, error-as-result, an approval gate with idempotency, and a loop guard. Then score it on an 8-case mini eval.</p>
+
+<h3>Setup (PowerShell)</h3>
+<div class="code"><div class="bar"><span>powershell</span><button class="copy" type="button">Copy</button></div><pre><code># 1. Ollama for Windows (native, no WSL needed) - https://ollama.com/download
+ollama pull qwen3:4b          # ~2.5 GB, fits the RTX 3050 6 GB; fallback: llama3.2:3b
+ollama list
+
+# 2. Project
+mkdir day16-tools; cd day16-tools
+py -3.13 -m venv .venv
+.\.venv\Scripts\Activate.ps1   # if blocked: Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
+python -m pip install --upgrade pip
+python -m pip install "ollama>=0.6.3" "pydantic>=2.14"
+
+# 3. Save tool_harness.py (below), then:
+python tool_harness.py --show-schemas   # same tool, 4 provider formats
+python tool_harness.py --mock           # tests the loop with a scripted fake model
+python tool_harness.py                  # real run + 8-case eval on qwen3:4b</code></pre></div>
+
+<h3>tool_harness.py</h3>
+<p class="out">Tested here in <code>--mock</code> mode against <code>ollama</code> 0.6.3 and <code>pydantic</code> 2.14. The real-model run depends on your local Ollama.</p>
+<div class="code"><div class="bar"><span>python · tool_harness.py</span><button class="copy" type="button">Copy</button></div><pre><code>&quot;&quot;&quot;
+Day 16 - Provider-neutral tool-calling harness (runs locally on Ollama).
+
+One canonical tool registry -&gt; adapters for OpenAI / Anthropic / Gemini / Ollama,
+plus a production-style execution loop: Pydantic validation, parallel execution,
+timeouts, retries for transient errors, error-as-tool-result, loop guard,
+step budget and a human-approval gate for side-effecting tools.
+
+Usage:
+  python tool_harness.py --mock            # no model needed: tests the loop logic
+  python tool_harness.py                   # real run against Ollama (qwen3:4b)
+  python tool_harness.py --model llama3.2:3b
+  python tool_harness.py --show-schemas    # print the same tool for 4 providers
+&quot;&quot;&quot;
+from __future__ import annotations
+
+import argparse
+import json
+import random
+import time
+import uuid
+from concurrent.futures import ThreadPoolExecutor, TimeoutError as FutTimeout
+from dataclasses import dataclass, field
+from typing import Any, Callable, Literal
+
+from pydantic import BaseModel, Field, ValidationError
+
+# --------------------------------------------------------------------------
+# 1. Canonical tool registry
+# --------------------------------------------------------------------------
+
+@dataclass
+class ToolSpec:
+    name: str
+    description: str
+    args: type[BaseModel]
+    fn: Callable[..., Any]
+    side_effect: bool = False      # writes -&gt; approval gate + idempotency
+    timeout_s: float = 5.0
+    retries: int = 2               # only for TransientError
+
+
+class TransientError(Exception):
+    &quot;&quot;&quot;Retryable failure (timeouts, 429/503 from a downstream API).&quot;&quot;&quot;
+
+
+def strict_schema(model: type[BaseModel]) -&gt; dict:
+    &quot;&quot;&quot;Pydantic JSON schema -&gt; &#x27;strict-mode friendly&#x27; schema:
+    every property required, additionalProperties false, no titles.&quot;&quot;&quot;
+    s = model.model_json_schema()
+
+    def walk(node: Any) -&gt; None:
+        if isinstance(node, dict):
+            node.pop(&quot;title&quot;, None)
+            if node.get(&quot;type&quot;) == &quot;object&quot;:
+                node[&quot;additionalProperties&quot;] = False
+                node[&quot;required&quot;] = list(node.get(&quot;properties&quot;, {}).keys())
+            for v in node.values():
+                walk(v)
+        elif isinstance(node, list):
+            for v in node:
+                walk(v)
+
+    walk(s)
+    return s
+
+
+# ---- adapters: same tool, four wire formats ------------------------------
+
+def to_openai(t: ToolSpec) -&gt; dict:      # Responses API function tool
+    return {&quot;type&quot;: &quot;function&quot;, &quot;name&quot;: t.name, &quot;description&quot;: t.description,
+            &quot;parameters&quot;: strict_schema(t.args), &quot;strict&quot;: True}
+
+
+def to_anthropic(t: ToolSpec) -&gt; dict:   # Messages API tool
+    return {&quot;name&quot;: t.name, &quot;description&quot;: t.description,
+            &quot;input_schema&quot;: strict_schema(t.args), &quot;strict&quot;: True}
+
+
+def to_gemini(t: ToolSpec) -&gt; dict:      # function declaration (OpenAPI-subset schema)
+    s = strict_schema(t.args)
+    s.pop(&quot;additionalProperties&quot;, None)  # not part of Gemini&#x27;s classic schema subset
+    return {&quot;name&quot;: t.name, &quot;description&quot;: t.description, &quot;parameters&quot;: s}
+
+
+def to_ollama(t: ToolSpec) -&gt; dict:      # OpenAI chat-completions style
+    return {&quot;type&quot;: &quot;function&quot;, &quot;function&quot;: {
+        &quot;name&quot;: t.name, &quot;description&quot;: t.description,
+        &quot;parameters&quot;: strict_schema(t.args)}}
+
+
+# --------------------------------------------------------------------------
+# 2. Demo tools (customer-support copilot)
+# --------------------------------------------------------------------------
+
+ORDERS = {
+    &quot;A100&quot;: {&quot;status&quot;: &quot;delivered&quot;, &quot;total&quot;: 2499.0, &quot;carrier&quot;: &quot;BlueDart&quot;},
+    &quot;A101&quot;: {&quot;status&quot;: &quot;in_transit&quot;, &quot;total&quot;: 899.0, &quot;carrier&quot;: &quot;Delhivery&quot;},
+    &quot;A102&quot;: {&quot;status&quot;: &quot;cancelled&quot;, &quot;total&quot;: 15999.0, &quot;carrier&quot;: None},
+}
+REFUNDS: dict[str, dict] = {}       # idempotency store: key -&gt; result
+
+
+class OrderArgs(BaseModel):
+    order_id: str = Field(pattern=r&quot;^A\d{3}$&quot;, description=&quot;Order id, e.g. A100&quot;)
+
+
+class KBArgs(BaseModel):
+    query: str = Field(min_length=3, description=&quot;Natural-language search query&quot;)
+
+
+class RefundArgs(BaseModel):
+    order_id: str = Field(pattern=r&quot;^A\d{3}$&quot;)
+    amount: float = Field(gt=0, description=&quot;Refund amount in INR&quot;)
+    reason: Literal[&quot;damaged&quot;, &quot;late&quot;, &quot;cancelled&quot;, &quot;other&quot;]
+
+
+def get_order(order_id: str) -&gt; dict:
+    if order_id not in ORDERS:
+        raise KeyError(f&quot;order {order_id} not found&quot;)
+    return {&quot;order_id&quot;: order_id, **ORDERS[order_id]}
+
+
+def get_tracking(order_id: str) -&gt; dict:
+    if random.random() &lt; 0.35:                       # flaky downstream
+        raise TransientError(&quot;carrier API 503&quot;)
+    o = get_order(order_id)
+    return {&quot;order_id&quot;: order_id, &quot;carrier&quot;: o[&quot;carrier&quot;],
+            &quot;eta_days&quot;: 2 if o[&quot;status&quot;] == &quot;in_transit&quot; else 0}
+
+
+def search_kb(query: str) -&gt; dict:
+    kb = {&quot;refund&quot;: &quot;Refunds allowed within 30 days; max = order total.&quot;,
+          &quot;shipping&quot;: &quot;Standard shipping 3-5 days; express 1-2 days.&quot;}
+    hits = [v for k, v in kb.items() if k in query.lower()]
+    return {&quot;hits&quot;: hits or [&quot;No article found.&quot;]}
+
+
+def issue_refund(order_id: str, amount: float, reason: str) -&gt; dict:
+    o = get_order(order_id)
+    if amount &gt; o[&quot;total&quot;]:
+        raise ValueError(f&quot;amount {amount} exceeds order total {o[&#x27;total&#x27;]}&quot;)
+    return {&quot;refund_id&quot;: &quot;R-&quot; + uuid.uuid4().hex[:6], &quot;order_id&quot;: order_id,
+            &quot;amount&quot;: amount, &quot;reason&quot;: reason}
+
+
+TOOLS = {t.name: t for t in [
+    ToolSpec(&quot;get_order&quot;, &quot;Look up an order&#x27;s status and total by order id.&quot;, OrderArgs, get_order),
+    ToolSpec(&quot;get_tracking&quot;, &quot;Get carrier and ETA for an order.&quot;, OrderArgs, get_tracking, timeout_s=3),
+    ToolSpec(&quot;search_kb&quot;, &quot;Search the support knowledge base for policy articles.&quot;, KBArgs, search_kb),
+    ToolSpec(&quot;issue_refund&quot;, &quot;Issue a refund. Side-effecting: requires human approval.&quot;,
+             RefundArgs, issue_refund, side_effect=True),
+]}
+
+# --------------------------------------------------------------------------
+# 3. Executor: validate -&gt; approve -&gt; run with timeout/retry -&gt; structured result
+# --------------------------------------------------------------------------
+
+TOOL_POOL = ThreadPoolExecutor(max_workers=8)   # runs tool functions
+CALL_POOL = ThreadPoolExecutor(max_workers=8)   # runs execute() per call (separate pool -&gt; no nested-pool deadlock)
+
+
+@dataclass
+class Stats:
+    calls: int = 0
+    invalid_args: int = 0
+    tool_errors: int = 0
+    retries: int = 0
+    blocked: int = 0
+    tools_used: list[str] = field(default_factory=list)
+
+
+def approve(spec: ToolSpec, args: dict, auto: bool | None) -&gt; bool:
+    if auto is not None:
+        return auto
+    ans = input(f&quot;\n  APPROVAL NEEDED -&gt; {spec.name}({args}) [y/N]: &quot;)
+    return ans.strip().lower() == &quot;y&quot;
+
+
+def execute(name: str, raw_args: Any, stats: Stats, auto_approve: bool | None) -&gt; dict:
+    stats.calls += 1
+    stats.tools_used.append(name)
+    spec = TOOLS.get(name)
+    if spec is None:
+        stats.invalid_args += 1
+        return {&quot;ok&quot;: False, &quot;error&quot;: f&quot;unknown tool &#x27;{name}&#x27;. Available: {list(TOOLS)}&quot;}
+    if isinstance(raw_args, str):                    # some providers send JSON strings
+        try:
+            raw_args = json.loads(raw_args or &quot;{}&quot;)
+        except json.JSONDecodeError as e:
+            stats.invalid_args += 1
+            return {&quot;ok&quot;: False, &quot;error&quot;: f&quot;arguments were not valid JSON: {e}&quot;}
+    try:
+        args = spec.args.model_validate(raw_args).model_dump()
+    except ValidationError as e:
+        stats.invalid_args += 1
+        # Give the model a compact, actionable error so it can self-repair.
+        errs = [f&quot;{&#x27;.&#x27;.join(map(str, x[&#x27;loc&#x27;]))}: {x[&#x27;msg&#x27;]}&quot; for x in e.errors()]
+        return {&quot;ok&quot;: False, &quot;error&quot;: &quot;invalid arguments&quot;, &quot;details&quot;: errs}
+
+    if spec.side_effect:
+        key = f&quot;{name}:{json.dumps(args, sort_keys=True)}&quot;   # idempotency key
+        if key in REFUNDS:
+            return {&quot;ok&quot;: True, &quot;result&quot;: REFUNDS[key], &quot;note&quot;: &quot;duplicate call - returned cached result&quot;}
+        if not approve(spec, args, auto_approve):
+            stats.blocked += 1
+            return {&quot;ok&quot;: False, &quot;error&quot;: &quot;rejected by human reviewer; do not retry, tell the user&quot;}
+
+    for attempt in range(spec.retries + 1):
+        fut = TOOL_POOL.submit(spec.fn, **args)
+        try:
+            result = fut.result(timeout=spec.timeout_s)
+            if spec.side_effect:
+                REFUNDS[key] = result
+            return {&quot;ok&quot;: True, &quot;result&quot;: result}
+        except (TransientError, FutTimeout) as e:
+            if attempt &lt; spec.retries:
+                stats.retries += 1
+                time.sleep(0.2 * 2 ** attempt + random.random() * 0.1)  # backoff + jitter
+                continue
+            stats.tool_errors += 1
+            return {&quot;ok&quot;: False, &quot;error&quot;: f&quot;transient failure after retries: {e!r}&quot;, &quot;retryable&quot;: False}
+        except Exception as e:                       # business error: don&#x27;t retry
+            stats.tool_errors += 1
+            return {&quot;ok&quot;: False, &quot;error&quot;: f&quot;{type(e).__name__}: {e}&quot;}
+    return {&quot;ok&quot;: False, &quot;error&quot;: &quot;unreachable&quot;}
+
+
+# --------------------------------------------------------------------------
+# 4. Agent loop (Ollama chat API)
+# --------------------------------------------------------------------------
+
+SYSTEM = (&quot;You are a support copilot. Use tools for any order fact; never guess. &quot;
+          &quot;Call independent tools in parallel. If a tool returns ok=false, fix the &quot;
+          &quot;arguments once or explain the problem to the user. Answer concisely.&quot;)
+
+
+def run(client, model: str, user_msg: str, auto_approve: bool | None = True,
+        max_steps: int = 6, verbose: bool = True) -&gt; tuple[str, Stats]:
+    stats = Stats()
+    msgs: list[dict] = [{&quot;role&quot;: &quot;system&quot;, &quot;content&quot;: SYSTEM},
+                        {&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: user_msg}]
+    seen: dict[str, int] = {}
+    tools = [to_ollama(t) for t in TOOLS.values()]
+    for step in range(max_steps):
+        resp = client.chat(model=model, messages=msgs, tools=tools,
+                           options={&quot;temperature&quot;: 0})
+        m = resp.message
+        calls = m.tool_calls or []
+        msgs.append({&quot;role&quot;: &quot;assistant&quot;, &quot;content&quot;: m.content or &quot;&quot;,
+                     &quot;tool_calls&quot;: [c.model_dump() if hasattr(c, &quot;model_dump&quot;) else c
+                                    for c in calls]})
+        if not calls:
+            return m.content or &quot;&quot;, stats
+        if verbose:
+            print(f&quot;  step {step}: {len(calls)} tool call(s) -&gt; &quot;
+                  + &quot;, &quot;.join(f&quot;{c.function.name}({dict(c.function.arguments)})&quot; for c in calls))
+        # Loop guard: the same call 3x means the model is stuck.
+        for c in calls:
+            sig = c.function.name + json.dumps(dict(c.function.arguments), sort_keys=True)
+            seen[sig] = seen.get(sig, 0) + 1
+            if seen[sig] &gt;= 3:
+                return &quot;[aborted: repeated identical tool call - escalate to human]&quot;, stats
+        # Parallel execution of independent calls; results appended in call order.
+        futs = [CALL_POOL.submit(execute, c.function.name, dict(c.function.arguments),
+                            stats, auto_approve) for c in calls]
+        for c, f in zip(calls, futs):
+            out = f.result()
+            msgs.append({&quot;role&quot;: &quot;tool&quot;, &quot;tool_name&quot;: c.function.name,
+                         &quot;content&quot;: json.dumps(out)})
+    return &quot;[aborted: step budget exhausted]&quot;, stats
+
+
+# --------------------------------------------------------------------------
+# 5. Mock client (lets you test the harness with no model)
+# --------------------------------------------------------------------------
+
+class _Fn:
+    def __init__(self, name, arguments): self.name, self.arguments = name, arguments
+class _Call:
+    def __init__(self, name, args): self.function = _Fn(name, args)
+    def model_dump(self): return {&quot;function&quot;: {&quot;name&quot;: self.function.name, &quot;arguments&quot;: self.function.arguments}}
+class _Msg:
+    def __init__(self, content=&quot;&quot;, tool_calls=None): self.content, self.tool_calls = content, tool_calls
+class _Resp:
+    def __init__(self, msg): self.message = msg
+
+
+class MockClient:
+    &quot;&quot;&quot;Scripted &#x27;model&#x27;: parallel calls, a bad-arg call, self-repair, final answer.&quot;&quot;&quot;
+    def chat(self, model, messages, tools, options=None):
+        n_tool = sum(1 for m in messages if m[&quot;role&quot;] == &quot;tool&quot;)
+        if n_tool == 0:
+            return _Resp(_Msg(tool_calls=[_Call(&quot;get_order&quot;, {&quot;order_id&quot;: &quot;A101&quot;}),
+                                          _Call(&quot;get_tracking&quot;, {&quot;order_id&quot;: &quot;A101&quot;}),
+                                          _Call(&quot;search_kb&quot;, {&quot;query&quot;: &quot;ok&quot;})]))   # too short -&gt; invalid
+        if n_tool == 3:
+            return _Resp(_Msg(tool_calls=[_Call(&quot;search_kb&quot;, {&quot;query&quot;: &quot;shipping policy&quot;})]))
+        return _Resp(_Msg(content=&quot;Order A101 is in transit with Delhivery, ETA ~2 days.&quot;))
+
+
+# --------------------------------------------------------------------------
+# 6. Mini eval: tool selection + arg validity + latency
+# --------------------------------------------------------------------------
+
+CASES = [
+    (&quot;What&#x27;s the status of order A100?&quot;, {&quot;get_order&quot;}),
+    (&quot;Where is my order A101 and when will it arrive?&quot;, {&quot;get_tracking&quot;}),
+    (&quot;What is your refund policy?&quot;, {&quot;search_kb&quot;}),
+    (&quot;Compare the totals of orders A100 and A102.&quot;, {&quot;get_order&quot;}),
+    (&quot;Order A100 arrived damaged, refund the full 2499.&quot;, {&quot;issue_refund&quot;}),
+    (&quot;Refund 99999 on order A101 because it was late.&quot;, {&quot;issue_refund&quot;, &quot;get_order&quot;}),
+    (&quot;What&#x27;s the capital of France?&quot;, set()),
+    (&quot;Status of order B999?&quot;, {&quot;get_order&quot;}),
+]
+
+
+def evaluate(client, model: str) -&gt; None:
+    print(f&quot;\n=== Eval on {model} ({len(CASES)} cases) ===&quot;)
+    hit = 0; tot = Stats(); t0 = time.perf_counter()
+    for q, expected in CASES:
+        t = time.perf_counter()
+        ans, s = run(client, model, q, auto_approve=True, verbose=False)
+        used = set(s.tools_used)
+        ok = (expected &lt;= used) if expected else not used
+        hit += ok
+        for f in (&quot;calls&quot;, &quot;invalid_args&quot;, &quot;tool_errors&quot;, &quot;retries&quot;, &quot;blocked&quot;):
+            setattr(tot, f, getattr(tot, f) + getattr(s, f))
+        print(f&quot;{&#x27;PASS&#x27; if ok else &#x27;FAIL&#x27;} {time.perf_counter()-t:5.1f}s  used={sorted(used)!s:40} q={q[:45]}&quot;)
+    print(f&quot;\nTool-selection accuracy: {hit}/{len(CASES)}  | calls={tot.calls} &quot;
+          f&quot;invalid_args={tot.invalid_args} tool_errors={tot.tool_errors} &quot;
+          f&quot;retries={tot.retries}  | total {time.perf_counter()-t0:.1f}s&quot;)
+
+
+if __name__ == &quot;__main__&quot;:
+    ap = argparse.ArgumentParser()
+    ap.add_argument(&quot;--model&quot;, default=&quot;qwen3:4b&quot;)
+    ap.add_argument(&quot;--mock&quot;, action=&quot;store_true&quot;)
+    ap.add_argument(&quot;--show-schemas&quot;, action=&quot;store_true&quot;)
+    ap.add_argument(&quot;--no-eval&quot;, action=&quot;store_true&quot;)
+    a = ap.parse_args()
+    random.seed(7)
+
+    if a.show_schemas:
+        t = TOOLS[&quot;issue_refund&quot;]
+        for fn in (to_openai, to_anthropic, to_gemini, to_ollama):
+            print(f&quot;--- {fn.__name__} ---\n{json.dumps(fn(t), indent=2)}&quot;)
+        raise SystemExit
+
+    if a.mock:
+        client = MockClient()
+    else:
+        from ollama import Client
+        client = Client()                       # http://localhost:11434
+
+    print(&quot;=== Demo conversation ===&quot;)
+    ans, st = run(client, a.model, &quot;Where is order A101 and what&#x27;s your shipping policy?&quot;)
+    print(&quot;\nANSWER:&quot;, ans)
+    print(&quot;STATS:&quot;, st)
+    if not a.no_eval and not a.mock:
+        evaluate(client, a.model)
+</code></pre></div>
+
+<h3>Expected output</h3>
+<div class="code"><div class="bar"><span>--mock (verified)</span><button class="copy" type="button">Copy</button></div><pre><code>=== Demo conversation ===
+  step 0: 3 tool call(s) -> get_order({'order_id': 'A101'}), get_tracking({'order_id': 'A101'}), search_kb({'query': 'ok'})
+  step 1: 1 tool call(s) -> search_kb({'query': 'shipping policy'})
+
+ANSWER: Order A101 is in transit with Delhivery, ETA ~2 days.
+STATS: Stats(calls=4, invalid_args=1, tool_errors=0, retries=1, blocked=0, tools_used=[...])</code></pre></div>
+<p>In the real run, expect roughly 5–7 of 8 eval cases to pass on <code>qwen3:4b</code>, with 2–10 s per case on the 3050. The interesting failures are usually these:</p>
+<ul>
+<li>"capital of France" triggers a needless tool call.</li>
+<li>The 99,999 refund is attempted without checking the order total first. The executor's business rule catches it, and the model has to explain the rejection.</li>
+<li><code>B999</code> fails the regex. Watch whether the model repairs the call or asks the user.</li>
+</ul>
+<p>Write those observations down. They are your evidence for "why server-side validation is non-negotiable".</p>
+
+<h3>Stretch goals</h3>
+<ol>
+<li><b>Second provider, same registry.</b> Add a <code>run_openai()</code> or <code>run_anthropic()</code> loop that uses <code>to_openai</code>/<code>to_anthropic</code> on a free or trial key, or point the OpenAI SDK at Ollama's OpenAI-compatible endpoint <code>http://localhost:11434/v1</code>. Make the 8 cases pass on both, and diff where the wire formats forced changes: call-id matching, JSON-string vs object args, batching tool results into one message.</li>
+<li><b>Real cancellation and tracing.</b> <code>future.result(timeout)</code> stops <em>waiting</em> but cannot kill a Python thread. Rewrite the executor with <code>asyncio</code> + <code>asyncio.wait_for</code> (or a subprocess for CPU-bound tools). Then emit one JSON log line per call (tool, latency_ms, ok, attempt, args hash) so it can feed into Langfuse on Day 27.</li>
+</ol>
+
+<h2 id="repos"><span class="n">05</span>GitHub repos to study</h2>
+<div class="grid2">
+<div class="repo"><a href="https://github.com/ollama/ollama-python">ollama/ollama-python</a><p>Read <code>ollama/_utils.py</code> (function → schema conversion and its <code>required</code> quirk) and <code>examples/</code> for the tool loop. Current release on PyPI: 0.6.3.</p></div>
+<div class="repo"><a href="https://github.com/BerriAI/litellm">BerriAI/litellm</a><p>Read the provider transformation code under <code>litellm/llms/</code> to see how a gateway maps one tool schema onto Anthropic, Gemini and Bedrock. This is a preview of Day 23.</p></div>
+<div class="repo"><a href="https://github.com/ShishirPatil/gorilla">ShishirPatil/gorilla</a><p>Read <code>berkeley-function-call-leaderboard/</code>: the BFCL v4 categories (simple, parallel, multiple, irrelevance, multi-turn) and AST-based checking. Borrow the taxonomy for your own golden set.</p></div>
+<div class="repo"><a href="https://github.com/anthropics/claude-cookbooks">anthropics/claude-cookbooks</a><p>Read the <code>tool_use/</code> notebooks: customer-service agent, forced tool use for extraction, and tool-result error handling.</p></div>
+</div>
+
+<h2 id="read"><span class="n">06</span>Read / watch</h2>
+<ul>
+<li><a href="https://developers.openai.com/api/docs/guides/function-calling">OpenAI: Function calling guide</a>. Covers strict mode, namespaces with <code>defer_loading</code>, and tool search. The companion pages on <a href="https://developers.openai.com/api/docs/guides/tools-programmatic-tool-calling">programmatic tool calling</a> and <a href="https://developers.openai.com/api/docs/guides/async-tool-calling">async tool calling</a> show where the pattern is heading.</li>
+<li><a href="https://platform.claude.com/docs/en/agents-and-tools/tool-use/parallel-tool-use">Anthropic: Parallel tool use</a> and <a href="https://platform.claude.com/docs/en/agents-and-tools/tool-use/strict-tool-use">strict tool use</a>. These cover the result-batching rule, <code>is_error</code> for calls that weren't executed, and the strict-schema limits.</li>
+<li><a href="https://gorilla.cs.berkeley.edu/leaderboard">Berkeley Function-Calling Leaderboard</a>. Use it to choose open models for tool use (check the irrelevance and multi-turn columns, not only the overall score), plus the <a href="https://ai.google.dev/gemini-api/docs/function-calling">Gemini function calling docs</a> for the third wire format.</li>
+</ul>
+
+<h2 id="interview"><span class="n">07</span>Interview questions</h2>
+<details><summary>1. Your agent occasionally sends invalid arguments in production. Where do you enforce correctness?</summary>
+<p>At two layers. First, enable strict, grammar-constrained decoding where the provider supports it, which removes shape errors. Second, keep the server-side validator authoritative, because strict mode can't express business rules and open models have no strict mode at all. On failure, return a compact, field-level error as the tool result and allow one bounded repair. Track the invalid-arg rate per model and prompt version as an SLO, and alert on regressions after a model upgrade.</p></details>
+<details><summary>2. The model issues two parallel calls to <code>issue_refund</code>. What's your design?</summary>
+<p>Treat it as a distributed-systems problem.</p><ul><li>Write tools get an idempotency key derived from normalized args plus the conversation id, with dedupe at the executor and ideally at the downstream API too.</li><li>Disable parallelism for turns that include write tools, or let the executor serialize writes and run reads concurrently.</li><li>Put an approval gate (HITL) or a policy limit on high-value actions.</li><li>On partial failure, return per-call results. On Anthropic, mark calls that weren't executed with <code>is_error</code> and the text "not executed".</li><li>Audit-log every write with its call id.</li></ul></details>
+<details><summary>3. We have 300 internal APIs exposed as tools. How do you keep selection accuracy and cost under control?</summary>
+<p>Don't put 300 schemas in every prompt. Accuracy drops and you pay for those schema tokens on every turn.</p><ul><li>Group tools into namespaces or domains.</li><li>Use a router or intent classifier, or the providers' tool search and deferred loading (OpenAI <code>defer_loading</code>, Anthropic tool search), to load only a handful of relevant tools.</li><li>Keep the hot set stable so prompt caching covers it.</li><li>Write tool descriptions like API docs, covering when to use and when <em>not</em> to use each tool.</li><li>Measure with a BFCL-style golden set that includes "irrelevance" cases where no tool should be called.</li></ul></details>
+<details><summary>4. How do you design for multi-provider tool calling without lowest-common-denominator lock-in?</summary>
+<p>Own a canonical tool contract: name, description, Pydantic/JSON-Schema args, side-effect flag, timeout and auth scope. Keep thin adapters per provider, or a gateway such as LiteLLM for transport. Those adapters absorb the differences: call-id matching, JSON-string vs object args, batching rules for results, and reasoning-item passthrough. Use provider-specific features (strict, tool search, programmatic calling) behind capability flags. Back it with contract tests per provider in CI that replay the same golden cases, so a fallback route to another provider is proven before it's needed.</p></details>
+<details><summary>5. Walk me through your error-handling policy for tools.</summary>
+<p>Classify each error, then route it:</p><ul><li><b>Validation errors</b> go back to the model for a single repair.</li><li><b>Transient errors</b> are retried inside the executor with exponential backoff and jitter behind a circuit breaker, and the model never sees them.</li><li><b>Business errors</b> go back to the model as data.</li><li><b>Policy or auth denials</b> fail closed with a "do not retry" instruction.</li><li><b>Timeouts</b> mean real cancellation (async, or a subprocess). A thread you stop waiting on isn't cancelled.</li></ul><p>Wrap the whole loop in a step budget, a token/cost budget and an identical-call detector, and escalate to a human when any of them trips. Also truncate and redact tool outputs. They count against the context window, and they are an injection surface (Day 21).</p></details>
+
+<h2 id="adr"><span class="n">08</span>Architect's lens</h2>
+<div class="adr">
+<div class="eyebrow">ADR-016 · Tool execution layer for the support copilot</div>
+<dl>
+<dt>Context</dt><dd>The copilot calls 12 internal tools, 3 of which write (refunds, ticket updates, address change). The primary model is on Azure OpenAI, failover goes to Anthropic, and the on-prem Granite path runs on watsonx.ai. Audit requires a trace for every write. The p95 latency target is 6 s.</dd>
+<dt>Options</dt><dd>(A) Provider SDK auto-execution per provider. (B) A framework's tool abstraction only (LangChain/LangGraph tools). (C) A canonical tool registry plus our own executor, with thin provider adapters; LiteLLM is allowed for transport.</dd>
+<dt>Decision</dt><dd><b>C.</b> The executor owns validation, RBAC scope checks, approval for writes over ₹5,000, idempotency keys, retries, timeouts and tracing. Strict mode is on wherever the provider supports it. Parallel calls are allowed for reads, and writes are serialized. Budgets are 6 model steps and 3 identical calls. LangGraph nodes (Day 17) call this executor rather than raw tools.</dd>
+<dt>Consequences</dt><dd>Plus: provider switching becomes a config change proven by contract tests, one audit trail covers every write, and write behaviour is deterministic. Minus: we own about 500 lines of infra code, adapters lag new provider features (tool search, programmatic calling) until we flag them in, and the team needs a golden tool-call eval in CI (Day 26). We revisit this ADR if one provider's hosted agent runtime becomes the standard.</dd>
+</dl>
+</div>
+
+<div class="tomorrow" id="tomorrow"><span class="eyebrow">09 · Tomorrow</span><br><b>Day 17: LangGraph.</b> State, nodes, conditional edges, checkpointing, human-in-the-loop and streaming. Today's executor becomes a graph node with a real interrupt for approval.</div>
+</main>
+</div>
+
+<script>
+document.querySelectorAll('button.copy').forEach(function(b){
+  b.addEventListener('click',function(){
+    var code=b.closest('.code').querySelector('pre');
+    var text=code.innerText;
+    function done(msg){b.textContent=msg;setTimeout(function(){b.textContent='Copy'},1500)}
+    function fallback(){var r=document.createRange();r.selectNodeContents(code);var s=getSelection();s.removeAllRanges();s.addRange(r);done('Press Ctrl+C')}
+    try{navigator.clipboard.writeText(text).then(function(){done('Copied')},fallback)}catch(e){fallback()}
+  });
+});
+</script>
+
+</body></html>

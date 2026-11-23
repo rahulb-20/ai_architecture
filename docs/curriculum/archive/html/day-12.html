@@ -1,0 +1,530 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>GenAI Prep · Day 12 — Multimodal RAG</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=Newsreader:opsz,wght@6..72,500;6..72,600&display=swap">
+<style>
+/* Layout: single reading column (~72ch) with a sticky section index on wide screens; "scanned page" motif — paper ground, ink-blue text, highlighter marks for key terms */
+:root{
+  --bg:#f6f7f4; --paper:#ffffff; --ink:#1b2430; --muted:#5b6573; --line:#dde1dc;
+  --accent:#2b5f8a; --accent-soft:#e3edf5; --mark:#fbe89a; --code-bg:#f0f2ee;
+  --good:#2f7a4f; --warn:#a2661a; --bad:#a63d3d;
+  --f-display:"Newsreader", Georgia, "Times New Roman", serif;
+  --f-body:"IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --f-mono:"IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#12161b; --paper:#181d24; --ink:#e3e7ec; --muted:#9aa4b1; --line:#2a313b;
+  --accent:#8bb8de; --accent-soft:#1f2c3a; --mark:#5c4f1c; --code-bg:#0f1318;
+  --good:#7cc59a; --warn:#e0b064; --bad:#e58f8f; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#12161b; --paper:#181d24; --ink:#e3e7ec; --muted:#9aa4b1; --line:#2a313b;
+  --accent:#8bb8de; --accent-soft:#1f2c3a; --mark:#5c4f1c; --code-bg:#0f1318;
+  --good:#7cc59a; --warn:#e0b064; --bad:#e58f8f; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:16px/1.62 var(--f-body);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 64px}
+.wrap{max-width:1120px;margin:0 auto;display:grid;grid-template-columns:200px minmax(0,1fr);gap:48px}
+@media (max-width:860px){.wrap{grid-template-columns:minmax(0,1fr)} nav.toc{display:none}}
+nav.toc{position:sticky;top:calc(env(safe-area-inset-top,0px) + 24px);align-self:start;padding-top:40px;font-size:13px}
+nav.toc ol{list-style:none;margin:0;padding:0;display:grid;gap:6px;counter-reset:s}
+nav.toc a{color:var(--muted);text-decoration:none}
+nav.toc a:hover,nav.toc a:focus-visible{color:var(--accent)}
+main{min-width:0;max-width:760px}
+header.hero{padding-block:40px 24px;border-bottom:1px solid var(--line);margin-bottom:8px}
+.eyebrow{font:500 12px/1 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+h1{font:600 clamp(30px,5vw,44px)/1.1 var(--f-display);margin:12px 0 12px;text-wrap:balance}
+h2{font:600 26px/1.2 var(--f-display);margin:0 0 14px;text-wrap:balance}
+h3{font:600 16px/1.3 var(--f-body);margin:22px 0 8px}
+.lede{color:var(--muted);font-size:17px;margin:0;max-width:65ch}
+.meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+.chip{font:500 12px/1 var(--f-mono);padding:6px 9px;border:1px solid var(--line);border-radius:4px;color:var(--muted);background:var(--paper)}
+section{padding-block:36px 8px;border-bottom:1px solid var(--line)}
+section:last-of-type{border-bottom:0}
+p,li{max-width:68ch}
+mark{background:var(--mark);color:inherit;padding:0 2px}
+a{color:var(--accent)}
+a:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.sn{font:500 13px var(--f-mono);color:var(--accent);margin-right:8px}
+.callout{background:var(--accent-soft);border-radius:6px;padding:14px 16px;margin:16px 0}
+.callout p{margin:0}
+.callout p+p{margin-top:8px}
+.tbl{overflow-x:auto;margin:14px 0;border:1px solid var(--line);border-radius:6px;background:var(--paper)}
+table{border-collapse:collapse;width:100%;font-size:14px;min-width:680px}
+th,td{text-align:left;vertical-align:top;padding:10px 12px;border-bottom:1px solid var(--line)}
+th{font:600 12px/1.3 var(--f-mono);letter-spacing:.04em;text-transform:uppercase;color:var(--muted);background:var(--code-bg)}
+tr:last-child td{border-bottom:0}
+td strong{display:block}
+.diagram{overflow-x:auto;margin:18px 0;padding:12px;border:1px solid var(--line);border-radius:6px;background:var(--paper)}
+.diagram svg{display:block;min-width:640px;width:100%;height:auto}
+.diagram text{font-family:var(--f-body)}
+.cap{font-size:13px;color:var(--muted);margin-top:6px}
+.code{position:relative;margin:12px 0}
+.code pre{margin:0;overflow-x:auto;background:var(--code-bg);border:1px solid var(--line);border-radius:6px;padding:14px 16px;font:13px/1.55 var(--f-mono);tab-size:4}
+.code .lbl{font:500 11px var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:4px;display:block}
+.copy{position:absolute;top:26px;right:8px;font:500 12px var(--f-mono);padding:5px 9px;border-radius:4px;border:1px solid var(--line);background:var(--paper);color:var(--ink);cursor:pointer}
+.copy:hover{border-color:var(--accent);color:var(--accent)}
+code{font-family:var(--f-mono);font-size:.9em;background:var(--code-bg);padding:1px 4px;border-radius:3px}
+pre code{background:none;padding:0;font-size:inherit}
+.steps{display:grid;gap:4px;padding-left:20px}
+.qa{display:grid;gap:12px;margin-top:8px}
+details{background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:12px 16px}
+details[open]{padding-bottom:16px}
+summary{cursor:pointer;font-weight:600}
+summary::marker{color:var(--accent)}
+details p,details ul{margin:10px 0 0}
+.repo{display:grid;gap:12px}
+.repo div{padding:12px 0;border-top:1px solid var(--line)}
+.repo div:first-child{border-top:0}
+.repo .stat{font:12px var(--f-mono);color:var(--muted)}
+.adr{display:grid;grid-template-columns:140px minmax(0,1fr);gap:10px 18px;background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:18px}
+.adr dt{font:600 12px/1.6 var(--f-mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.adr dd{margin:0}
+@media (max-width:560px){.adr{grid-template-columns:minmax(0,1fr)} .adr dd{margin-bottom:6px}}
+.pill{font:500 11px var(--f-mono);padding:2px 6px;border-radius:3px;border:1px solid currentColor;white-space:nowrap}
+.pill.g{color:var(--good)} .pill.w{color:var(--warn)} .pill.b{color:var(--bad)}
+.tomorrow{font-family:var(--f-display);font-size:20px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+<nav class="toc" aria-label="Sections">
+  <ol>
+    <li><a href="#why">Why it matters</a></li>
+    <li><a href="#concept">Concept brief</a></li>
+    <li><a href="#tradeoffs">Trade-offs</a></li>
+    <li><a href="#lab">Hands-on lab</a></li>
+    <li><a href="#repos">Repos</a></li>
+    <li><a href="#read">Read / watch</a></li>
+    <li><a href="#interview">Interview Qs</a></li>
+    <li><a href="#adr">Architect's lens</a></li>
+    <li><a href="#tomorrow">Tomorrow</a></li>
+  </ol>
+</nav>
+
+<main>
+<header class="hero">
+  <div class="eyebrow">Week 2 · Production retrieval · Day 12 of 30</div>
+  <h1>Multimodal RAG: tables, figures and scanned pages</h1>
+  <p class="lede">Most enterprise answers sit in a table cell, a chart or a scanned annex, and plain-text extraction loses them. Today you design ingestion that keeps structure and test it against a naive baseline on your own laptop.</p>
+  <div class="meta">
+    <span class="chip">Wed 21 Oct 2026</span>
+    <span class="chip">docling 2.141 · docling-core 2.103</span>
+    <span class="chip">colpali-engine 0.3.18</span>
+    <span class="chip">ollama-python 0.6.3</span>
+  </div>
+</header>
+
+<section id="why">
+  <h2><span class="sn">1</span>Why this matters for the JD</h2>
+  <p>The JD's headline use cases are <strong>document Q&amp;A, knowledge assistants and search</strong>, and enterprise documents are PDFs with tables, charts and scans. The "Preferred" line on <strong>RAG optimization (chunking…)</strong> and the must-have on <strong>evaluation (groundedness, faithfulness)</strong> both break first on non-text content. The <strong>multi-provider</strong> line now includes vision models (GPT/Claude/Gemini vision, Granite Vision, Qwen-VL). Expect a design-review question like "your bot can't answer from the rate table on page 14. Why, and what do you change?"</p>
+</section>
+
+<section id="concept">
+  <h2><span class="sn">2</span>Concept brief</h2>
+  <p>A multimodal RAG system has two design problems, and people tend to merge them. The first is <mark>representation</mark>: what you index for each element (a text chunk, a table, a figure, a whole page image). The second is <mark>generation input</mark>: what the answering model actually sees (the same text, the raw table HTML, or the original pixels). There are three architectures in use, plus hybrids of them.</p>
+
+  <div class="diagram" role="img" aria-label="Three multimodal RAG architectures: parse to text, multi-vector, and vision-native page retrieval">
+  <svg viewBox="0 0 760 336" xmlns="http://www.w3.org/2000/svg">
+    <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker></defs>
+    <g font-size="12" fill="var(--ink)">
+      <!-- lane labels -->
+      <text x="10" y="58" font-weight="600" fill="var(--accent)">A · Parse → text</text>
+      <text x="10" y="158" font-weight="600" fill="var(--accent)">B · Multi-vector</text>
+      <text x="10" y="258" font-weight="600" fill="var(--accent)">C · Vision-native</text>
+      <!-- source -->
+      <rect x="10" y="80" width="0" height="0" fill="none"/>
+      <!-- Lane A -->
+      <rect x="130" y="38" width="128" height="40" rx="4" fill="var(--paper)" stroke="var(--line)"/>
+      <text x="194" y="55" text-anchor="middle">Layout + OCR +</text><text x="194" y="70" text-anchor="middle">table structure</text>
+      <rect x="290" y="38" width="128" height="40" rx="4" fill="var(--paper)" stroke="var(--line)"/>
+      <text x="354" y="55" text-anchor="middle">Markdown/HTML;</text><text x="354" y="70" text-anchor="middle">figure → caption</text>
+      <rect x="450" y="38" width="128" height="40" rx="4" fill="var(--paper)" stroke="var(--line)"/>
+      <text x="514" y="55" text-anchor="middle">1 dense vector</text><text x="514" y="70" text-anchor="middle">per chunk</text>
+      <rect x="610" y="38" width="140" height="40" rx="4" fill="var(--accent-soft)" stroke="var(--accent)"/>
+      <text x="680" y="55" text-anchor="middle">Text LLM sees</text><text x="680" y="70" text-anchor="middle">extracted text</text>
+      <line x1="258" y1="58" x2="288" y2="58" stroke="var(--muted)" marker-end="url(#ar)"/>
+      <line x1="418" y1="58" x2="448" y2="58" stroke="var(--muted)" marker-end="url(#ar)"/>
+      <line x1="578" y1="58" x2="608" y2="58" stroke="var(--muted)" marker-end="url(#ar)"/>
+      <!-- Lane B -->
+      <rect x="130" y="138" width="128" height="40" rx="4" fill="var(--paper)" stroke="var(--line)"/>
+      <text x="194" y="155" text-anchor="middle">Typed elements</text><text x="194" y="170" text-anchor="middle">text · table · figure</text>
+      <rect x="290" y="128" width="128" height="26" rx="4" fill="var(--paper)" stroke="var(--line)"/>
+      <text x="354" y="145" text-anchor="middle">summary → index</text>
+      <rect x="290" y="162" width="128" height="26" rx="4" fill="var(--paper)" stroke="var(--line)"/>
+      <text x="354" y="179" text-anchor="middle">raw → doc store</text>
+      <rect x="450" y="138" width="128" height="40" rx="4" fill="var(--paper)" stroke="var(--line)"/>
+      <text x="514" y="155" text-anchor="middle">match summary,</text><text x="514" y="170" text-anchor="middle">fetch raw by id</text>
+      <rect x="610" y="138" width="140" height="40" rx="4" fill="var(--accent-soft)" stroke="var(--accent)"/>
+      <text x="680" y="155" text-anchor="middle">LLM/VLM sees raw</text><text x="680" y="170" text-anchor="middle">table HTML / image</text>
+      <line x1="258" y1="150" x2="288" y2="142" stroke="var(--muted)" marker-end="url(#ar)"/>
+      <line x1="258" y1="166" x2="288" y2="174" stroke="var(--muted)" marker-end="url(#ar)"/>
+      <line x1="418" y1="142" x2="448" y2="152" stroke="var(--muted)" marker-end="url(#ar)"/>
+      <line x1="418" y1="175" x2="448" y2="166" stroke="var(--muted)" marker-end="url(#ar)"/>
+      <line x1="578" y1="158" x2="608" y2="158" stroke="var(--muted)" marker-end="url(#ar)"/>
+      <!-- Lane C -->
+      <rect x="130" y="238" width="128" height="40" rx="4" fill="var(--paper)" stroke="var(--line)"/>
+      <text x="194" y="255" text-anchor="middle">Render page</text><text x="194" y="270" text-anchor="middle">as image</text>
+      <rect x="290" y="238" width="128" height="40" rx="4" fill="var(--paper)" stroke="var(--line)"/>
+      <text x="354" y="255" text-anchor="middle">ColPali / ColQwen</text><text x="354" y="270" text-anchor="middle">~1k patch vectors</text>
+      <rect x="450" y="238" width="128" height="40" rx="4" fill="var(--paper)" stroke="var(--line)"/>
+      <text x="514" y="255" text-anchor="middle">MaxSim late</text><text x="514" y="270" text-anchor="middle">interaction search</text>
+      <rect x="610" y="238" width="140" height="40" rx="4" fill="var(--accent-soft)" stroke="var(--accent)"/>
+      <text x="680" y="255" text-anchor="middle">VLM sees top-k</text><text x="680" y="270" text-anchor="middle">page images</text>
+      <line x1="258" y1="258" x2="288" y2="258" stroke="var(--muted)" marker-end="url(#ar)"/>
+      <line x1="418" y1="258" x2="448" y2="258" stroke="var(--muted)" marker-end="url(#ar)"/>
+      <line x1="578" y1="258" x2="608" y2="258" stroke="var(--muted)" marker-end="url(#ar)"/>
+      <!-- footer notes -->
+      <text x="130" y="306" font-size="11" fill="var(--muted)">A: cheap index, weak on charts  ·  B: best default for mixed corpora</text><text x="130" y="322" font-size="11" fill="var(--muted)">C: no parsing, but a heavy index and no text for BM25 or ACL redaction</text>
+    </g>
+  </svg>
+  </div>
+
+  <h3>A. Parse to text (the "textify" baseline done properly)</h3>
+  <p>A layout model segments each page into typed regions (title, paragraph, table, figure, caption, header and footer). OCR runs only where there is no text layer. A table-structure model (TableFormer in Docling) rebuilds rows and columns. Figures get a VLM caption. The output is Markdown or HTML that keeps reading order and headings, and that feeds the structure-aware chunking from Day 6. This covers most of the value at the lowest index cost. It fails on charts, where the caption is lossy, and on any layout the parser misreads.</p>
+
+  <h3>B. Multi-vector: index a proxy, generate from the original</h3>
+  <p>Each element gets a <em>retrieval representation</em>, such as an LLM summary of a table ("quarterly premium rates by age band; highest is…") or a VLM description of a chart. The <em>raw element</em> goes into a doc store under the same id. At query time you match on the summary and pass the raw table HTML, or the image itself, to the generator. The summary is phrased the way people ask questions. The raw element keeps the exact numbers. This is the LangChain <code>MultiVectorRetriever</code> pattern, and it is what today's lab builds.</p>
+
+  <h3>C. Vision-native retrieval (ColPali family)</h3>
+  <p>Render every page as an image and embed it with a VLM retriever. ColPali, ColQwen and ColSmol produce one vector per image patch, roughly 1,030 × 128-dim vectors per page, and score queries with ColBERT-style <strong>MaxSim</strong>. No parsing is needed, and it does very well on slide decks, infographics and forms. The costs are architectural.</p>
+  <ul>
+    <li><strong>Index size:</strong> 1,030 × 128 × 4 B ≈ <strong>527 KB per page</strong> in float32, against about 3 KB for one 768-d dense vector. At 1M pages that is about 527 GB. Binary quantization brings it to about 16 KB per page, and pooling or a dense first-stage retriever cuts it further.</li>
+    <li><strong>Infra:</strong> you need multi-vector / late-interaction support (Vespa, Qdrant multivector, Milvus, Weaviate multi-vector, or brute force for small corpora).</li>
+    <li><strong>No text:</strong> without text you get no BM25 leg for hybrid search (Day 9), no exact-quote citations, and no text-level PII redaction or field-level ACL. Production systems usually run C alongside A or B rather than instead of them.</li>
+  </ul>
+
+  <h3>What breaks in practice</h3>
+  <ul>
+    <li><strong>Tables split by chunking</strong>, so headers get separated from values. Treat each table as an atomic element. For very large tables, chunk by row groups and repeat the header in every chunk.</li>
+    <li><strong>VLMs inventing chart numbers.</strong> A 2B vision model will confidently read "42%" off a bar it cannot resolve. Mark figure-derived facts as approximate, give the original image to the generator for numeric questions, and include chart questions in the golden set.</li>
+    <li><strong>Reading order</strong> on multi-column pages, rotated scans, and footnotes or running headers that pollute every chunk.</li>
+    <li><strong>Tables spanning pages</strong> and merged header cells. Check how your parser stitches them before you trust aggregate answers.</li>
+    <li><strong>Aggregate questions</strong> ("total exposure across all regions") are not retrieval problems. Route them to SQL over extracted tables (text-to-SQL), not to top-k chunks.</li>
+    <li><strong>Parser drift.</strong> A parser upgrade changes chunk boundaries and ids. Store <code>parser_version</code> in metadata and treat re-parsing as a planned, evaluated migration.</li>
+  </ul>
+
+  <div class="callout">
+    <p><strong>Platform map.</strong> Self-hosted: Docling (IBM Research, now LF AI &amp; Data), Unstructured, MinerU, Granite-Docling-258M as an end-to-end page→DocTags VLM. watsonx: Docling and Granite Vision are IBM's own stack, and the watsonx.ai text-extraction service covers managed parsing. Azure: AI Document Intelligence (layout model) feeding AI Search. AWS: Textract and Bedrock Data Automation / Knowledge Bases advanced parsing. GCP: Document AI layout parser feeding Vertex AI RAG Engine or Vector Search.</p>
+    <p><strong>Provenance is a feature.</strong> Docling keeps a page number and bounding box for every element. Store them, and the UI can highlight the exact table cell region behind a citation, which compliance reviewers value more than a slightly better retrieval score.</p>
+  </div>
+</section>
+
+<section id="tradeoffs">
+  <h2><span class="sn">3</span>Trade-offs &amp; decision table</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>Option</th><th>Pick when</th><th>Failure modes</th><th>Cost / latency</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Naive text extraction</strong>pypdf / PyMuPDF</td><td>Born-digital prose (policies, contracts) with few tables; prototypes</td><td>Tables flattened into number soup; figures and scans invisible; headers and footers mixed into chunks</td><td><span class="pill g">lowest</span> ms per page, CPU only</td></tr>
+      <tr><td><strong>Layout-aware parser</strong>Docling, Unstructured <code>hi_res</code>, MinerU</td><td>Default for mixed enterprise PDFs; self-hosted or data-residency constraints</td><td>Misread complex tables; OCR quality on poor scans and Indic scripts; parser upgrades change output</td><td><span class="pill w">medium</span> about 0.5–3 s per page on CPU, much faster on GPU; model downloads</td></tr>
+      <tr><td><strong>Managed document AI</strong>Azure DI, Textract, Document AI, watsonx.ai text extraction</td><td>You are on that cloud already, need SLAs, forms and key-value extraction, and the scale does not justify running GPUs</td><td>Per-page pricing at scale; region availability; lock-in on output schema</td><td><span class="pill w">per-page fee</span> async APIs, seconds per page</td></tr>
+      <tr><td><strong>Multi-vector + VLM generation</strong>summary indexed, raw passed</td><td>Tables and charts carry the answers (finance, insurance, engineering specs)</td><td>Summary misses what users ask; ingestion LLM cost; two stores to keep in sync</td><td><span class="pill w">ingest-heavy</span> one LLM/VLM call per table or figure at ingest; generation sees more tokens</td></tr>
+      <tr><td><strong>Vision-native</strong>ColPali / ColQwen / ColSmol</td><td>Slides, infographics, forms, scans where parsing fails; small to medium corpora</td><td>Huge index; no BM25, no exact quotes; page-level granularity only; harder ACL and PII control</td><td><span class="pill b">index-heavy</span> about 0.5 MB per page in float32; GPU to embed; VLM at answer time</td></tr>
+      <tr><td><strong>End-to-end VLM parser</strong>Granite-Docling-258M, VLM pipelines</td><td>Complex layouts (equations, code, nested tables) where the classic pipeline struggles</td><td>Generative output can hallucinate or loop; slower; needs a GPU in practice</td><td><span class="pill w">GPU</span> seconds per page; small model, so it fits laptop-class GPUs</td></tr>
+    </tbody>
+  </table></div>
+  <div class="callout"><p><strong>Ingestion cost model to quote in a review:</strong> <code>pages × (parse_s/page) / GPU_workers</code> for throughput, plus <code>(tables + figures) × (img_tokens + out_tokens) × price</code> for captioning. A 100k-page corpus averaging 1.5 figures and 0.8 tables per page means about 230k model calls at ingest. Price that before you choose B, and cache by content hash so a re-ingest does not pay twice.</p></div>
+</section>
+
+<section id="lab">
+  <h2><span class="sn">4</span>Hands-on lab · 75 min</h2>
+  <p><strong>Goal:</strong> ingest a real technical PDF (the Docling technical report, which contains a runtime table and pipeline figures) into a <em>typed, multi-vector</em> index. Text chunks use Docling's HybridChunker, tables are indexed by LLM summary and answered from raw Markdown, and figures are described by Granite Vision. Then compare retrieval against a naive pypdf baseline. Everything runs locally through Ollama, with no API keys.</p>
+  <p><strong>Fits your laptop:</strong> granite3.2-vision (2.4 GB) and granite3.3:2b each fit in 6 GB VRAM, and Ollama swaps them as needed. Docling runs on CPU by default on Windows, which is fine for a 9-page PDF. No WSL2 or Docker needed.</p>
+
+  <h3>Setup (PowerShell)</h3>
+  <div class="code"><span class="lbl">powershell</span><button class="copy" type="button">Copy</button><pre><code>mkdir day12-mmrag; cd day12-mmrag
+py -3.13 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -U pip
+python -m pip install docling pypdf ollama numpy
+
+# Ollama for Windows must be running (tray icon). Pull the three models:
+ollama pull nomic-embed-text
+ollama pull granite3.2-vision
+ollama pull granite3.3:2b
+
+# Sample PDF: Docling Technical Report (arXiv 2408.09869)
+Invoke-WebRequest https://arxiv.org/pdf/2408.09869 -OutFile docling_report.pdf
+
+# Optional: silence the Hugging Face symlink warning on Windows
+$env:HF_HUB_DISABLE_SYMLINKS_WARNING = "1"</code></pre></div>
+  <p class="cap">On first run Docling downloads its layout and TableFormer weights from Hugging Face (a few hundred MB). For GPU parsing later, install a CUDA build of torch using the selector on pytorch.org. It is optional today.</p>
+
+  <h3>Starter code: <code>mmrag.py</code></h3>
+  <div class="code"><span class="lbl">python</span><button class="copy" type="button">Copy</button><pre><code>"""
+Day 12 - Multimodal RAG on a laptop (Docling + Ollama, no cloud keys).
+
+  py mmrag.py ingest docling_report.pdf      # parse -&gt; elements -&gt; embeddings
+  py mmrag.py ask "your question"            # retrieve + grounded answer
+  py mmrag.py compare                        # structured vs naive-text retrieval on QUESTIONS
+
+Models (Ollama): nomic-embed-text (embeddings), granite3.2-vision (figures),
+granite3.3:2b (table summaries + answers). Swap via env vars below.
+"""
+import json, os, sys, time
+from pathlib import Path
+
+import numpy as np
+import ollama
+
+EMBED = os.getenv("EMBED_MODEL", "nomic-embed-text")
+VISION = os.getenv("VISION_MODEL", "granite3.2-vision")
+LLM = os.getenv("LLM_MODEL", "granite3.3:2b")
+OUT = Path("mm_index"); OUT.mkdir(exist_ok=True)
+FIG_DIR = OUT / "figures"; FIG_DIR.mkdir(exist_ok=True)
+
+# Edit these after looking at your PDF: mix text, table and figure questions.
+QUESTIONS = [
+    "Which hardware/thread configuration gave the fastest pages-per-second, and what was it?",
+    "What does the architecture figure show about the processing pipeline stages?",
+    "Which models does Docling use for layout analysis and table structure?",
+]
+
+
+# ---------- embeddings ----------
+def embed(texts, kind):
+    # nomic-embed-text is trained with task prefixes; skipping them costs recall.
+    prefix = "search_document: " if kind == "doc" else "search_query: "
+    vecs = []
+    for i in range(0, len(texts), 32):
+        r = ollama.embed(model=EMBED, input=[prefix + t for t in texts[i:i + 32]])
+        vecs.extend(r.embeddings)
+    m = np.asarray(vecs, dtype=np.float32)
+    return m / np.linalg.norm(m, axis=1, keepdims=True)
+
+
+def llm(prompt, model=LLM, images=None):
+    msg = {"role": "user", "content": prompt}
+    if images:
+        msg["images"] = images
+    r = ollama.chat(model=model, messages=[msg], options={"temperature": 0})
+    return r.message.content.strip()
+
+
+# ---------- ingest: one record per *element*, typed ----------
+def ingest(pdf):
+    from docling.document_converter import DocumentConverter, PdfFormatOption
+    from docling.datamodel.base_models import InputFormat
+    from docling.datamodel.pipeline_options import PdfPipelineOptions
+    from docling.chunking import HybridChunker
+
+    opts = PdfPipelineOptions()
+    opts.do_table_structure = True          # TableFormer -&gt; real rows/cols
+    opts.generate_picture_images = True     # keep figure crops for the VLM
+    opts.images_scale = 2.0                 # ~144 dpi crops; VLMs need pixels
+    conv = DocumentConverter(format_options={InputFormat.PDF: PdfFormatOption(pipeline_options=opts)})
+
+    t0 = time.perf_counter()
+    doc = conv.convert(pdf).document
+    print(f"[parse] {pdf}: {len(doc.texts)} text items, {len(doc.tables)} tables, "
+          f"{len(doc.pictures)} pictures in {time.perf_counter()-t0:.1f}s")
+    (OUT / "doc.md").write_text(doc.export_to_markdown(), encoding="utf-8")
+
+    records = []  # {id, type, page, embed_text, payload}
+
+    # 1) text: structure-aware chunks (headings carried into each chunk)
+    chunker = HybridChunker()
+    for i, ch in enumerate(chunker.chunk(dl_doc=doc)):
+        items = ch.meta.doc_items or []
+        if items and all(it.label.value in ("table", "picture") for it in items):
+            continue  # tables/figures get their own records below
+        page = items[0].prov[0].page_no if items and items[0].prov else None
+        ctx = chunker.contextualize(chunk=ch)  # "Heading &gt; Subheading\ntext"
+        records.append(dict(id=f"txt{i}", type="text", page=page, embed_text=ctx, payload=ctx))
+
+    # 2) tables: embed a summary, generate from the raw markdown (multi-vector pattern)
+    for i, tbl in enumerate(doc.tables):
+        md = tbl.export_to_markdown(doc=doc)
+        cap = tbl.caption_text(doc) or ""
+        page = tbl.prov[0].page_no if tbl.prov else None
+        summary = llm(
+            "Summarise this table for search indexing in 3 sentences. Name the columns, "
+            "what each row represents, and the most notable values.\n"
+            f"Caption: {cap}\n\n{md[:6000]}")
+        records.append(dict(id=f"tbl{i}", type="table", page=page,
+                            embed_text=f"Table. {cap}\n{summary}", payload=f"{cap}\n{md}"))
+        print(f"[table] tbl{i} p{page}: {summary[:90]}...")
+
+    # 3) figures: VLM description becomes the searchable text
+    for i, pic in enumerate(doc.pictures):
+        img = pic.get_image(doc)
+        if img is None or min(img.size) &lt; 64:
+            continue  # skip logos / icons
+        path = FIG_DIR / f"fig{i}.png"; img.save(path)
+        cap = pic.caption_text(doc) or ""
+        desc = llm(
+            "Describe this figure from a technical document for a search index. "
+            "State the figure type, the components or axes, and any text or numbers you can read. "
+            f"Caption (may be empty): {cap}", model=VISION, images=[str(path)])
+        page = pic.prov[0].page_no if pic.prov else None
+        records.append(dict(id=f"fig{i}", type="figure", page=page,
+                            embed_text=f"Figure. {cap}\n{desc}", payload=f"{cap}\n{desc}", image=str(path)))
+        print(f"[figure] fig{i} p{page}: {desc[:90]}...")
+
+    E = embed([r["embed_text"] for r in records], "doc")
+    np.save(OUT / "vectors.npy", E)
+    (OUT / "records.json").write_text(json.dumps(records, indent=1), encoding="utf-8")
+
+    # naive baseline: plain text per page, fixed 1200-char windows (no tables, no figures)
+    from pypdf import PdfReader
+    naive = []
+    for pno, page in enumerate(PdfReader(pdf).pages, start=1):
+        t = page.extract_text() or ""
+        naive += [dict(id=f"naive{pno}_{j}", type="text", page=pno, embed_text=t[j:j+1200], payload=t[j:j+1200])
+                  for j in range(0, len(t), 1000) if t[j:j+1200].strip()]
+    np.save(OUT / "naive_vectors.npy", embed([r["embed_text"] for r in naive], "doc"))
+    (OUT / "naive_records.json").write_text(json.dumps(naive), encoding="utf-8")
+    counts = {t: sum(r["type"] == t for r in records) for t in ("text", "table", "figure")}
+    print(f"[index] structured={counts}  naive={len(naive)} chunks  -&gt; {OUT}/")
+
+
+# ---------- retrieve + answer ----------
+def load(prefix=""):
+    recs = json.loads((OUT / f"{prefix}records.json").read_text(encoding="utf-8"))
+    return recs, np.load(OUT / f"{prefix}vectors.npy")
+
+
+def retrieve(q, recs, E, k=4):
+    s = E @ embed([q], "query")[0]
+    idx = np.argsort(-s)[:k]
+    return [(recs[i], float(s[i])) for i in idx]
+
+
+def ask(q, k=4):
+    recs, E = load()
+    hits = retrieve(q, recs, E, k)
+    ctx = "\n\n".join(f"[{r['id']} | {r['type']} | p.{r['page']}]\n{r['payload'][:2500]}" for r, _ in hits)
+    ans = llm(
+        "Answer using ONLY the sources below. Cite source ids in square brackets after each claim. "
+        "If the sources do not contain the answer, reply exactly: NOT IN SOURCES.\n\n"
+        f"{ctx}\n\nQuestion: {q}")
+    for r, s in hits:
+        print(f"  {s:.3f}  {r['id']:&lt;7} {r['type']:&lt;6} p.{r['page']}")
+    print("\n" + ans)
+
+
+def compare():
+    S = load(); N = load("naive_")
+    for q in QUESTIONS:
+        print(f"\nQ: {q}")
+        for name, (recs, E) in (("structured", S), ("naive", N)):
+            hits = retrieve(q, recs, E, 4)
+            print(f"  {name:&lt;10} " + "  ".join(f"{r['id']}(p{r['page']},{s:.2f})" for r, s in hits))
+
+
+if __name__ == "__main__":
+    cmd = sys.argv[1] if len(sys.argv) &gt; 1 else ""
+    if cmd == "ingest": ingest(sys.argv[2])
+    elif cmd == "ask": ask(" ".join(sys.argv[2:]))
+    elif cmd == "compare": compare()
+    else: print(__doc__)
+</code></pre></div>
+
+  <h3>Run it</h3>
+  <div class="code"><span class="lbl">powershell</span><button class="copy" type="button">Copy</button><pre><code>python mmrag.py ingest docling_report.pdf
+python mmrag.py compare
+python mmrag.py ask "On which hardware and thread count did Docling process the most pages per second?"
+python mmrag.py ask "What is the capital of France?"   # should answer NOT IN SOURCES</code></pre></div>
+
+  <h3>Expected output (shape; your counts and scores will differ)</h3>
+  <div class="code"><span class="lbl">output</span><button class="copy" type="button">Copy</button><pre><code>[parse] docling_report.pdf: ~300 text items, 2+ tables, 3+ pictures in 40-120s (CPU)
+[table] tbl0 p.N: The table reports Docling runtime on two systems (e.g. an Apple laptop and
+        an x86 server) with 4 and 16 threads; columns include ... pages/s ...
+[figure] fig0 p.1: The figure is a diagram of the Docling processing pipeline: a PDF is
+        parsed, passed through layout analysis and table structure models, ...
+[index] structured={'text': 2x, 'table': 2, 'figure': 3}  naive=4x chunks  -&gt; mm_index/
+
+&gt; python mmrag.py compare
+Q: Which hardware/thread configuration gave the fastest pages-per-second, and what was it?
+  structured tbl0(pN,0.7x)  txt1x(pN,0.6x)  ...
+  naive      naiveN_0(pN,0.6x)  naiveM_1(pM,0.5x)  ...   # page text, table flattened
+
+&gt; python mmrag.py ask "On which hardware and thread count ... most pages per second?"
+  0.7xx  tbl0    table  p.N
+  ...
+The fastest configuration was &lt;system&gt; with 16 threads at &lt;n&gt; pages/s [tbl0].</code></pre></div>
+
+  <h3>What to observe and write down (10 min)</h3>
+  <ol class="steps">
+    <li>Open <code>mm_index/doc.md</code> and compare its runtime table with what pypdf produced. Is the table still a grid?</li>
+    <li>For the table question, does <em>structured</em> rank <code>tbl*</code> first while <em>naive</em> returns page-level text with the numbers out of order?</li>
+    <li>Read every figure description in <code>records.json</code>. Mark each number the VLM "read" as correct, wrong or invented. That count is your figure-hallucination rate.</li>
+    <li>Check the abstention: the off-topic question must return <code>NOT IN SOURCES</code>.</li>
+  </ol>
+
+  <h3>Stretch goals</h3>
+  <ol class="steps">
+    <li><strong>Vision-native leg.</strong> <code>python -m pip install colpali-engine</code>, render pages with <code>pypdfium2</code> (already installed with Docling, so no Poppler needed on Windows), embed them with <code>vidore/colSmol-256M</code> (small enough for 6 GB; colqwen2 is tight), and score with the processor's MaxSim. Report top-1 page accuracy against the structured index on the same questions, plus the per-page index size in KB.</li>
+    <li><strong>Modality-stratified eval.</strong> Write 12 golden questions (4 text, 4 table, 4 figure), each with the expected element id or page. Compute hit@1 and hit@4 per modality for structured and naive. Then switch figure captioning to <code>qwen2.5vl:3b</code> and see whether the figure row moves. This table is the artefact you would show in a design review.</li>
+  </ol>
+</section>
+
+<section id="repos">
+  <h2><span class="sn">5</span>GitHub repos to study</h2>
+  <div class="repo">
+    <div><a href="https://github.com/docling-project/docling">docling-project/docling</a> <span class="stat">· ~69k ★ · MIT · PyPI release 20 Oct 2026</span><br>Read <code>docling/pipeline/</code> (standard vs VLM pipeline) and <code>docling/models/</code> to see where layout, OCR, TableFormer and picture description plug in. The examples folder has the chunking and picture-description recipes.</div>
+    <div><a href="https://github.com/Unstructured-IO/unstructured">Unstructured-IO/unstructured</a> <span class="stat">· ~15k ★ · Apache-2.0 · PyPI release 20 Oct 2026</span><br>Compare the <code>partition_pdf</code> strategies (<code>fast</code>, <code>hi_res</code>, <code>ocr_only</code>, <code>auto</code>) and its element types against Docling's model. Note that it requires Python below 3.14, and <code>hi_res</code> needs Poppler and Tesseract (easiest under WSL2 on Windows).</div>
+    <div><a href="https://github.com/illuin-tech/colpali">illuin-tech/colpali</a> <span class="stat">· ~2.7k ★ · MIT · colpali-engine 0.3.18 (Aug 2026)</span><br>The reference implementation for ColPali, ColQwen and ColSmol. Look at the processors' <code>score_multi_vector</code> (MaxSim) and the token-pooling utilities that reduce index size.</div>
+    <div><a href="https://github.com/HKUDS/RAG-Anything">HKUDS/RAG-Anything</a> <span class="stat">· ~23k ★ · MIT · active in 2026</span><br>An end-to-end multimodal RAG framework built on LightRAG, with MinerU or Docling parsing. Study how it builds a knowledge graph across text, tables, images and equations, and where that adds ingest cost.</div>
+  </div>
+</section>
+
+<section id="read">
+  <h2><span class="sn">6</span>Read / watch</h2>
+  <ul>
+    <li><a href="https://arxiv.org/abs/2407.01449">ColPali: Efficient Document Retrieval with Vision Language Models</a> (Faysse et al., ICLR 2025). Read sections 3–4 for the late-interaction design and the ViDoRe benchmark, and the latency comparison against parse-then-embed pipelines.</li>
+    <li><a href="https://arxiv.org/abs/2408.09869">Docling Technical Report</a> (IBM Research). It is short, and it is also the PDF you ingest today. Read the architecture and the runtime table before you run the lab.</li>
+    <li><a href="https://www.ibm.com/think/tutorials/build-multimodal-rag-langchain-with-docling-granite">IBM tutorial: multimodal RAG with Docling and Granite</a>. The watsonx-flavoured version of today's lab with LangChain, which you can reuse for an IBM CoE demo. Pair it with Docling's <a href="https://docling-project.github.io/docling/examples/pictures_description/">picture-description example</a>.</li>
+  </ul>
+</section>
+
+<section id="interview">
+  <h2><span class="sn">7</span>Interview questions</h2>
+  <div class="qa">
+    <details><summary>An insurer's bot answers prose questions well but fails on premium tables. How do you redesign ingestion?</summary>
+      <p>Diagnose first: look at the chunks. Usually the table was flattened or split away from its header. Fix it in layers.</p>
+      <ul><li>Use a layout-aware parser with table structure (Docling/TableFormer, Azure DI layout).</li><li>Make each table an atomic element with its caption and section heading. For large tables, use row-group chunks that repeat the header.</li><li>Index an LLM summary phrased the way users ask, and generate from the raw HTML.</li><li>Route aggregate or computed questions to SQL over the extracted tables.</li><li>Prove it with a golden set stratified by modality, reporting table hit@k and exact-match on numbers.</li></ul></details>
+    <details><summary>When would you choose ColPali-style retrieval over parse-then-embed, and what would you warn the client about?</summary>
+      <p>Choose it for visually dense corpora where parsing loses meaning (slide decks, infographics, forms, poor scans) and moderate page counts. Warn about four things.</p>
+      <ul><li>Index size is about 0.5 MB per page in float32 (16 KB binarized), so 1M pages is hundreds of GB.</li><li>It needs late-interaction support in the vector DB.</li><li>Granularity is the page, so citations are coarse.</li><li>With no text there is no BM25 leg, no quote-level grounding and no text-level PII redaction.</li></ul><p>My default is hybrid: a parsed text index for precision and governance, plus a ColPali index for the visual subset, fused with RRF.</p></details>
+    <details><summary>Your VLM captions charts with confident but wrong numbers. What controls do you put in place?</summary>
+      <ul><li>Prompt captions to describe structure and trends, and to quote only numbers printed on the chart.</li><li>Tag figure-derived records as approximate in metadata.</li><li>For numeric questions, give the generator the original image, or better the underlying data if a source table exists, rather than the caption.</li><li>Prefer the source spreadsheet or table when the chart has one.</li><li>Add chart questions to the golden set and track a figure-hallucination rate.</li><li>Let the answer abstain or say "approximately" when the only evidence is a figure.</li></ul></details>
+    <details><summary>Design ingestion for 2M scanned and born-digital pages a month. What are the NFRs and the architecture?</summary>
+      <ul><li>Event-driven: object-store upload → queue → stateless parser workers on a GPU node pool with autoscaling (KEDA on queue depth).</li><li>Detect a text layer and OCR only the pages without one.</li><li>Use a content-hash for idempotency and a dead-letter queue for poison documents.</li><li>Store the parser and model version on every element.</li><li>Throughput: about 2M ÷ 22 working days ÷ 8 h ≈ 3 pages/s sustained. Size workers for the peak, not the average.</li><li>Track cost per page as a metric, and keep data residency by self-hosting the parser in-region.</li></ul></details>
+    <details><summary>How do you evaluate a multimodal RAG system?</summary>
+      <ul><li>Evaluate at three layers.</li><li><strong>Parse quality:</strong> TEDS for table structure, CER/WER for OCR on a sampled set, and reading-order spot checks.</li><li><strong>Retrieval:</strong> hit@k and context recall per modality (text, table, figure, scan). A single averaged score hides a broken table path.</li><li><strong>Generation:</strong> faithfulness and answer correctness, with exact-match for numeric answers.</li><li>Run the suite as a regression gate on every parser, embedding or VLM upgrade, because a parser upgrade is a data migration.</li></ul></details>
+  </div>
+</section>
+
+<section id="adr">
+  <h2><span class="sn">8</span>Architect's lens: ADR-012</h2>
+  <dl class="adr">
+    <dt>Title</dt><dd>Ingestion representation for a regulated BFSI document assistant (policies, rate tables, scanned annexures)</dd>
+    <dt>Context</dt><dd>About 400k pages, about 30% of answer-bearing content in tables, about 10% scanned. India data residency (DPDP), citations required for auditors, existing watsonx.ai tenancy, and a 3-person platform team.</dd>
+    <dt>Options</dt><dd>(1) pypdf text only. (2) Docling layout parse + table summaries + VLM figure captions (multi-vector). (3) ColQwen page-image retrieval only. (4) Managed cloud document AI.</dd>
+    <dt>Decision</dt><dd>Option 2, self-hosted in-region on the existing OpenShift GPU pool. Tables are atomic elements and aggregate queries route to SQL. Option 3 runs as a secondary index only for the slide-deck collection, fused with RRF.</dd>
+    <dt>Why not</dt><dd>(1) fails the table questions in the pilot golden set. (3) alone gives page-level citations, has no BM25 and adds about 200 GB of index. (4) is blocked by residency for some documents and raises per-page cost at re-ingest.</dd>
+    <dt>Consequences</dt><dd>GPU capacity is needed at ingest. Parser and model versions are pinned and recorded per element, and upgrades go through a re-parse plus an evaluation gate. Captioning cost is budgeted and cached by content hash. The golden set is stratified by modality and owned by the business SME.</dd>
+  </dl>
+</section>
+
+<section id="tomorrow">
+  <h2><span class="sn">9</span>Tomorrow</h2>
+  <p class="tomorrow">Day 13: Feedback loops and continuous RAG improvement, plus latency and cost optimisation (semantic caching, prompt caching).</p>
+</section>
+</main>
+</div>
+
+<script>
+document.querySelectorAll('.copy').forEach(function(btn){
+  btn.addEventListener('click',function(){
+    var code=btn.parentElement.querySelector('pre').innerText;
+    function done(t){btn.textContent=t;setTimeout(function(){btn.textContent='Copy'},1500)}
+    function fallback(){var r=document.createRange();r.selectNodeContents(btn.parentElement.querySelector('pre'));var s=getSelection();s.removeAllRanges();s.addRange(r);done('Select + Ctrl+C')}
+    try{navigator.clipboard.writeText(code).then(function(){done('Copied')},fallback)}catch(e){fallback()}
+  });
+});
+</script>
+
+</body></html>

@@ -1,0 +1,23 @@
+<svg font-family="IBM Plex Sans, Segoe UI, Arial, sans-serif" aria-label="LCEL RAG pipeline on top, LangChain 1.x package layers below" role="img" style="background:#ffffff" viewbox="0 0 760 340" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="ar" markerheight="7" markerwidth="7" orient="auto" refx="9" refy="5" viewbox="0 0 10 10"><path d="M0,0L10,5L0,10z" fill="#555"></path></marker></defs>
+
+<text class="h" x="10" y="18">ONE LCEL CHAIN · TODAY'S LAB</text>
+<rect class="b" height="80" rx="6" width="80" x="10" y="34"></rect><text class="t" text-anchor="middle" x="50" y="70">question</text><text class="s" text-anchor="middle" x="50" y="88">str</text>
+<rect class="c" height="40" rx="6" width="130" x="110" y="30"></rect><text class="t" text-anchor="middle" x="175" y="55">retriever (k=3)</text>
+<rect class="c" height="40" rx="6" width="130" x="110" y="78"></rect><text class="t" text-anchor="middle" x="175" y="103">passthrough</text>
+<text class="s" text-anchor="middle" x="175" y="134">RunnableParallel</text>
+<rect class="b" height="80" rx="6" width="110" x="260" y="34"></rect><text class="t" text-anchor="middle" x="315" y="66">assign</text><text class="s" text-anchor="middle" x="315" y="84">context=fmt(docs)</text>
+<rect class="b" height="80" rx="6" width="86" x="390" y="34"></rect><text class="t" text-anchor="middle" x="433" y="70">prompt</text><text class="s" text-anchor="middle" x="433" y="88">template</text>
+<rect class="w" height="80" rx="6" width="110" x="496" y="34"></rect><text class="t" text-anchor="middle" x="551" y="62">chat model</text><text class="s" text-anchor="middle" x="551" y="80">.with_retry()</text><text class="s" text-anchor="middle" x="551" y="96">.with_fallbacks()</text>
+<rect class="b" height="80" rx="6" width="124" x="626" y="34"></rect><text class="t" text-anchor="middle" x="688" y="66">answer + sources</text><text class="s" text-anchor="middle" x="688" y="84">dict</text>
+<path class="l" d="M90 64H108" marker-end="url(#ar)"></path><path class="l" d="M90 90H108" marker-end="url(#ar)"></path>
+<path class="l" d="M240 50H258" marker-end="url(#ar)"></path><path class="l" d="M240 98H258" marker-end="url(#ar)"></path>
+<path class="l" d="M370 74H388" marker-end="url(#ar)"></path><path class="l" d="M476 74H494" marker-end="url(#ar)"></path><path class="l" d="M606 74H624" marker-end="url(#ar)"></path>
+<text class="s" text-anchor="middle" x="380" y="160">RunnableConfig (callbacks · tags · metadata · max_concurrency) flows through every node →</text>
+<text class="h" x="10" y="196">THE 1.x STACK · WHAT YOU DEPEND ON</text>
+<rect class="c" height="34" rx="6" width="740" x="10" y="208"></rect><text class="t" x="20" y="230">langchain-core</text><text class="s" x="140" y="230">Runnable · messages · prompts · parsers · Retriever · VectorStore · @tool · callbacks   (stable contract)</text>
+<rect class="b" height="34" rx="6" width="360" x="10" y="250"></rect><text class="t" x="20" y="272">langchain 1.x</text><text class="s" x="120" y="272">create_agent · middleware · [mcp]</text>
+<rect class="b" height="34" rx="6" width="370" x="380" y="250"></rect><text class="t" x="390" y="272">partner pkgs</text><text class="s" x="480" y="272">openai · anthropic · ollama · ibm · aws</text>
+<rect class="b" height="34" rx="6" width="360" x="10" y="292"></rect><text class="t" x="20" y="314">langgraph</text><text class="s" x="100" y="314">state · checkpoints · interrupts</text>
+<rect class="w" height="34" rx="6" width="370" x="380" y="292"></rect><text class="t" x="390" y="314">langchain-classic</text><text class="s" x="520" y="314">legacy chains: avoid in new code</text>
+</svg>

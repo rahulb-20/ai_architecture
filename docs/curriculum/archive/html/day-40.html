@@ -1,0 +1,398 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>GenAI Prep · Day 40 — Revision Drill: MCP Security & RAG Evaluation</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: single reading column; questions are recall cards with answers folded; diagram, tables and code scroll in their own frames. */
+:root{
+  --bg:#f6f7f9;--surface:#fff;--fg:#1b2230;--muted:#5a6475;--line:#dde2ea;
+  --accent:#2f5bd3;--accent-soft:#e7edfb;--code-bg:#f0f2f6;--warn:#a15c00;--warn-soft:#fbf1e1;
+  --f-display:"IBM Plex Sans Condensed","Arial Narrow",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#11151c;--surface:#181e27;--fg:#e4e8ef;--muted:#9aa4b4;--line:#2b3340;
+  --accent:#8aa8ff;--accent-soft:#1f2a44;--code-bg:#0d1117;--warn:#e0a84a;--warn-soft:#2e2414;color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#11151c;--surface:#181e27;--fg:#e4e8ef;--muted:#9aa4b4;--line:#2b3340;
+  --accent:#8aa8ff;--accent-soft:#1f2a44;--code-bg:#0d1117;--warn:#e0a84a;--warn-soft:#2e2414;color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font:16px/1.62 var(--f-body);padding-block:40px 64px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+main{max-width:760px;margin:0 auto;display:grid;gap:44px}
+main>*{min-width:0}
+h1,h2,h3{font-family:var(--f-display);line-height:1.15;text-wrap:balance;margin:0}
+h1{font-size:clamp(32px,6vw,44px);font-weight:700}
+h2{font-size:26px;font-weight:600}
+h3{font-size:18px;font-weight:600}
+p{margin:0}
+a{color:var(--accent);text-underline-offset:2px}
+code{font:.88em var(--f-mono);background:var(--code-bg);padding:.1em .3em;border-radius:3px;overflow-wrap:anywhere}
+section,header{display:grid;gap:14px}
+section>*,header>*{min-width:0}
+.eyebrow{font:500 12.5px var(--f-mono);letter-spacing:.04em;color:var(--muted)}
+.lede{font-size:18px;color:var(--muted)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font:12.5px var(--f-mono);padding:3px 8px;background:var(--accent-soft);color:var(--accent);border-radius:3px}
+.sub{color:var(--muted)}
+ul,ol{margin:0;padding-left:22px;display:grid;gap:7px}
+.change{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:12px}
+.change>div{background:var(--surface);border:1px solid var(--line);padding:14px 16px;display:grid;gap:8px;align-content:start;min-width:0}
+.bar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+button{font:500 13px var(--f-body);color:var(--accent);background:var(--surface);border:1px solid var(--line);border-radius:4px;padding:5px 11px;cursor:pointer}
+button:hover{border-color:var(--accent)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.qs{display:grid;gap:12px}
+.q{background:var(--surface);border:1px solid var(--line);padding:16px 18px;display:grid;gap:10px;min-width:0}
+.q .tag{font:500 12px var(--f-mono);color:var(--muted)}
+.q .ask{font-weight:600;font-size:17px;line-height:1.42}
+summary{cursor:pointer;color:var(--accent);font-weight:500;font-size:14.5px}
+.ans{display:grid;gap:10px;padding-top:10px}
+.ans>*{min-width:0}
+.probe{font-size:14.5px;color:var(--warn);background:var(--warn-soft);padding:8px 11px}
+.frame{overflow-x:auto;background:var(--surface);border:1px solid var(--line)}
+.frame svg{display:block;width:100%;min-width:680px;height:auto}
+svg text{font-family:var(--f-body);font-size:12.5px;fill:var(--fg)}
+svg .s{font-size:11px;fill:var(--muted)}
+svg .b{fill:var(--surface);stroke:var(--line);stroke-width:1.2}
+svg .k{fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.2}
+svg .w{fill:var(--warn-soft);stroke:var(--warn);stroke-width:1.2}
+svg .l{fill:none;stroke:var(--muted);stroke-width:1.2}
+svg .h{fill:var(--muted)}
+svg .band{fill:var(--bg);stroke:var(--line);stroke-dasharray:4 4}
+table{border-collapse:collapse;width:100%;min-width:600px;font-size:14.5px}
+th,td{text-align:left;vertical-align:top;padding:9px 12px;border-bottom:1px solid var(--line)}
+th{font-weight:600;background:var(--code-bg)}
+tr:last-child td{border-bottom:0}
+.code{position:relative;background:var(--code-bg);border:1px solid var(--line)}
+.code pre{margin:0;padding:14px 16px;overflow-x:auto;font:13px/1.55 var(--f-mono);tab-size:4}
+.code button{position:absolute;top:7px;right:7px;padding:3px 9px;font-size:12px}
+.src{font-size:14.5px}
+.src li{overflow-wrap:anywhere}
+@media (prefers-reduced-motion:no-preference){summary{transition:color .15s}}
+</style>
+<main>
+<header>
+  <div class="eyebrow">GenAI Architect prep · Day 40 · Revision drill · Wed 18 Nov 2026</div>
+  <h1>MCP security under a stateless protocol, and RAG evaluation you can defend</h1>
+  <p class="lede">RAG evaluation (Day 11) has not been drilled yet. MCP (Day 20) comes back for a second pass, this time on approval flows, gateway trust and cache boundaries. The scenario joins them: how do you prove a tool-using assistant is safe to release?</p>
+  <div class="chips"><span class="chip">MCP spec 2026-07-28</span><span class="chip">mcp 2.3.0</span><span class="chip">ragas 0.4.4</span><span class="chip">deepeval 4.3.4</span></div>
+</header>
+
+<section>
+  <h2>Why this matters for the JD</h2>
+  <p>The JD asks for evaluation (groundedness, relevance, faithfulness, latency and cost), MCP and tool calling, guardrails, and eval dashboards. Panels tend to probe the seams: who approved this tool call, what your judge misses, and which number stops a release.</p>
+</section>
+
+<section>
+  <h2>What to have current</h2>
+  <div class="change">
+    <div><h3>MCP</h3>
+      <ul>
+        <li>Results carry a required <code>resultType</code>: <code>complete</code> or <code>input_required</code>.</li>
+        <li>Streamable HTTP POSTs carry <code>MCP-Protocol-Version</code> and <code>Mcp-Method</code>, plus <code>Mcp-Name</code> on named calls.</li>
+        <li>Tool parameters can be mirrored to headers with <code>x-mcp-header</code>.</li>
+        <li>List results require <code>ttlMs</code> and <code>cacheScope</code>.</li>
+      </ul></div>
+    <div><h3>Ragas</h3>
+      <ul>
+        <li>New code imports from <code>ragas.metrics.collections</code>.</li>
+        <li>The docs say the legacy metric API is due for removal in 1.0.</li>
+        <li>Faithfulness needs no reference. <code>ContextPrecision</code> and <code>ContextRecall</code> do.</li>
+        <li>The PyPI project now points to <code>vibrantlabsai/ragas</code> as its code home.</li>
+      </ul></div>
+  </div>
+</section>
+
+<section>
+  <div class="bar"><h2>Eight interview questions</h2><button id="toggle" type="button" aria-pressed="false">Show all answers</button></div>
+  <p class="sub">Answer each aloud in under 90 seconds before opening the model answer.</p>
+  <div class="qs">
+
+  <article class="q"><div class="tag">Q1 · MCP</div><div class="ask">A tool that amends a customer record needs human approval. Walk through the flow on a stateless MCP server. How do you stop tampering, replay and double execution?</div>
+  <details><summary>Model answer</summary><div class="ans">
+    <p>The first <code>tools/call</code> returns an <code>InputRequiredResult</code> with an elicitation in <code>inputRequests</code> and a <code>requestState</code>. The client collects the input and retries the original call with a new JSON-RPC id, the <code>inputResponses</code> and the exact <code>requestState</code>. Any replica can handle the retry.</p>
+    <p>The spec treats <code>requestState</code> as attacker-controlled. Protect it with AEAD or HMAC, and bind it to the principal, a short expiry, and the method plus a digest of the parameters. Those bindings limit replay but do not guarantee single use, so the write needs a server-side ledger: an idempotency key with a unique constraint, committed in the same transaction as the change.</p>
+    <p>The design point most candidates miss: a form-mode answer arrives through the client, so a compromised or auto-approving client can fabricate it. For high-risk writes, use URL-mode elicitation to a server-owned page that authenticates the user and shows the exact change. Record approval against the parameter digest. The client learns the outcome by retrying.</p>
+    <p class="probe">Follow-up: the spec marks URL mode as liable to change. Keep the approval service behind your own interface so the protocol binding can move.</p>
+  </div></details></article>
+
+  <article class="q"><div class="tag">Q2 · MCP</div><div class="ask">Your gateway authorizes calls using the <code>Mcp-Name</code> header so it never parses bodies. A security reviewer calls this a bypass. Are they right?</div>
+  <details><summary>Model answer</summary><div class="ans">
+    <p>They are right if the backend can disagree with the gateway. A request can say <code>read_invoice</code> in the header and <code>delete_invoice</code> in the body: the gateway allows the first and the server runs the second. The spec closes this at the server, which must reject a mismatch with <code>400</code> and <code>HeaderMismatch</code> (<code>-32020</code>), after decoding any Base64-encoded values.</p>
+    <p>So header-based policy is sound only under conditions I can verify:</p>
+    <ul>
+      <li>Every backend passes a mismatch test in CI, including encoded names.</li>
+      <li>The gateway checks <code>MCP-Protocol-Version</code> and rejects older or missing versions, as the spec recommends, because those requests carry no validation guarantee.</li>
+      <li>Backends cannot be reached except through the gateway.</li>
+      <li>The gateway handles coarse policy. The server still does object-level authorization.</li>
+    </ul>
+    <p>For a small set of destructive tools I would also parse the body at the gateway. The latency cost is small and the blast radius justifies it.</p>
+    <p class="probe">Follow-up: keep secrets and personal data out of <code>x-mcp-header</code> parameters. Mirrored values land in places that log headers.</p>
+  </div></details></article>
+
+  <article class="q"><div class="tag">Q3 · MCP</div><div class="ask">Tool lists differ by role. You want the gateway to cache <code>tools/list</code> to cut latency. What can go wrong, and what is the correct cache design?</div>
+  <details><summary>Model answer</summary><div class="ans">
+    <p>If a role-filtered list is marked <code>public</code>, a shared cache may serve it across authorization contexts, so a junior user learns about admin tools, or loses tools they should have. Role-dependent lists must be <code>private</code>, which limits reuse to the same authorization context. Key the cache on that context, and use <code>public</code> only for lists that are identical for everyone.</p>
+    <p>Three further rules:</p>
+    <ul>
+      <li>A cached list is never an authorization decision. <code>tools/call</code> re-checks entitlement, because a revoked tool can stay listed until <code>ttlMs</code> expires.</li>
+      <li>Hash tool definitions on each refresh. A changed description goes to review before it reaches the model, which also covers rug pulls.</li>
+      <li>Keep tool order deterministic. The spec recommends it, and it protects the LLM prompt-cache prefix.</li>
+    </ul>
+    <p class="probe">Follow-up: set the TTL from how long you can tolerate a stale list. Treat revocation latency as a call-time concern.</p>
+  </div></details></article>
+
+  <article class="q"><div class="tag">Q4 · MCP + evaluation</div><div class="ask">A team edits one MCP tool description and tool selection quietly degrades. How do you evaluate an MCP tool surface, and what belongs in the release gate?</div>
+  <details><summary>Model answer</summary><div class="ans">
+    <p>Tool descriptions are prompts, so a description change gets the same gate as a prompt change. Snapshot <code>tools/list</code>, version it, and run evaluation when its hash changes.</p>
+    <p>I score four layers against a labelled scenario set:</p>
+    <ul>
+      <li><strong>Selection:</strong> correct tool, including "no tool" and "ask the user".</li>
+      <li><strong>Arguments:</strong> schema validity first, then semantic match on the fields that matter.</li>
+      <li><strong>Trajectory:</strong> required steps present, forbidden steps absent, and a step budget.</li>
+      <li><strong>Outcome:</strong> final state checked against a sandboxed system. This outranks the trajectory, since several paths may be valid.</li>
+    </ul>
+    <p>Hard gates are zero forbidden writes and zero unapproved writes. Selection and outcome get non-inferiority margins. I also track the tokens the tool schemas consume, because a growing catalogue costs latency and hurts selection. Past a modest catalogue size, retrieve tools per request and evaluate that retrieval too.</p>
+  </div></details></article>
+
+  <article class="q"><div class="tag">Q5 · RAG evaluation</div><div class="ask">Faithfulness averages 0.96, yet users report wrong answers. How is that possible, and how do you find the cause?</div>
+  <details><summary>Model answer</summary><div class="ans">
+    <p>Faithfulness is the share of response claims supported by the <em>retrieved</em> context. It says nothing about whether that context was the right one. A clean answer drawn from a superseded policy scores perfectly.</p>
+    <p>I split the failure by pipeline stage:</p>
+    <ul>
+      <li><strong>Retrieval:</strong> ID-based recall and precision against labelled evidence. No LLM involved, so it is cheap and stable.</li>
+      <li><strong>Corpus:</strong> version and effective-date checks on what was cited. Stale or conflicting sources show up here.</li>
+      <li><strong>Generation:</strong> correctness against a reference, plus citation support.</li>
+      <li><strong>Behaviour:</strong> abstention precision and recall on unanswerable questions.</li>
+      <li><strong>Metric:</strong> inspect claim extraction. If it drops the risky claim, the score never sees it.</li>
+    </ul>
+    <p>Then I slice by intent and document type. An average of 0.96 can hide a failing segment, and complaints usually cluster.</p>
+  </div></details></article>
+
+  <article class="q"><div class="tag">Q6 · RAG evaluation</div><div class="ask">Your LLM judge agrees with human reviewers 88% of the time and gives the same answer on 97% of reruns. Would you trust it as a release gate?</div>
+  <details><summary>Model answer</summary><div class="ans">
+    <p>Not yet. With imbalanced labels, a judge that says "supported" nearly every time gets high agreement. I want Cohen's kappa and, above all, recall on the unsupported class, since that is the failure the gate exists to catch. Today's exercise shows 88% agreement with kappa near 0.32 and only about 28% of unsupported claims found.</p>
+    <p>Repeatability is a separate property. A 2026 study of 21 judges across about 541,000 judgments found exact match overstated agreement by 33 to 41 points against kappa on MT-Bench. Two judges had test-retest above 0.95 alongside position bias above 0.10, and rankings moved up to 14 places between benchmarks. Those were general judging benchmarks, so I take the method from it and measure on my own domain.</p>
+    <p>My protocol: 200 to 400 claims labelled by two subject experts, with disagreements adjudicated; report kappa and per-class recall with intervals; randomize order; pin the judge model and prompt; recalibrate when either changes. Deterministic checks run first, and the judge handles only what they cannot decide.</p>
+  </div></details></article>
+
+  <article class="q"><div class="tag">Q7 · RAG evaluation</div><div class="ask">The candidate's mean score is about 0.03 lower and its confidence interval overlaps the baseline's. The team says the difference is noise. What is your gate?</div>
+  <details><summary>Model answer</summary><div class="ans">
+    <p>Overlapping intervals are the wrong test when both versions ran on the same questions. Question difficulty dominates the variance, and pairing removes it. I bootstrap the per-question differences and apply a non-inferiority rule: the lower bound of the delta must stay above a margin the business agreed, such as −0.02.</p>
+    <p>Precision sets the golden-set size. For a half-width of 0.02 with a paired-difference SD of 0.10, n ≈ (1.96 × 0.10 / 0.02)² ≈ 96. A single pass/fail rate near 90% has an SD of 0.30, so the same precision needs about 860 cases. That is a good argument for paired, continuous scores.</p>
+    <p>Then gate by segment, because a small regulated segment can fail while the average looks acceptable. Segment gates multiply false alarms, so I keep a few pre-registered critical segments as blocking and treat the rest as warnings. Safety invariants such as access-control leaks get no margin: one failure blocks.</p>
+  </div></details></article>
+
+  <article class="q"><div class="tag">Q8 · RAG evaluation</div><div class="ask">How do you keep a golden set trustworthy for two years while the corpus, users and permissions keep changing?</div>
+  <details><summary>Model answer</summary><div class="ans">
+    <p>Treat it as a versioned product with an owner. Each case stores the question, intent, segment, persona, expected evidence by document ID and version, the reference answer, its reviewer and a review date.</p>
+    <ul>
+      <li><strong>Corpus change:</strong> when a cited document changes, flag dependent cases for review. Run gates against a pinned corpus snapshot so a model change and a content change are not confounded.</li>
+      <li><strong>Drift:</strong> sample production traces by segment, with extra weight on low-confidence answers, negative feedback and escalations. Mask personal data before anyone reviews them.</li>
+      <li><strong>Overfitting:</strong> keep a holdout that prompt authors cannot see, and rotate it.</li>
+      <li><strong>Synthetic data:</strong> useful for coverage, but it stays out of blocking gates until a person has reviewed it.</li>
+      <li><strong>Permissions:</strong> run cases per persona. Add negative cases where the correct result is no restricted chunk retrieved, asserted deterministically.</li>
+    </ul>
+    <p>The set itself holds sensitive content, so it gets the same access control and retention rules as its source data.</p>
+  </div></details></article>
+  </div>
+</section>
+
+<section>
+  <h2>Design scenario · 25 minutes on paper</h2>
+  <p><strong>A general insurer wants a claims copilot for 12,000 staff.</strong> It answers policy questions from 400,000 documents, reads claim records, and can draft and submit policy endorsements. Retrieval and business actions are exposed as MCP tools so other assistants can reuse them.</p>
+  <ul>
+    <li>p95 time to first token under 2.5 seconds for read-only questions; 99.9% availability in business hours.</li>
+    <li>Personal data stays in India. Access follows branch, line of business and role.</li>
+    <li>Policy wordings change weekly, and old versions still govern old claims.</li>
+    <li>Every submitted endorsement needs a named human approver and a full audit trail.</li>
+    <li>Prompts, tool descriptions, indexes and models can each change independently.</li>
+  </ul>
+  <p><strong>Produce:</strong> the architecture, the identity flow, the write path, the evaluation plan with release gates, and your top three risks.</p>
+  <details class="q"><summary>Reference design</summary><div class="ans">
+    <div class="frame"><svg viewBox="0 0 780 372" role="img" aria-label="Copilot calls an MCP gateway that routes to retrieval, claims and endorsement servers. Endorsement writes need out-of-band approval. Traces feed an evaluation pipeline that ends in a release gate.">
+      <defs><marker id="a" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path class="h" d="M0 0L8 4L0 8z"/></marker></defs>
+      <rect class="b" x="20" y="52" width="120" height="60"/><text x="80" y="78" text-anchor="middle">Copilot host</text><text class="s" x="80" y="95" text-anchor="middle">user token, MRTR loop</text>
+      <rect class="k" x="190" y="52" width="150" height="60"/><text x="265" y="78" text-anchor="middle">MCP gateway</text><text class="s" x="265" y="95" text-anchor="middle">authn, tool RBAC, audit</text>
+      <rect class="b" x="400" y="16" width="170" height="40"/><text x="485" y="41" text-anchor="middle">Retrieval server</text>
+      <rect class="b" x="400" y="66" width="170" height="40"/><text x="485" y="91" text-anchor="middle">Claims read server</text>
+      <rect class="w" x="400" y="116" width="170" height="40"/><text x="485" y="141" text-anchor="middle">Endorsement write server</text>
+      <rect class="w" x="400" y="178" width="170" height="36"/><text x="485" y="201" text-anchor="middle">Approval page (URL mode)</text>
+      <rect class="b" x="620" y="16" width="140" height="40"/><text x="690" y="41" text-anchor="middle">Hybrid index</text>
+      <rect class="b" x="620" y="66" width="140" height="40"/><text x="690" y="91" text-anchor="middle">Claims system</text>
+      <rect class="b" x="620" y="116" width="140" height="40"/><text x="690" y="141" text-anchor="middle">Policy admin + ledger</text>
+      <path class="l" marker-end="url(#a)" d="M140 82H188"/>
+      <path class="l" marker-end="url(#a)" d="M340 72L398 38"/><path class="l" marker-end="url(#a)" d="M340 82L398 86"/><path class="l" marker-end="url(#a)" d="M340 94L398 134"/>
+      <path class="l" marker-end="url(#a)" d="M570 36H618"/><path class="l" marker-end="url(#a)" d="M570 86H618"/><path class="l" marker-end="url(#a)" d="M570 136H618"/>
+      <path class="l" marker-end="url(#a)" d="M485 156V176"/>
+      <rect class="band" x="10" y="238" width="760" height="104"/>
+      <text class="s" x="104" y="256">Evaluation path</text>
+      <path class="l" marker-end="url(#a)" d="M265 112V226H86V266"/>
+      <text class="s" x="274" y="222">OTel traces, masked</text>
+      <rect class="b" x="20" y="268" width="132" height="56"/><text x="86" y="292" text-anchor="middle">Trace store</text><text class="s" x="86" y="309" text-anchor="middle">sampled by segment</text>
+      <rect class="b" x="172" y="268" width="132" height="56"/><text x="238" y="292" text-anchor="middle">Golden sets</text><text class="s" x="238" y="309" text-anchor="middle">per persona, pinned</text>
+      <rect class="b" x="324" y="268" width="132" height="56"/><text x="390" y="292" text-anchor="middle">Deterministic</text><text class="s" x="390" y="309" text-anchor="middle">ACL, IDs, citations</text>
+      <rect class="b" x="476" y="268" width="132" height="56"/><text x="542" y="292" text-anchor="middle">Calibrated judge</text><text class="s" x="542" y="309" text-anchor="middle">faithfulness, correctness</text>
+      <rect class="k" x="628" y="268" width="132" height="56"/><text x="694" y="292" text-anchor="middle">Release gate</text><text class="s" x="694" y="309" text-anchor="middle">paired, by segment</text>
+      <path class="l" marker-end="url(#a)" d="M152 296H170"/><path class="l" marker-end="url(#a)" d="M304 296H322"/><path class="l" marker-end="url(#a)" d="M456 296H474"/><path class="l" marker-end="url(#a)" d="M608 296H626"/>
+      <text class="s" x="760" y="360" text-anchor="end">Gate applies to prompts, tool descriptions, index builds and model changes</text>
+    </svg></div>
+    <p><strong>Identity.</strong> The IdP issues a token with the gateway or target server as audience. Servers exchange it for narrower downstream credentials. Branch, line of business and role become retrieval filters applied in the server, never parameters the model chooses.</p>
+    <p><strong>Retrieval.</strong> Hybrid search with reranking, with effective-date and policy-version metadata. The claim's inception date selects the governing wording, so "latest" is the wrong default.</p>
+    <p><strong>Write path.</strong> The model drafts. The server validates the draft and stores it with a digest. MRTR sends the user to a server-owned approval page. On retry, the server verifies the signed state and approval record, then commits once through an idempotency ledger.</p>
+    <div class="frame"><table>
+      <thead><tr><th>Layer</th><th>Check</th><th>Gate</th></tr></thead>
+      <tbody>
+        <tr><td>Access control</td><td>Per-persona negative retrieval cases</td><td>Zero leaks</td></tr>
+        <tr><td>Write safety</td><td>Sandboxed attempts without approval, with replay and tampered state</td><td>Zero commits</td></tr>
+        <tr><td>Retrieval</td><td>ID recall@k, correct policy version</td><td>Paired non-inferiority by line of business</td></tr>
+        <tr><td>Answer</td><td>Faithfulness, correctness, abstention</td><td>Margins set with claims leadership</td></tr>
+        <tr><td>Tools</td><td>Selection, arguments, outcome</td><td>Margins, plus a step budget</td></tr>
+        <tr><td>Operations</td><td>p95 first token, cost per resolved query</td><td>Budget thresholds in a load test</td></tr>
+      </tbody></table></div>
+    <p><strong>Eval cost, as a sizing habit.</strong> 400 cases × 4 judge calls × 3,000 tokens = 4.8M tokens per run. At 20 runs a month that is 96M tokens. Run deterministic checks on every change and the full judged suite only when a relevant artifact changes.</p>
+    <p><strong>Top risks.</strong> Wrong policy version presented confidently; a compromised client forging approval; a lenient judge letting regressions through. The first is addressed by version-aware retrieval and tests, the second by out-of-band approval, the third by calibration against expert labels.</p>
+  </div></details>
+</section>
+
+<section>
+  <h2>Today's exercise · 20 minutes</h2>
+  <p>Audit a simulated lenient judge, then run a paired release gate. It uses only the standard library, so it runs on your laptop with no GPU, API key, WSL2 or Docker.</p>
+  <div class="code"><button type="button" class="copy">Copy</button><pre><code>New-Item -ItemType Directory -Force day40-drill | Out-Null
+Set-Location day40-drill
+notepad judge_audit.py   # paste the script below and save
+py -3.13 judge_audit.py</code></pre></div>
+  <div class="code"><button type="button" class="copy">Copy</button><pre><code>"""Day 40 drill: audit an LLM judge, then gate a release. Standard library only."""
+import random
+import statistics as st
+
+rng = random.Random(40)
+
+
+def judge_metrics(human, judge):
+    n = len(human)
+    observed = sum(h == j for h, j in zip(human, judge)) / n
+    p_h, p_j = sum(human) / n, sum(judge) / n
+    expected = p_h * p_j + (1 - p_h) * (1 - p_j)
+    kappa = (observed - expected) / (1 - expected)
+    bad = [j for h, j in zip(human, judge) if h == 0]
+    caught = sum(j == 0 for j in bad) / len(bad)
+    return observed, kappa, caught
+
+
+def bootstrap_ci(values, rounds=4000):
+    means = sorted(
+        st.fmean(rng.choices(values, k=len(values))) for _ in range(rounds)
+    )
+    return means[int(0.025 * rounds)], means[int(0.975 * rounds)]
+
+
+def clamp(x):
+    return max(0.0, min(1.0, x))
+
+
+# Part 1: 400 claims labelled by humans (1 = supported, 0 = unsupported).
+# The simulated judge is lenient: it misses most unsupported claims.
+human = [1 if rng.random() &lt; 0.85 else 0 for _ in range(400)]
+judge = [
+    (1 if rng.random() &lt; 0.97 else 0) if h else (0 if rng.random() &lt; 0.35 else 1)
+    for h in human
+]
+acc, kappa, caught = judge_metrics(human, judge)
+print("JUDGE AUDIT (n=400 claims)")
+print(f"  exact agreement          {acc:.3f}")
+print(f"  Cohen's kappa            {kappa:.3f}")
+print(f"  unsupported claims found {caught:.3f}")
+
+# Part 2: 150 golden questions, same set scored on both releases.
+# The candidate regresses only on the 'policy' segment (20% of traffic).
+rows = []
+for i in range(150):
+    segment = "policy" if i % 5 == 0 else "general"
+    base = clamp(rng.gauss(0.84, 0.12))
+    drop = 0.12 if segment == "policy" else 0.0
+    cand = clamp(base - drop + rng.gauss(0, 0.03))
+    rows.append((segment, base, cand))
+
+base = [r[1] for r in rows]
+cand = [r[2] for r in rows]
+diffs = [c - b for b, c in zip(base, cand)]
+b_lo, b_hi = bootstrap_ci(base)
+c_lo, c_hi = bootstrap_ci(cand)
+d_lo, d_hi = bootstrap_ci(diffs)
+
+print("\nRELEASE GATE (n=150 paired questions, margin -0.02)")
+print(f"  baseline mean {st.fmean(base):.3f}  CI [{b_lo:.3f}, {b_hi:.3f}]")
+print(f"  candidate mean {st.fmean(cand):.3f}  CI [{c_lo:.3f}, {c_hi:.3f}]")
+print(f"  intervals overlap: {c_hi &gt;= b_lo and b_hi &gt;= c_lo}")
+print(f"  paired delta {st.fmean(diffs):+.3f}  CI [{d_lo:+.3f}, {d_hi:+.3f}]")
+print(f"  overall gate: {'PASS' if d_lo &gt;= -0.02 else 'FAIL'}")
+
+for name in ("general", "policy"):
+    seg = [c - b for s, b, c in rows if s == name]
+    lo, hi = bootstrap_ci(seg)
+    verdict = "PASS" if lo &gt;= -0.02 else "FAIL"
+    print(f"  {name:&lt;8} n={len(seg):&lt;3} delta {st.fmean(seg):+.3f}  "
+          f"CI [{lo:+.3f}, {hi:+.3f}]  {verdict}")</code></pre></div>
+  <h3>Expected output</h3>
+  <div class="code"><button type="button" class="copy">Copy</button><pre><code>JUDGE AUDIT (n=400 claims)
+  exact agreement          0.882
+  Cohen's kappa            0.318
+  unsupported claims found 0.275
+
+RELEASE GATE (n=150 paired questions, margin -0.02)
+  baseline mean 0.834  CI [0.816, 0.852]
+  candidate mean 0.807  CI [0.788, 0.826]
+  intervals overlap: True
+  paired delta -0.028  CI [-0.037, -0.019]
+  overall gate: FAIL
+  general  n=120 delta -0.002  CI [-0.006, +0.002]  PASS
+  policy   n=30  delta -0.130  CI [-0.141, -0.120]  FAIL</code></pre></div>
+  <h3>Then do this</h3>
+  <ol>
+    <li>Explain aloud why the intervals overlap while the gate fails.</li>
+    <li>Raise the judge's catch rate from <code>0.35</code> to <code>0.75</code>. Note how much kappa moves compared with exact agreement.</li>
+    <li>Stretch: replace the simulated labels with 30 claims you hand-label from your compliance bot's answers, and score them with your Granite judge prompt through Ollama.</li>
+  </ol>
+</section>
+
+<section>
+  <h2>Read if you have time</h2>
+  <ul>
+    <li><a href="https://modelcontextprotocol.io/specification/2026-07-28/basic/patterns/mrtr">MCP: Multi Round-Trip Requests</a>. Read the server requirements on <code>requestState</code>.</li>
+    <li><a href="https://modelcontextprotocol.io/specification/2026-07-28/basic/transports/streamable-http">MCP: Streamable HTTP</a>. Read the server validation section and the note for intermediaries.</li>
+    <li><a href="https://arxiv.org/abs/2606.19544">Reliability without Validity</a> (Norman, Rivera, Hughes, 2026), on LLM judges.</li>
+  </ul>
+</section>
+
+<section>
+  <h2>Tomorrow</h2>
+  <p>Day 41 revision drill: multimodal RAG (Day 12) with LangGraph checkpointing and recovery (Day 17).</p>
+</section>
+
+<section>
+  <h2>Sources</h2>
+  <ul class="src">
+    <li><a href="https://modelcontextprotocol.io/specification/2026-07-28/changelog">MCP 2026-07-28 key changes</a></li>
+    <li><a href="https://modelcontextprotocol.io/specification/2026-07-28/basic/patterns/mrtr">MCP Multi Round-Trip Requests</a></li>
+    <li><a href="https://modelcontextprotocol.io/specification/2026-07-28/basic/transports/streamable-http">MCP Streamable HTTP</a></li>
+    <li><a href="https://raw.githubusercontent.com/modelcontextprotocol/modelcontextprotocol/main/docs/specification/2026-07-28/client/elicitation.mdx">MCP elicitation specification source</a></li>
+    <li><a href="https://raw.githubusercontent.com/modelcontextprotocol/modelcontextprotocol/main/schema/2026-07-28/schema.ts">MCP 2026-07-28 schema</a></li>
+    <li><a href="https://docs.ragas.io/en/stable/concepts/metrics/available_metrics/faithfulness/">Ragas Faithfulness</a></li>
+    <li><a href="https://docs.ragas.io/en/stable/concepts/metrics/available_metrics/context_recall/">Ragas Context Recall</a></li>
+    <li><a href="https://docs.ragas.io/en/stable/concepts/metrics/available_metrics/context_precision/">Ragas Context Precision</a></li>
+    <li><a href="https://arxiv.org/abs/2606.19544">Reliability without Validity (arXiv 2606.19544)</a></li>
+    <li>PyPI: <a href="https://pypi.org/project/mcp/">mcp</a>, <a href="https://pypi.org/project/ragas/">ragas</a>, <a href="https://pypi.org/project/deepeval/">deepeval</a></li>
+  </ul>
+</section>
+</main>
+<script>
+const t=document.getElementById('toggle'),ds=[...document.querySelectorAll('article.q details')];
+t.addEventListener('click',()=>{const open=!ds.every(d=>d.open);ds.forEach(d=>d.open=open);t.textContent=open?'Hide all answers':'Show all answers';t.setAttribute('aria-pressed',open)});
+document.querySelectorAll('.copy').forEach(b=>b.addEventListener('click',async()=>{const c=b.parentElement.querySelector('code');try{await navigator.clipboard.writeText(c.textContent);b.textContent='Copied'}catch{const r=document.createRange();r.selectNodeContents(c);const s=getSelection();s.removeAllRanges();s.addRange(r);b.textContent='Press Ctrl+C'}setTimeout(()=>b.textContent='Copy',1600)}));
+</script>
+
+</body></html>

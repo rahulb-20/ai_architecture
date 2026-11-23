@@ -1,0 +1,40 @@
+<svg font-family="IBM Plex Sans, Segoe UI, Arial, sans-serif" aria-label="Tool calling loop: app sends messages and tool schemas to the model; the model returns tool calls; the executor validates, applies policy, runs tools in parallel with timeouts and retries, and returns structured results to the model until it answers." role="img" style="background:#ffffff" viewbox="0 0 760 300" width="100%" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="ar" markerheight="7" markerwidth="7" orient="auto" refx="9" refy="5" viewbox="0 0 10 10"><path d="M0,0L10,5L0,10z" fill="#555"></path></marker></defs>
+<g fill="#555" stroke="#555" stroke-width="1.5">
+<rect height="70" rx="6" width="120" x="10" y="110"></rect>
+<rect height="80" rx="6" stroke="#555" width="160" x="210" y="20"></rect>
+<rect height="80" rx="6" stroke="#555" width="160" x="210" y="190"></rect>
+<rect height="220" rx="6" stroke="#555" width="300" x="450" y="40"></rect>
+</g>
+<g fill="#555" font-size="13">
+<text font-weight="600" text-anchor="middle" x="70" y="140">App / loop</text>
+<text fill="#555" font-size="11" text-anchor="middle" x="70" y="160">step budget</text>
+<text fill="#555" font-size="11" text-anchor="middle" x="70" y="174">loop guard</text>
+<text font-weight="600" text-anchor="middle" x="290" y="50">LLM</text>
+<text fill="#555" font-size="11" text-anchor="middle" x="290" y="70">picks tool + args</text>
+<text fill="#555" font-size="11" text-anchor="middle" x="290" y="86">(strict = constrained)</text>
+<text font-weight="600" text-anchor="middle" x="290" y="220">Tool results</text>
+<text fill="#555" font-size="11" text-anchor="middle" x="290" y="240">{ok, result | error}</text>
+<text fill="#555" font-size="11" text-anchor="middle" x="290" y="256">matched by call id</text>
+<text fill="#555" font-weight="600" text-anchor="middle" x="600" y="66">Executor (your code)</text>
+</g>
+<g fill="#555" font-size="12">
+<text x="470" y="98">1 resolve name · parse JSON</text>
+<text x="470" y="124">2 validate (Pydantic) → repair msg</text>
+<text x="470" y="150">3 policy: RBAC · approval · idempotency</text>
+<text x="470" y="176">4 run in parallel · timeout · retry</text>
+<text x="470" y="202">5 truncate/redact output</text>
+<text x="470" y="228">6 trace span + cost</text>
+</g>
+<g fill="none" marker-end="url(#ar)" stroke="#555" stroke-width="1.5">
+<path d="M130,130 L208,70"></path>
+<path d="M372,60 L448,90"></path>
+<path d="M448,220 L372,230"></path>
+<path d="M208,230 L132,165"></path>
+</g>
+<g fill="#555" font-size="11">
+<text x="120" y="88">msgs + tool schemas</text>
+<text x="380" y="62">tool_calls[]</text>
+<text x="96" y="222">append, re-call model</text>
+</g>
+</svg>

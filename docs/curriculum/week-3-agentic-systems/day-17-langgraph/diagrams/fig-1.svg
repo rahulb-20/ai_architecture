@@ -1,0 +1,24 @@
+<svg font-family="IBM Plex Sans, Segoe UI, Arial, sans-serif" aria-label="Refund agent graph: triage routes to lookup or answer; lookup routes to human approval, auto-approve or reply; checkpoints saved after each step" role="img" style="min-width:560px;background:#ffffff" viewbox="0 0 720 300" width="100%" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="ar" markerheight="7" markerwidth="7" orient="auto" refx="9" refy="5" viewbox="0 0 10 10"><path d="M0,0L10,5L0,10z" fill="#555"></path></marker></defs>
+<g fill="none" marker-end="url(#ar)" stroke="#555" stroke-width="1.5">
+<path d="M70,150 H112"></path><path d="M212,135 L272,80"></path><path d="M212,165 L272,225"></path>
+<path d="M382,70 L452,40"></path><path d="M382,80 L452,110"></path><path d="M382,90 Q420,170 452,180"></path>
+<path d="M572,40 Q640,60 600,165"></path><path d="M572,110 L590,165"></path>
+<path d="M382,225 H640"></path><path d="M640,195 V212"></path>
+</g>
+<g font-size="12.5" text-anchor="middle">
+<circle cx="50" cy="150" fill="#555" r="18"></circle><text fill="#555" x="50" y="154">START</text>
+<rect fill="#555" height="44" rx="8" stroke="#555" stroke-width="1.5" width="100" x="112" y="128"></rect><text fill="#555" x="162" y="155">triage (LLM)</text>
+<rect fill="#555" height="44" rx="8" stroke="#555" stroke-width="1.5" width="110" x="272" y="56"></rect><text fill="#555" x="327" y="83">lookup_order</text>
+<rect fill="#555" height="44" rx="8" stroke="#555" stroke-width="1.5" width="110" x="272" y="203"></rect><text fill="#555" x="327" y="230">answer (LLM)</text>
+<rect fill="#555" height="44" rx="8" stroke="#555" stroke-width="2" width="120" x="452" y="18"></rect><text fill="#555" x="512" y="38">human_approval</text><text fill="#555" font-size="10.5" x="512" y="53">interrupt()</text>
+<rect fill="#555" height="44" rx="8" stroke="#555" stroke-width="1.5" width="120" x="452" y="88"></rect><text fill="#555" x="512" y="115">auto_approve</text>
+<rect fill="#555" height="30" rx="8" stroke="#555" stroke-width="1.5" width="120" x="560" y="165"></rect><text fill="#555" x="620" y="185">write_reply</text>
+<circle cx="660" cy="232" fill="#555" r="18"></circle><text fill="#555" x="660" y="236">END</text>
+</g>
+<g fill="#555" font-size="11">
+<text x="218" y="98">refund</text><text x="218" y="210">question</text>
+<text x="392" y="44">&gt; ₹5,000</text><text x="392" y="122">≤ ₹5,000</text><text x="408" y="160">not found</text>
+</g>
+<g fill="#555" font-size="11"><text x="20" y="290">● checkpoint written after every super-step → thread_id="T1" in checkpoints.db (resume, replay, fork)</text></g>
+</svg>

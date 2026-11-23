@@ -1,0 +1,40 @@
+<svg font-family="IBM Plex Sans, Segoe UI, Arial, sans-serif" aria-labelledby="dg-t" role="img" style="min-width:600px;background:#ffffff" viewbox="0 0 720 270" width="100%" xmlns="http://www.w3.org/2000/svg">
+
+<defs><marker id="ah" markerheight="7" markerwidth="7" orient="auto-start-reverse" refx="9" refy="5" viewbox="0 0 10 10"><path class="s-ah" d="M0,0 L10,5 L0,10 z"></path></marker></defs>
+<!-- source doc -->
+<rect class="s-box" height="190" rx="6" width="150" x="16" y="40"></rect>
+<text class="s-t" x="30" y="64">Policy.pdf</text>
+<text class="s-m" x="30" y="84"># 4 Data retention</text>
+<rect class="s-gen" height="54" rx="3" width="122" x="30" y="94"></rect>
+<text class="s-m" x="38" y="114">## 4.2 Backups</text>
+<text class="s-m" x="38" y="132">parent ≤1024 tok</text>
+<rect class="s-box" height="54" rx="3" width="122" x="30" y="156"></rect>
+<text class="s-m" x="38" y="176">## 4.3 Deletion</text>
+<text class="s-m" x="38" y="194">parent ≤1024 tok</text>
+<!-- children -->
+<path class="s-a" d="M166 121 L222 121" marker-end="url(#ah)"></path>
+<text class="s-acc" x="236" y="34">UNIT OF RETRIEVAL</text>
+<rect class="s-ret" height="150" rx="6" width="170" x="230" y="46"></rect>
+<text class="s-t" x="244" y="70">Children, 128 tok each</text>
+<rect class="s-child" height="18" rx="2" width="142" x="244" y="82"></rect>
+<rect class="s-child" height="18" rx="2" width="142" x="244" y="106"></rect>
+<rect class="s-child" height="18" rx="2" width="142" x="244" y="130"></rect>
+<text class="s-m" x="244" y="172">+ breadcrumb, doc_id,</text>
+<text class="s-m" x="244" y="187">parent_id, ACL tags</text>
+<!-- index -->
+<path class="s-a" d="M400 121 L452 121" marker-end="url(#ah)"></path>
+<rect class="s-box" height="62" rx="6" width="110" x="460" y="90"></rect>
+<text class="s-t" x="474" y="116">Vector index</text>
+<text class="s-m" x="474" y="136">sharp vectors</text>
+<!-- query -->
+<text class="s-m" x="460" y="30">query → top-k children</text>
+<path class="s-a" d="M515 38 L515 84" marker-end="url(#ah)"></path>
+<!-- parent lookup -->
+<path class="s-a" d="M515 152 L515 214" marker-end="url(#ah)"></path>
+<text class="s-m" x="526" y="186">dedupe by parent_id</text>
+<text class="s-mk" x="400" y="216">UNIT OF GENERATION</text>
+<rect class="s-gen" height="40" rx="6" width="300" x="400" y="222"></rect>
+<text class="s-t" x="414" y="247">LLM reads parent §4.2 in full (k ≤ 3)</text>
+<path class="s-a" d="M92 148 C 92 250, 300 250, 396 244" marker-end="url(#ah)" stroke-dasharray="4 4"></path>
+<text class="s-m" x="150" y="262">parent text fetched from doc store, not the vector DB</text>
+</svg>

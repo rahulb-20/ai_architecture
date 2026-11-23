@@ -1,0 +1,463 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>GenAI Prep · Day 13 — Feedback Loops &amp; Caching</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: study-notebook — sticky contents rail on wide screens, one reading column (~68ch), code and tables scroll in place */
+:root{
+  --bg:#f4f6f8; --surface:#ffffff; --ink:#15202b; --muted:#56636f; --line:#d9dfe5;
+  --accent:#0d6e63; --accent-soft:#e0f0ed; --warn:#a85a07; --warn-soft:#fbeedd; --code-bg:#eef1f4;
+  --display:"IBM Plex Sans Condensed","Arial Narrow",system-ui,sans-serif;
+  --body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f151b; --surface:#151d25; --ink:#e3e9ee; --muted:#93a1ad; --line:#2a3540;
+  --accent:#4fc2b0; --accent-soft:#163a35; --warn:#e9a253; --warn-soft:#3a2a15; --code-bg:#0b1116; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f151b; --surface:#151d25; --ink:#e3e9ee; --muted:#93a1ad; --line:#2a3540;
+  --accent:#4fc2b0; --accent-soft:#163a35; --warn:#e9a253; --warn-soft:#3a2a15; --code-bg:#0b1116; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:16px/1.62 var(--body);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:32px 64px}
+.wrap{max-width:1120px;margin:0 auto;display:grid;grid-template-columns:200px minmax(0,1fr);gap:48px}
+nav.toc{position:sticky;top:calc(env(safe-area-inset-top,0px) + 24px);align-self:start;font-size:13.5px}
+nav.toc p{font:600 11px/1 var(--body);letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:0 0 12px}
+nav.toc ol{list-style:none;margin:0;padding:0;display:grid;gap:6px;counter-reset:s}
+nav.toc a{color:var(--muted);text-decoration:none;display:flex;gap:8px}
+nav.toc a::before{counter-increment:s;content:counter(s);font:500 12px var(--mono);color:var(--accent);min-width:14px}
+nav.toc a:hover{color:var(--ink)}
+main{min-width:0;max-width:760px}
+header.hero{display:grid;gap:10px;padding-bottom:28px;border-bottom:1px solid var(--line);margin-bottom:12px}
+.eyebrow{font:500 12.5px var(--mono);color:var(--accent);letter-spacing:.04em}
+h1{font:700 clamp(30px,4.6vw,44px)/1.08 var(--display);margin:0;text-wrap:balance;letter-spacing:-.01em}
+.lede{color:var(--muted);margin:0;max-width:62ch}
+.meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+.chip{font:500 12px var(--mono);padding:3px 9px;border-radius:999px;background:var(--accent-soft);color:var(--accent)}
+section{padding-top:40px}
+h2{font:600 26px/1.2 var(--display);margin:0 0 14px;text-wrap:balance;display:flex;gap:12px;align-items:baseline}
+h2 .n{font:500 14px var(--mono);color:var(--accent)}
+h3{font:600 18px/1.3 var(--display);margin:26px 0 8px}
+p,li{max-width:68ch}
+a{color:var(--accent)}
+a:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+code{font:0.9em var(--mono);background:var(--code-bg);padding:1px 5px;border-radius:4px}
+.code{position:relative;margin:14px 0;border:1px solid var(--line);border-radius:8px;background:var(--code-bg)}
+.code pre{margin:0;padding:16px;overflow-x:auto;font:13px/1.55 var(--mono)}
+.code pre code{background:none;padding:0;font:inherit}
+.copy{position:absolute;top:8px;right:8px;font:500 12px var(--body);padding:4px 10px;border-radius:6px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+.copy:hover{border-color:var(--accent)}
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:8px;margin:14px 0;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:14px;min-width:680px}
+th,td{text-align:left;vertical-align:top;padding:10px 12px;border-bottom:1px solid var(--line)}
+th{font:600 12px var(--body);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:var(--bg)}
+tr:last-child td{border-bottom:0}
+td:first-child{font-weight:600;white-space:nowrap}
+.note{border-left:3px solid var(--warn);background:var(--warn-soft);padding:12px 16px;border-radius:0 8px 8px 0;margin:16px 0;max-width:68ch}
+.note strong{color:var(--warn)}
+.math{font:13.5px/1.6 var(--mono);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:14px 16px;overflow-x:auto;white-space:pre}
+figure{margin:18px 0;overflow-x:auto}
+figure svg{display:block;min-width:640px;width:100%;height:auto}
+figcaption{font-size:13px;color:var(--muted);margin-top:8px}
+.qa{border-top:1px solid var(--line);padding:16px 0}
+.qa summary{cursor:pointer;font-weight:600;list-style:none;display:flex;gap:10px}
+.qa summary::before{content:"Q";font:600 13px var(--mono);color:var(--accent);padding-top:2px}
+.qa[open] summary{margin-bottom:8px}
+.qa div{padding-left:22px;color:var(--ink)}
+.adr{display:grid;gap:0;border:1px solid var(--line);border-radius:8px;background:var(--surface);overflow:hidden}
+.adr>div{display:grid;grid-template-columns:130px minmax(0,1fr);gap:16px;padding:14px 16px;border-bottom:1px solid var(--line)}
+.adr>div:last-child{border-bottom:0}
+.adr dt{font:600 12px var(--body);text-transform:uppercase;letter-spacing:.08em;color:var(--muted);padding-top:3px}
+.adr dd{margin:0}
+.repo{display:grid;gap:2px;padding:12px 0;border-top:1px solid var(--line)}
+.repo a{font:500 14.5px var(--mono)}
+.repo span{color:var(--muted);font-size:14.5px}
+.tomorrow{margin-top:40px;padding:18px 20px;border-radius:8px;background:var(--accent-soft);color:var(--ink)}
+.tomorrow b{color:var(--accent)}
+@media (max-width:860px){.wrap{grid-template-columns:minmax(0,1fr)}nav.toc{display:none}.adr>div{grid-template-columns:minmax(0,1fr);gap:4px}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+<nav class="toc" aria-label="Contents"><p>Day 13</p><ol>
+<li><a href="#why">Why it matters</a></li><li><a href="#concept">Concept brief</a></li><li><a href="#tradeoffs">Trade-offs</a></li>
+<li><a href="#lab">Hands-on lab</a></li><li><a href="#repos">Repos</a></li><li><a href="#read">Read</a></li>
+<li><a href="#interview">Interview</a></li><li><a href="#adr">Architect's lens</a></li><li><a href="#next">Tomorrow</a></li></ol></nav>
+<main>
+<header class="hero">
+  <div class="eyebrow">Week 2 · Production retrieval · Day 13 of 30</div>
+  <h1>Feedback loops, semantic caching and prompt caching</h1>
+  <p class="lede">How a RAG system gets better every week instead of decaying, and how to cut its latency and token bill without serving wrong answers faster.</p>
+  <div class="meta"><span class="chip">~25 min read</span><span class="chip">75 min lab</span><span class="chip">Runs on Ollama, no Docker</span></div>
+</header>
+
+<section id="why"><h2><span class="n">1</span>Why this matters for the JD</h2>
+<p>The JD's preferred skills name <b>"RAG optimization … feedback loops"</b> and the must-haves include <b>"evaluation (latency/cost)"</b> and <b>"productionization … cost controls"</b>. In a design review, this is where you show the system has a plan for month three: who reads thumbs-down, how failures become regression tests, and which cache layer pays for the GPU bill.</p>
+</section>
+
+<section id="concept"><h2><span class="n">2</span>Concept brief</h2>
+<p>Treat a production RAG system as two loops running at different speeds.</p>
+<ul>
+<li><b>Fast loop (milliseconds):</b> the request path. Caches remove work at three different layers: whole answers (exact and semantic cache), shared prompt prefixes (provider prompt caching, vLLM automatic prefix caching), and intermediate artifacts (query embeddings, retrieval results, rerank scores).</li>
+<li><b>Slow loop (days):</b> the improvement path. Signals are captured, triaged into a failure taxonomy, fixed at the right layer (index, chunking, prompt, model, guardrail), and frozen into the golden set so the fix can't regress.</li>
+</ul>
+<figure>
+<svg viewBox="0 0 760 330" role="img" aria-label="Request path with three cache layers and a feedback loop back into the golden set and index">
+<defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0L10,5L0,10z" fill="var(--muted)"/></marker></defs>
+<style>.b{fill:var(--surface);stroke:var(--line);stroke-width:1.2}.c{fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.2}.w{fill:var(--warn-soft);stroke:var(--warn);stroke-width:1.2}.t{font:500 12px var(--body);fill:var(--ink)}.s{font:11px var(--mono);fill:var(--muted)}.l{stroke:var(--muted);stroke-width:1.2;fill:none}.h{font:600 11px var(--body);letter-spacing:.1em;fill:var(--muted)}</style>
+<text class="h" x="10" y="18">FAST LOOP · REQUEST PATH</text>
+<rect class="b" x="10" y="32" width="86" height="54" rx="6"/><text class="t" x="53" y="56" text-anchor="middle">Query</text><text class="s" x="53" y="73" text-anchor="middle">+ tenant, ACL</text>
+<rect class="c" x="116" y="32" width="120" height="54" rx="6"/><text class="t" x="176" y="54" text-anchor="middle">L1 answer cache</text><text class="s" x="176" y="71" text-anchor="middle">exact → semantic</text>
+<rect class="b" x="256" y="32" width="120" height="54" rx="6"/><text class="t" x="316" y="54" text-anchor="middle">Retrieve + rerank</text><text class="s" x="316" y="71" text-anchor="middle">L3: embed cache</text>
+<rect class="c" x="396" y="32" width="150" height="54" rx="6"/><text class="t" x="471" y="54" text-anchor="middle">L2 prefix cache</text><text class="s" x="471" y="71" text-anchor="middle">static ‖ dynamic</text>
+<rect class="b" x="566" y="32" width="84" height="54" rx="6"/><text class="t" x="608" y="64" text-anchor="middle">LLM</text>
+<rect class="b" x="670" y="32" width="80" height="54" rx="6"/><text class="t" x="710" y="64" text-anchor="middle">Answer</text>
+<path class="l" d="M96 59H114" marker-end="url(#ar)"/><path class="l" d="M236 59H254" marker-end="url(#ar)"/><path class="l" d="M376 59H394" marker-end="url(#ar)"/><path class="l" d="M546 59H564" marker-end="url(#ar)"/><path class="l" d="M650 59H668" marker-end="url(#ar)"/>
+<path class="l" d="M176 32V14H710V30" marker-end="url(#ar)" stroke-dasharray="4 3"/><text class="s" x="440" y="10" text-anchor="middle">hit: skip retrieval + generation</text>
+<text class="h" x="10" y="140">SLOW LOOP · IMPROVEMENT PATH</text>
+<rect class="w" x="600" y="156" width="150" height="60" rx="6"/><text class="t" x="675" y="180" text-anchor="middle">Signals</text><text class="s" x="675" y="198" text-anchor="middle">thumbs · re-ask · escalate</text>
+<rect class="b" x="420" y="156" width="150" height="60" rx="6"/><text class="t" x="495" y="180" text-anchor="middle">Triage</text><text class="s" x="495" y="198" text-anchor="middle">judge + human queue</text>
+<rect class="b" x="240" y="156" width="150" height="60" rx="6"/><text class="t" x="315" y="180" text-anchor="middle">Classify failure</text><text class="s" x="315" y="198" text-anchor="middle">retrieval/gen/stale</text>
+<rect class="b" x="10" y="156" width="200" height="60" rx="6"/><text class="t" x="110" y="180" text-anchor="middle">Fix at the right layer</text><text class="s" x="110" y="198" text-anchor="middle">chunk · index · prompt · model</text>
+<path class="l" d="M710 86V154" marker-end="url(#ar)"/><path class="l" d="M600 186H572" marker-end="url(#ar)"/><path class="l" d="M420 186H392" marker-end="url(#ar)"/><path class="l" d="M240 186H212" marker-end="url(#ar)"/>
+<rect class="c" x="10" y="252" width="200" height="56" rx="6"/><text class="t" x="110" y="276" text-anchor="middle">Golden set + eval gate</text><text class="s" x="110" y="294" text-anchor="middle">CI blocks regressions</text>
+<rect class="w" x="240" y="252" width="200" height="56" rx="6"/><text class="t" x="340" y="276" text-anchor="middle">Invalidate cache</text><text class="s" x="340" y="294" text-anchor="middle">bad entry · corpus version</text>
+<path class="l" d="M110 216V250" marker-end="url(#ar)"/><path class="l" d="M210 280H238" marker-end="url(#ar)"/>
+<path class="l" d="M440 280H520V88" marker-end="url(#ar)" stroke-dasharray="4 3"/><path class="l" d="M110 252V236H60V88" marker-end="url(#ar)" stroke-dasharray="4 3"/>
+</svg>
+<figcaption>Three cache layers on the request path; the feedback path ends in two places — the golden set (so fixes stick) and cache invalidation (so bad answers stop being replayed).</figcaption>
+</figure>
+
+<h3>Prompt caching is about layout, not a feature flag</h3>
+<p>Provider prompt caches (Anthropic, OpenAI, Gemini, Bedrock, Azure OpenAI) and self-hosted KV prefix reuse (vLLM's Automatic Prefix Caching) all match on an <em>exact token prefix</em>. One changed token early in the prompt invalidates everything after it. So the architecture rule is: <b>stable → volatile</b>. Tool schemas, system instructions, policy text and few-shot examples first; retrieved chunks next; the user question last. Timestamps, user names or request IDs in the system prompt silently destroy the hit rate. Sort tool definitions deterministically.</p>
+<p>Current pricing shapes (confirm per model before committing numbers): Anthropic charges 1.25× base input for a 5-minute cache write, 2× for a 1-hour write, and about 0.1× for a cache read; you mark up to 4 breakpoints with <code>cache_control</code>, or set one top-level <code>cache_control</code> for automatic caching. OpenAI caches automatically above 1,024 tokens and reports <code>cached_tokens</code> in usage; <code>prompt_cache_key</code> influences routing but does not guarantee a hit. Gemini 2.5+ does implicit caching by default, with explicit context caches as a separate beta API. vLLM APC only cuts <em>prefill</em> time, never decode time.</p>
+<div class="math">Break-even for a cached prefix of P tokens reused n times (Anthropic multipliers):
+  5-min TTL:  1.25P + 0.1P·n   vs   P·(1+n)   → pays off from the 1st reuse
+  1-hour TTL: 2.00P + 0.1P·n   vs   P·(1+n)   → pays off from the 2nd reuse
+
+Worked example: 6,000-token prompt = 4,000 static prefix + 2,000 retrieved chunks + question
+  uncached input           = 6,000 units
+  cached (steady state)    = 0.1 × 4,000 + 2,000 = 2,400 units   → −60% input tokens
+  + 20% semantic-cache hit rate on FAQ intents  → those calls cost ≈ one embedding</div>
+
+<h3>Semantic caching: the hit rate is easy, the precision is hard</h3>
+<p>A semantic cache embeds the query and returns a stored answer when cosine similarity clears a threshold. The failure is that the most dangerous queries are the most similar: "domestic travel limit" and "international travel limit" can score above 0.94 with general-purpose embedders. Raising the threshold kills recall long before it removes those false hits. What works in practice:</p>
+<ul>
+<li><b>Scope the key:</b> tenant + permission set + corpus version. A cache shared across ACL groups is a data-leak path, not a performance feature.</li>
+<li><b>Guard on discriminators:</b> numbers, regions, product names, dates must match exactly (the lab does this with a regex; production systems use NER or a small reranker as a verifier).</li>
+<li><b>Cache by intent:</b> enable it only for FAQ-class intents with stable answers; never for personalised, time-sensitive or tool-calling turns.</li>
+<li><b>Calibrate on near-misses:</b> the threshold comes from a labelled set of paraphrases <em>and</em> near-miss pairs, with a target false-hit rate, not from a blog post's "0.9".</li>
+<li><b>Only cache good answers:</b> admit entries that passed grounding checks; evict on thumbs-down, on TTL and on corpus re-index.</li>
+</ul>
+
+<h3>Feedback signals, ranked by trust</h3>
+<p>Explicit thumbs are sparse and skew negative; use them, but don't optimise to them alone. Implicit signals are denser: user re-asks within a minute, copies the answer, clicks a citation, escalates to a human agent or raises a ticket. Online LLM-as-judge (faithfulness, answer relevance) scores a sample of every day's traffic. Human annotation queues review the disagreements. Each confirmed failure gets a class — <code>retrieval_miss</code>, <code>chunking</code>, <code>stale_doc</code>, <code>generation</code>, <code>out_of_scope</code>, <code>policy</code> — because the class decides which team and which layer fixes it. Then it lands in the golden set that the CI eval gate runs on every prompt, model or index change.</p>
+<p><b>IBM mapping:</b> watsonx.governance covers the monitoring and evaluation side (quality and drift metrics, feedback data); for self-hosted Granite on Red Hat OpenShift AI, the vLLM runtime gives you prefix caching; Azure API Management offers a semantic-cache policy in front of Azure OpenAI; Bedrock and Vertex both expose provider-side prompt/context caching.</p>
+</section>
+
+<section id="tradeoffs"><h2><span class="n">3</span>Trade-offs &amp; decision table</h2>
+<div class="tbl"><table>
+<thead><tr><th>Lever</th><th>Saves</th><th>Pick when</th><th>Failure modes</th><th>Cost / latency notes</th></tr></thead>
+<tbody>
+<tr><td>Exact-match cache</td><td>Whole call</td><td>Repeated canned prompts, batch jobs, eval reruns</td><td>Near-zero hit rate on free text; stale after re-index</td><td>Key = hash(model, prompt version, normalised query, scope). Cheapest win.</td></tr>
+<tr><td>Semantic cache</td><td>Retrieval + generation</td><td>High-volume FAQ intents (HR, IT helpdesk, support)</td><td>Confident wrong answers on near-misses; cross-ACL leakage; staleness</td><td>Hit ≈ one embedding + vector lookup (tens of ms). Needs calibration set and invalidation.</td></tr>
+<tr><td>Provider prompt cache</td><td>Prefill cost + TTFT on shared prefix</td><td>Long system prompts, tool schemas, few-shot, long docs, agents</td><td>Volatile tokens in prefix → 0% hits; TTL expiry on low traffic; min-token thresholds</td><td>Reads ≈ 0.1× input; writes 1.25–2×. Track cached-token ratio as an SLI.</td></tr>
+<tr><td>vLLM prefix caching</td><td>Prefill GPU time</td><td>Self-hosted models, multi-turn chat, shared RAG instructions</td><td>KV memory pressure evicts blocks; routing across replicas breaks locality</td><td>Use prefix-aware routing in the gateway for multi-replica deployments.</td></tr>
+<tr><td>Embedding / retrieval cache</td><td>Embed + ANN + rerank</td><td>Re-ask patterns, multi-query expansion, agent loops</td><td>Stale results after index updates</td><td>Key on corpus version; reranker is often the costliest retrieval hop.</td></tr>
+<tr><td>Model routing / cascade</td><td>Per-token price</td><td>Mixed difficulty traffic</td><td>Router misclassifies hard queries; quality variance</td><td>Gate with eval on each route; fall back up the cascade on low confidence.</td></tr>
+<tr><td>Streaming + trimming</td><td>Perceived latency, output tokens</td><td>Every chat UI</td><td>Guardrails that need the full answer conflict with streaming</td><td>TTFT is the SLO users feel; cap max_tokens; trim top-k after rerank.</td></tr>
+</tbody></table></div>
+<div class="note"><strong>Review trap:</strong> quoting a semantic-cache hit rate without a false-hit rate. Ask for both, measured on a near-miss set, before approving the design.</div>
+</section>
+
+<section id="lab"><h2><span class="n">4</span>Hands-on lab · 75 min</h2>
+<p><b>Goal:</b> build a scoped semantic cache in front of a local RAG answerer, prove why the threshold alone can't protect you, measure prefix reuse, and wire a thumbs-down into cache invalidation and the golden set. Everything runs in native Windows via Ollama: no Redis, Docker or WSL2.</p>
+<h3>Setup (PowerShell)</h3>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code># PowerShell — one-time setup (no Docker/WSL needed)
+winget install --id Ollama.Ollama -e        # or the installer from ollama.com/download
+ollama pull nomic-embed-text
+ollama pull llama3.2:3b
+
+mkdir day13; cd day13
+py -3.13 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+python -m pip install &quot;ollama&gt;=0.6&quot; &quot;numpy&gt;=2.1&quot;
+# save the script below as semcache_lab.py, then:
+python semcache_lab.py sweep
+python semcache_lab.py serve
+python semcache_lab.py feedback</code></pre></div>
+<p>Model footprint: <code>llama3.2:3b</code> is about 2 GB at Q4 and fits in the 3050's 6 GB VRAM; <code>nomic-embed-text</code> is small and can share it. If VRAM is tight, set <code>$env:OLLAMA_MAX_LOADED_MODELS=2</code> before starting Ollama, or swap the chat model for <code>qwen2.5:1.5b</code>.</p>
+<h3>semcache_lab.py</h3>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code>&quot;&quot;&quot;
+Day 13 lab: semantic cache + prompt-prefix reuse + feedback loop, fully local (Ollama).
+Run:  python semcache_lab.py sweep      -&gt; threshold calibration on paraphrase vs near-miss pairs
+      python semcache_lab.py serve      -&gt; cached RAG answers, latency + prefix-reuse stats
+      python semcache_lab.py feedback   -&gt; thumbs-down -&gt; invalidate cache + grow golden set
+&quot;&quot;&quot;
+import json
+import re
+import sys
+import time
+import uuid
+import pathlib
+
+import numpy as np
+import ollama
+
+EMBED_MODEL = &quot;nomic-embed-text&quot;   # 137M params, runs fine on CPU or RTX 3050
+CHAT_MODEL = &quot;llama3.2:3b&quot;         # ~2 GB Q4, fits in 6 GB VRAM
+CORPUS_VERSION = &quot;kb-2026-10-22&quot;   # bump when the index is rebuilt -&gt; old cache entries die
+GOLDEN = pathlib.Path(&quot;golden_set.jsonl&quot;)
+FEEDBACK = pathlib.Path(&quot;feedback.jsonl&quot;)
+
+# ---------------------------------------------------------------- embeddings
+def embed(texts: list[str]) -&gt; np.ndarray:
+    # nomic-embed-text expects a task prefix; use the same one on both sides (symmetric match)
+    r = ollama.embed(model=EMBED_MODEL, input=[f&quot;search_query: {t}&quot; for t in texts])
+    v = np.asarray(r.embeddings, dtype=np.float32)
+    return v / np.linalg.norm(v, axis=1, keepdims=True)
+
+# Cheap &quot;entity guard&quot;: numbers and discriminating words must match exactly.
+GUARD_WORDS = {&quot;india&quot;, &quot;us&quot;, &quot;uk&quot;, &quot;international&quot;, &quot;domestic&quot;, &quot;annual&quot;, &quot;sick&quot;,
+               &quot;casual&quot;, &quot;email&quot;, &quot;vpn&quot;, &quot;encash&quot;, &quot;carry&quot;, &quot;contractor&quot;, &quot;manager&quot;}
+
+def entities(q: str) -&gt; frozenset[str]:
+    toks = re.findall(r&quot;[a-z]+|\d[\d,]*&quot;, q.lower())
+    nums = {t.replace(&quot;,&quot;, &quot;&quot;) for t in toks if t[0].isdigit()}
+    return frozenset(nums | (set(toks) &amp; GUARD_WORDS))
+
+# ---------------------------------------------------------------- semantic cache
+class SemanticCache:
+    def __init__(self, threshold: float = 0.90, ttl_s: int = 3600, guard: bool = True):
+        self.threshold, self.ttl, self.guard = threshold, ttl_s, guard
+        self.entries: list[dict] = []
+        self.stats = {&quot;hit&quot;: 0, &quot;miss&quot;: 0, &quot;guard_block&quot;: 0}
+
+    @staticmethod
+    def scope(tenant: str, acl_group: str) -&gt; str:
+        # never share answers across tenants, permission sets, or corpus versions
+        return f&quot;{tenant}|{acl_group}|{CORPUS_VERSION}&quot;
+
+    def lookup(self, query: str, vec: np.ndarray, scope: str):
+        now, best, best_s = time.time(), None, -1.0
+        for e in self.entries:
+            if e[&quot;scope&quot;] != scope or e[&quot;bad&quot;] or now - e[&quot;ts&quot;] &gt; self.ttl:
+                continue
+            s = float(vec @ e[&quot;vec&quot;])
+            if s &gt; best_s:
+                best, best_s = e, s
+        if best is not None and best_s &gt;= self.threshold:
+            if self.guard and entities(query) != best[&quot;ents&quot;]:
+                self.stats[&quot;guard_block&quot;] += 1
+            else:
+                self.stats[&quot;hit&quot;] += 1
+                return best, best_s
+        self.stats[&quot;miss&quot;] += 1
+        return None, best_s
+
+    def store(self, query, vec, scope, answer) -&gt; str:
+        eid = uuid.uuid4().hex[:8]
+        self.entries.append({&quot;id&quot;: eid, &quot;query&quot;: query, &quot;vec&quot;: vec, &quot;scope&quot;: scope,
+                             &quot;answer&quot;: answer, &quot;ents&quot;: entities(query),
+                             &quot;ts&quot;: time.time(), &quot;bad&quot;: False})
+        return eid
+
+    def invalidate(self, eid: str):
+        for e in self.entries:
+            if e[&quot;id&quot;] == eid:
+                e[&quot;bad&quot;] = True
+
+# ---------------------------------------------------------------- part A: calibration
+PAIRS = [  # (cached query, new query, should_hit)
+    (&quot;How many days of annual leave do I get?&quot;, &quot;What is my yearly leave entitlement?&quot;, True),
+    (&quot;How do I reset my VPN password?&quot;, &quot;Steps to change my VPN password&quot;, True),
+    (&quot;What is the travel reimbursement limit for domestic trips?&quot;, &quot;Domestic travel claim cap?&quot;, True),
+    (&quot;Can I carry forward unused leave?&quot;, &quot;Do unused leave days carry over to next year?&quot;, True),
+    (&quot;How do I raise an IT ticket?&quot;, &quot;Where do I log a helpdesk request?&quot;, True),
+    (&quot;Who approves expenses above 50,000 INR?&quot;, &quot;Who signs off on expenses over 50,000 INR?&quot;, True),
+    (&quot;What is the travel reimbursement limit for domestic trips?&quot;, &quot;What is the travel reimbursement limit for international trips?&quot;, False),
+    (&quot;How many days of annual leave do I get?&quot;, &quot;How many days of sick leave do I get?&quot;, False),
+    (&quot;How do I reset my VPN password?&quot;, &quot;How do I reset my email password?&quot;, False),
+    (&quot;Can I carry forward unused leave?&quot;, &quot;Can I encash unused leave?&quot;, False),
+    (&quot;What is the notice period for employees in India?&quot;, &quot;What is the notice period for employees in the US?&quot;, False),
+    (&quot;Who approves expenses above 50,000 INR?&quot;, &quot;Who approves expenses above 5,000 INR?&quot;, False),
+]
+
+def sweep():
+    a = embed([p[0] for p in PAIRS])
+    b = embed([p[1] for p in PAIRS])
+    sims = (a * b).sum(axis=1)
+    print(f&quot;{&#x27;sim&#x27;:&gt;6}  label  pair&quot;)
+    for s, (x, y, lab) in zip(sims, PAIRS):
+        print(f&quot;{s:6.3f}  {&#x27;HIT &#x27; if lab else &#x27;MISS&#x27;}   {x[:38]!r} ~ {y[:38]!r}&quot;)
+    print(&quot;\nthreshold | guard | true hits | false hits (wrong answer served)&quot;)
+    for guard in (False, True):
+        for t in (0.80, 0.85, 0.88, 0.90, 0.93, 0.95):
+            tp = fp = 0
+            for s, (x, y, lab) in zip(sims, PAIRS):
+                hit = s &gt;= t and (not guard or entities(x) == entities(y))
+                tp += hit and lab
+                fp += hit and not lab
+            print(f&quot;   {t:.2f}   | {&#x27;on &#x27; if guard else &#x27;off&#x27;}  |   {tp}/6     |   {fp}/6&quot;)
+
+# ---------------------------------------------------------------- part B: cached RAG
+KB = &quot;&quot;&quot;[HR-12] Annual leave: 24 working days per calendar year, accrued monthly.
+[HR-13] Sick leave: 12 days per year, not encashable.
+[HR-14] Up to 10 unused annual leave days carry forward; the rest lapse on 31 March.
+[HR-15] Leave encashment: allowed only at exit, max 30 days.
+[FIN-03] Domestic travel claims capped at INR 15,000 per trip; international at USD 1,500.
+[FIN-07] Expenses above INR 50,000 need VP approval; above INR 5,000 need manager approval.
+[IT-02] Reset VPN password at https://selfservice.example.internal/vpn (MFA required).
+[IT-05] Raise IT tickets in ServiceDesk, category &#x27;End-user computing&#x27;.
+&quot;&quot;&quot;
+# Static prefix FIRST (instructions + KB) so the server can reuse its KV cache; the
+# per-request question goes LAST. Do not put timestamps or user ids in the prefix.
+SYSTEM = (&quot;You are an internal policy assistant. Answer ONLY from the policy text below, &quot;
+          &quot;cite the [ID], and reply &#x27;Not in policy&#x27; if absent. Be brief.\n\n&quot; + KB * 6)
+
+def answer_llm(q: str) -&gt; tuple[str, dict]:
+    r = ollama.chat(model=CHAT_MODEL, keep_alive=&quot;10m&quot;,
+                    options={&quot;temperature&quot;: 0, &quot;num_ctx&quot;: 4096},
+                    messages=[{&quot;role&quot;: &quot;system&quot;, &quot;content&quot;: SYSTEM},
+                              {&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: q}])
+    meta = {&quot;prompt_tokens&quot;: r.prompt_eval_count,
+            &quot;prefill_ms&quot;: round((r.prompt_eval_duration or 0) / 1e6),
+            &quot;total_ms&quot;: round((r.total_duration or 0) / 1e6)}
+    return r.message.content.strip(), meta
+
+STREAM = [&quot;How many days of annual leave do I get?&quot;,
+          &quot;What is my yearly leave entitlement?&quot;,
+          &quot;How many days of sick leave do I get?&quot;,
+          &quot;Domestic travel claim cap?&quot;,
+          &quot;What is the travel reimbursement limit for international trips?&quot;,
+          &quot;What&#x27;s the domestic travel reimbursement limit?&quot;,
+          &quot;How do I reset my VPN password?&quot;]
+
+def serve(cache: SemanticCache | None = None, tenant=&quot;ltim&quot;, acl=&quot;all-staff&quot;):
+    cache = cache or SemanticCache(threshold=0.88)
+    scope = cache.scope(tenant, acl)
+    for q in STREAM:
+        t0 = time.perf_counter()
+        vec = embed([q])[0]
+        hit, s = cache.lookup(q, vec, scope)
+        if hit:
+            ms = (time.perf_counter() - t0) * 1000
+            print(f&quot;HIT  {ms:7.0f} ms  sim={s:.3f}  {q!r}\n      -&gt; {hit[&#x27;answer&#x27;][:90]}&quot;)
+            continue
+        ans, meta = answer_llm(q)
+        eid = cache.store(q, vec, scope, ans)
+        ms = (time.perf_counter() - t0) * 1000
+        print(f&quot;MISS {ms:7.0f} ms  best={s:.3f}  id={eid}  {q!r}  {meta}\n      -&gt; {ans[:90]}&quot;)
+    print(&quot;\ncache stats:&quot;, cache.stats)
+    return cache
+
+# ---------------------------------------------------------------- part C: feedback loop
+def record_feedback(cache: SemanticCache, eid: str, rating: int, reason: str, expected: str = &quot;&quot;):
+    e = next(x for x in cache.entries if x[&quot;id&quot;] == eid)
+    FEEDBACK.open(&quot;a&quot;, encoding=&quot;utf-8&quot;).write(json.dumps({
+        &quot;ts&quot;: time.time(), &quot;entry&quot;: eid, &quot;query&quot;: e[&quot;query&quot;], &quot;answer&quot;: e[&quot;answer&quot;],
+        &quot;rating&quot;: rating, &quot;reason&quot;: reason, &quot;corpus&quot;: CORPUS_VERSION}) + &quot;\n&quot;)
+    if rating &lt; 0:
+        cache.invalidate(eid)  # stop serving it immediately
+        GOLDEN.open(&quot;a&quot;, encoding=&quot;utf-8&quot;).write(json.dumps({
+            &quot;question&quot;: e[&quot;query&quot;], &quot;expected&quot;: expected, &quot;failure_class&quot;: reason,
+            &quot;source&quot;: &quot;prod-feedback&quot;}) + &quot;\n&quot;)  # becomes a regression test
+
+def feedback_demo():
+    cache = serve()
+    target = cache.entries[0]
+    print(f&quot;\nUser gives thumbs-down on {target[&#x27;id&#x27;]} ({target[&#x27;query&#x27;]!r})&quot;)
+    record_feedback(cache, target[&quot;id&quot;], -1, &quot;generation:missing_accrual_detail&quot;,
+                    expected=&quot;24 working days per year, accrued monthly [HR-12]&quot;)
+    print(&quot;Replaying the stream; that entry must now MISS and regenerate:\n&quot;)
+    cache.stats = {&quot;hit&quot;: 0, &quot;miss&quot;: 0, &quot;guard_block&quot;: 0}
+    serve(cache)
+    print(f&quot;\n{GOLDEN} now has {sum(1 for _ in GOLDEN.open(encoding=&#x27;utf-8&#x27;))} case(s)&quot;)
+
+if __name__ == &quot;__main__&quot;:
+    {&quot;sweep&quot;: sweep, &quot;serve&quot;: serve, &quot;feedback&quot;: feedback_demo}[sys.argv[1] if len(sys.argv) &gt; 1 else &quot;sweep&quot;]()
+</code></pre></div>
+<h3>What to do, in order</h3>
+<ol>
+<li><b>sweep (15 min):</b> read the similarity column. Note how high the near-miss pairs score. Find the threshold where guard-off false hits reach 0 and see what recall is left.</li>
+<li><b>serve (20 min):</b> watch latency on HIT vs MISS, and <code>prompt_tokens</code>/<code>prefill_ms</code> on consecutive misses. If prefix reuse kicks in, later misses evaluate far fewer prompt tokens. Then put <code>time.ctime()</code> at the start of <code>SYSTEM</code> and rerun: the reuse disappears.</li>
+<li><b>feedback (15 min):</b> confirm the downvoted entry misses on replay and <code>golden_set.jsonl</code> gains a case with a failure class.</li>
+<li><b>write-up (15 min):</b> one paragraph: chosen threshold, false-hit rate, latency saved per hit, and which intents you'd allow in the cache.</li>
+</ol>
+<h3>Expected output (shape)</h3>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code># sweep (illustrative; exact sims depend on the embedding model)
+   sim  label  pair
+ 0.912  HIT    &#x27;How many days of annual leave do I get&#x27; ~ &#x27;What is my yearly leave entitlement?&#x27;
+ 0.947  MISS   &#x27;What is the travel reimbursement limit&#x27; ~ &#x27;What is the travel reimbursement limit&#x27;
+ 0.931  MISS   &#x27;Who approves expenses above 50,000 INR&#x27; ~ &#x27;Who approves expenses above 5,000 INR?&#x27;
+ ...
+threshold | guard | true hits | false hits (wrong answer served)
+   0.85   | off  |   5/6     |   6/6     &lt;- every near-miss is served a wrong answer
+   0.93   | off  |   2/6     |   3/6     &lt;- raising the threshold kills recall first
+   0.85   | on   |   5/6     |   0/6     &lt;- the guard, not the threshold, buys precision
+
+# serve
+MISS    3400 ms  best=-1.000  id=3f1a9c2e  &#x27;How many days of annual leave do I get?&#x27;  {&#x27;prompt_tokens&#x27;: 1630, &#x27;prefill_ms&#x27;: 2100, ...}
+HIT       45 ms  sim=0.912  &#x27;What is my yearly leave entitlement?&#x27;
+MISS     900 ms  best=0.951  id=...       &#x27;How many days of sick leave do I get?&#x27;  {&#x27;prompt_tokens&#x27;: 14, &#x27;prefill_ms&#x27;: 30, ...}
+cache stats: {&#x27;hit&#x27;: 2, &#x27;miss&#x27;: 5, &#x27;guard_block&#x27;: 2}</code></pre></div>
+<p>Your similarity values will differ by model and version; the pattern to look for is that near-miss pairs score close to or above true paraphrases, and that the entity guard removes false hits without costing recall.</p>
+<h3>Stretch goals</h3>
+<ol>
+<li><b>Verifier instead of regex:</b> replace <code>entities()</code> with a cross-encoder check (e.g. a bge reranker via <code>sentence-transformers</code>) that must score the (cached query, new query) pair above a cut-off. Compare false hits and added latency.</li>
+<li><b>Redis-backed cache:</b> swap the in-memory class for RedisVL's <code>SemanticCache</code> (needs Redis 8 / Redis Stack, so Docker Desktop or WSL2). Add <code>filterable_fields</code> for tenant and ACL so scope is enforced in the query, not in Python.</li>
+</ol>
+</section>
+
+<section id="repos"><h2><span class="n">5</span>GitHub repos to study</h2>
+<div class="repo"><a href="https://github.com/redis/redis-vl-python">redis/redis-vl-python</a><span>Read the <code>SemanticCache</code> and <code>EmbeddingsCache</code> extensions: TTL, distance threshold and filterable fields for scoping.</span></div>
+<div class="repo"><a href="https://github.com/vllm-project/vllm">vllm-project/vllm</a><span>Study the prefix-caching design (block hashing, LRU eviction) and how it interacts with KV memory under load.</span></div>
+<div class="repo"><a href="https://github.com/langfuse/langfuse">langfuse/langfuse</a><span>Scores, annotation queues and datasets: the reference shape for "trace → feedback → dataset → experiment" loops.</span></div>
+<div class="repo"><a href="https://github.com/vllm-project/semantic-router">vllm-project/semantic-router</a><span>Policy-based model routing on cost, latency and quality: the cascade lever from the table, in code.</span></div>
+<p class="note"><strong>Skip for new builds:</strong> zilliztech/GPTCache is still public, but its README says it no longer adds support for new APIs or models. Read its get/set design for ideas; don't adopt it.</p>
+</section>
+
+<section id="read"><h2><span class="n">6</span>Read / watch</h2>
+<ul>
+<li><a href="https://platform.claude.com/docs/en/build-with-claude/prompt-caching">Anthropic · Prompt caching</a> — breakpoints, TTLs, automatic caching, per-model minimums, usage fields.</li>
+<li><a href="https://developers.openai.com/api/docs/guides/prompt-caching">OpenAI · Prompt caching guide</a> — automatic caching, retention options, <code>prompt_cache_key</code>; then the <a href="https://developers.openai.com/cookbook/examples/prompt_caching_201">Prompt Caching 201 cookbook</a>.</li>
+<li><a href="https://langfuse.com/docs/evaluation/overview">Langfuse · Evaluation overview</a> — online LLM-as-judge, annotation queues, datasets and CI experiments in one loop.</li>
+<li><a href="https://docs.vllm.ai/en/latest/features/automatic_prefix_caching.html">vLLM · Automatic Prefix Caching</a> — what it speeds up and what it doesn't.</li>
+</ul>
+</section>
+
+<section id="interview"><h2><span class="n">7</span>Interview questions</h2>
+<details class="qa" open><summary>Your semantic cache served "domestic travel limit" for an "international" question. How do you fix it without killing the hit rate?</summary><div>Raising the threshold won't do it: near-misses often score above paraphrases. Add an exact-match guard on discriminating entities (numbers, regions, product names) or a cross-encoder verifier on the query pair; restrict caching to FAQ intents; calibrate the threshold on a labelled near-miss set with a target false-hit rate (e.g. under 0.5%); and monitor false hits through feedback on cache-served answers specifically.</div></details>
+<details class="qa"><summary>How do you design prompts so provider prompt caching actually hits?</summary><div>Order content stable → volatile: tools, system instructions, policy and few-shot, then retrieved chunks, then the question. Keep timestamps, user IDs and A/B flags out of the prefix; serialise tool schemas deterministically; place breakpoints at the end of each stable segment. Choose TTL from traffic: a 5-minute write pays back on the first reuse, a 1-hour write on the second. Track cached-token ratio per route as an SLI and alert when it drops after a deploy.</div></details>
+<details class="qa"><summary>Thumbs-down rate is 3%. How do you turn that into improvements rather than noise?</summary><div>Join feedback to traces, add implicit signals (re-asks, escalations), and run an online judge on a sample to catch silent failures. Route disagreements to an annotation queue. Classify each confirmed failure by layer (retrieval miss, chunking, stale doc, generation, policy) and fix it there. Every fixed case goes into the golden set; the CI eval gate blocks prompt, model or index changes that regress it. Report weekly by failure class, not by raw thumbs.</div></details>
+<details class="qa"><summary>A semantic cache in a multi-tenant assistant: what are the security and compliance risks?</summary><div>Cross-tenant or cross-role leakage if the cache key ignores ACLs; cached PII outliving its retention policy; inability to honour erasure requests under DPDP or GDPR. Mitigate with keys scoped by tenant, permission-set hash and corpus version; no caching of personalised or PII-bearing answers (check with Presidio before admit); per-entry TTLs; purge APIs by user and document; encryption at rest; and audit logs of cache-served responses.</div></details>
+<details class="qa"><summary>p95 is 4.2 s against a 2.5 s SLO. Walk through how you'd get there.</summary><div>Break the trace down: embedding, ANN, rerank, prefill, decode, guardrails. Typical moves: stream to cut perceived latency (TTFT); move the static prefix into the prompt cache to cut prefill; shrink rerank candidates or use a smaller reranker; trim context to the top chunks after rerank; cap max tokens; route simple intents to a smaller model; run retrieval branches in parallel; serve FAQ intents from the semantic cache. Re-run the eval set after each change so quality doesn't pay for the speed.</div></details>
+</section>
+
+<section id="adr"><h2><span class="n">8</span>Architect's lens · ADR-013</h2>
+<dl class="adr">
+<div><dt>Title</dt><dd>Layered caching for the enterprise policy assistant</dd></div>
+<div><dt>Context</dt><dd>~60% of traffic is FAQ-class HR/IT questions. The prompt carries a ~4k-token static prefix. Answers are permission-scoped, and the corpus re-indexes nightly. Wrong policy answers carry compliance risk.</dd></div>
+<div><dt>Options</dt><dd>(A) No caching. (B) Provider prompt caching only. (C) B + a global semantic cache. (D) B + exact cache + a scoped, guarded semantic cache for allow-listed intents.</dd></div>
+<div><dt>Decision</dt><dd><b>D.</b> Prompt caching everywhere with a stable-first prompt layout. Semantic cache keyed by tenant, ACL hash and corpus version; entity guard; admission only after grounding checks pass; launch gated on a false-hit rate under 0.5% on a 300-pair near-miss set.</dd></div>
+<div><dt>Consequences</dt><dd>Lower input cost and TTFT; FAQ hits served in tens of ms. We take on a calibration set to maintain, cache-specific monitoring (false-hit feedback, hit rate by intent), purge APIs for DPDP erasure, and nightly invalidation on re-index. C was rejected for ACL leakage risk; A for cost.</dd></div>
+</dl>
+</section>
+
+<section id="next" class="tomorrow"><b>Tomorrow · Day 14:</b> Mini-project — a production-grade RAG with hybrid search, reranking and an evaluation report. Keep today's cache and golden set; you'll plug them in.</section>
+</main>
+</div>
+<script>
+document.querySelectorAll('.copy').forEach(b=>b.addEventListener('click',()=>{
+  const code=b.parentElement.querySelector('code');
+  const done=t=>{b.textContent=t;setTimeout(()=>b.textContent='Copy',1500)};
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(code.innerText).then(()=>done('Copied'),()=>{sel(code);done('Press Ctrl+C')});
+  }else{sel(code);done('Press Ctrl+C')}
+}));
+function sel(el){const r=document.createRange();r.selectNodeContents(el);const s=getSelection();s.removeAllRanges();s.addRange(r)}
+</script>
+
+</body></html>

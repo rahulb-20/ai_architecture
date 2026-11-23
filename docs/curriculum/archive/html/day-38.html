@@ -1,0 +1,376 @@
+<title>GenAI Prep · Day 38 — Revision Drill: Caching & Architect Deliverables</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Serif:wght@500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: single reading column (~72ch) with a sticky section index on wide screens; ledger-style tables for cost math */
+:root{
+  --bg:#f6f7f9; --surface:#ffffff; --fg:#1b2230; --muted:#5a6476; --line:#dde2ea;
+  --accent:#0f62a8; --accent-soft:#e3eef9; --warn:#a4570a; --warn-soft:#fbefe0; --ok:#1f7a4d; --ok-soft:#e2f3ea;
+  --code-bg:#0f1724; --code-fg:#e3e9f3;
+  --f-display:"IBM Plex Serif",Georgia,serif; --f-body:"IBM Plex Sans",system-ui,sans-serif; --f-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#10141b; --surface:#171d27; --fg:#e4e8ef; --muted:#9aa5b8; --line:#2a3342;
+  --accent:#6cb0f0; --accent-soft:#1a2b40; --warn:#f0a65a; --warn-soft:#33240f; --ok:#5fcf98; --ok-soft:#12301f;
+  --code-bg:#0a0e14; --code-fg:#dbe3ee; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#10141b; --surface:#171d27; --fg:#e4e8ef; --muted:#9aa5b8; --line:#2a3342;
+  --accent:#6cb0f0; --accent-soft:#1a2b40; --warn:#f0a65a; --warn-soft:#33240f; --ok:#5fcf98; --ok-soft:#12301f;
+  --code-bg:#0a0e14; --code-fg:#dbe3ee; color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:16px;line-height:1.6}
+.wrap{max-width:1120px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:32px 64px;display:grid;grid-template-columns:200px minmax(0,1fr);gap:40px}
+@media (max-width:860px){.wrap{grid-template-columns:minmax(0,1fr)} nav.toc{display:none}}
+nav.toc{position:sticky;top:calc(env(safe-area-inset-top,0px) + 24px);align-self:start;font-size:13px}
+nav.toc a{display:block;color:var(--muted);text-decoration:none;padding:4px 0;border-left:2px solid var(--line);padding-left:10px}
+nav.toc a:hover,nav.toc a:focus-visible{color:var(--accent);border-color:var(--accent)}
+main{min-width:0;max-width:760px}
+header .eyebrow{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);font-weight:600}
+h1{font-family:var(--f-display);font-size:clamp(28px,4vw,38px);line-height:1.2;margin:8px 0 12px;text-wrap:balance}
+h2{font-family:var(--f-display);font-size:24px;margin:48px 0 12px;text-wrap:balance;scroll-margin-top:24px}
+h3{font-size:17px;margin:24px 0 8px}
+p,li{max-width:70ch}
+.lede{color:var(--muted);font-size:17px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+.chip{font-size:12px;padding:3px 10px;border-radius:999px;background:var(--accent-soft);color:var(--accent);font-weight:500}
+a{color:var(--accent)}
+.tbl{overflow-x:auto;margin:16px 0;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:14px;min-width:620px}
+th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:600;background:var(--bg)}
+tr:last-child td{border-bottom:0}
+td.num{font-family:var(--f-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.note{padding:12px 16px;border-radius:8px;background:var(--warn-soft);color:var(--fg);border:1px solid var(--line);font-size:14.5px;margin:16px 0}
+.note b{color:var(--warn)}
+.code{position:relative;margin:12px 0 20px}
+.code pre{background:var(--code-bg);color:var(--code-fg);padding:16px;border-radius:8px;overflow-x:auto;font-family:var(--f-mono);font-size:13px;line-height:1.55;margin:0}
+.code .lbl{font-family:var(--f-mono);font-size:12px;color:var(--muted);margin-bottom:4px}
+.copy{position:absolute;top:28px;right:8px;font:500 12px var(--f-body);padding:4px 10px;border-radius:6px;border:1px solid #3a4656;background:#1d2734;color:#dbe3ee;cursor:pointer}
+.copy:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+code{font-family:var(--f-mono);font-size:.9em;background:var(--accent-soft);padding:1px 5px;border-radius:4px}
+pre code{background:none;padding:0}
+figure{margin:20px 0;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:16px;overflow-x:auto}
+figcaption{font-size:13px;color:var(--muted);margin-top:8px}
+svg text{font-family:var(--f-body)}
+details{border:1px solid var(--line);border-radius:8px;background:var(--surface);margin:10px 0;padding:0 16px}
+details[open]{padding-bottom:12px}
+summary{cursor:pointer;padding:12px 0;font-weight:600;list-style-position:outside}
+summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+details .tag{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-right:6px}
+.adr{display:grid;grid-template-columns:130px minmax(0,1fr);gap:8px 16px;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:16px}
+.adr dt{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600;padding-top:3px}
+.adr dd{margin:0}
+@media (max-width:520px){.adr{grid-template-columns:minmax(0,1fr)}}
+.ok{color:var(--ok);font-weight:600}.bad{color:var(--warn);font-weight:600}
+footer{margin-top:48px;font-size:13px;color:var(--muted);border-top:1px solid var(--line);padding-top:16px}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+</style>
+
+<div class="wrap">
+<nav class="toc" aria-label="Sections">
+  <a href="#why">Why it matters</a><a href="#brief">Concept recap</a><a href="#tradeoffs">Decision table</a>
+  <a href="#lab">Hands-on lab</a><a href="#repos">Repos</a><a href="#read">Read</a>
+  <a href="#qs">8 hard questions</a><a href="#scenario">Design scenario</a><a href="#adr">ADR</a><a href="#next">Tomorrow</a>
+</nav>
+<main>
+<header>
+  <div class="eyebrow">Day 38 · Revision drill · Mon 16 Nov 2026</div>
+  <h1>Caching for cost &amp; latency, and the architect's cost model</h1>
+  <p class="lede">Today pairs Day 13 (semantic and prompt caching) with Day 29 (NFRs, token-cost estimation, DR, ADRs). In a design review these come up together, because "what will this cost at 50k users, and what happens when the provider goes down?" is one question.</p>
+  <div class="chips"><span class="chip">Day 13 · Caching &amp; latency/cost</span><span class="chip">Day 29 · Architect deliverables</span><span class="chip">~75 min</span></div>
+</header>
+
+<h2 id="why">Why this matters for the JD</h2>
+<p>The JD asks for <em>latency/cost</em> evaluation, <em>cost controls</em> in productionization, and <em>HLD/LLD, NFRs, decision logs, cost estimates</em> plus <em>scalability, resilience, DR</em>. Caching is the cheapest lever on the cost line, and a defensible token-cost model is the artifact that gets a GenAI design approved by finance and the architecture board.</p>
+
+<h2 id="brief">Concept recap</h2>
+<h3>Three caches, three different things they skip</h3>
+<figure>
+<svg viewBox="0 0 720 250" width="100%" role="img" aria-label="Request path with exact cache, semantic cache, and provider prefix cache">
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker></defs>
+  <rect x="8" y="90" width="92" height="56" rx="6" fill="var(--accent-soft)" stroke="var(--accent)"/>
+  <text x="54" y="114" text-anchor="middle" font-size="13" fill="var(--fg)" font-weight="600">Request</text>
+  <text x="54" y="132" text-anchor="middle" font-size="11" fill="var(--muted)">user + scope</text>
+  <line x1="100" y1="118" x2="140" y2="118" stroke="var(--muted)" marker-end="url(#ar)"/>
+  <rect x="142" y="90" width="120" height="56" rx="6" fill="var(--surface)" stroke="var(--line)"/>
+  <text x="202" y="113" text-anchor="middle" font-size="13" fill="var(--fg)" font-weight="600">1 · Exact cache</text>
+  <text x="202" y="131" text-anchor="middle" font-size="11" fill="var(--muted)">hash(prompt+params)</text>
+  <line x1="262" y1="118" x2="302" y2="118" stroke="var(--muted)" marker-end="url(#ar)"/>
+  <rect x="304" y="90" width="136" height="56" rx="6" fill="var(--surface)" stroke="var(--line)"/>
+  <text x="372" y="113" text-anchor="middle" font-size="13" fill="var(--fg)" font-weight="600">2 · Semantic cache</text>
+  <text x="372" y="131" text-anchor="middle" font-size="11" fill="var(--muted)">cos ≥ τ, same scope</text>
+  <line x1="440" y1="118" x2="480" y2="118" stroke="var(--muted)" marker-end="url(#ar)"/>
+  <rect x="482" y="78" width="228" height="80" rx="6" fill="var(--surface)" stroke="var(--accent)"/>
+  <text x="596" y="100" text-anchor="middle" font-size="13" fill="var(--fg)" font-weight="600">3 · LLM provider</text>
+  <rect x="494" y="110" width="112" height="36" rx="4" fill="var(--ok-soft)" stroke="var(--ok)"/>
+  <text x="550" y="126" text-anchor="middle" font-size="11" fill="var(--fg)">static prefix</text>
+  <text x="550" y="140" text-anchor="middle" font-size="10" fill="var(--muted)">prompt-cached</text>
+  <rect x="610" y="110" width="90" height="36" rx="4" fill="var(--warn-soft)" stroke="var(--warn)"/>
+  <text x="655" y="126" text-anchor="middle" font-size="11" fill="var(--fg)">dynamic tail</text>
+  <text x="655" y="140" text-anchor="middle" font-size="10" fill="var(--muted)">full price</text>
+  <text x="202" y="178" text-anchor="middle" font-size="11" fill="var(--ok)">hit → skips everything</text>
+  <text x="202" y="194" text-anchor="middle" font-size="11" fill="var(--muted)">risk: low hit rate</text>
+  <text x="372" y="178" text-anchor="middle" font-size="11" fill="var(--ok)">hit → skips LLM + retrieval</text>
+  <text x="372" y="194" text-anchor="middle" font-size="11" fill="var(--warn)">risk: wrong answer served</text>
+  <text x="596" y="178" text-anchor="middle" font-size="11" fill="var(--ok)">hit → cheaper, faster prefill</text>
+  <text x="596" y="194" text-anchor="middle" font-size="11" fill="var(--muted)">risk: none to correctness</text>
+  <text x="360" y="234" text-anchor="middle" font-size="12" fill="var(--muted)">Order: tools → system → few-shot (stable) … retrieved chunks → user turn (volatile)</text>
+</svg>
+<figcaption>Only the semantic cache can change what the user sees. Exact and prefix caches are correctness-neutral; that asymmetry drives most review discussions.</figcaption>
+</figure>
+<ul>
+  <li><b>Provider prompt (prefix) caching.</b> The provider reuses KV-cache for an identical prompt prefix. On Anthropic, cache writes cost 1.25× base input (5-min TTL) or 2× (1-hour TTL), reads 0.1× (lower on some newer models); up to 4 breakpoints; the cache hierarchy is tools → system → messages, so changing a tool definition invalidates everything after it. On OpenAI, caching is automatic above a minimum prompt size (1,024 tokens on current models), hits show in <code>usage…cached_tokens</code>, and <code>prompt_cache_key</code> helps route related requests to the same cache. Design rule: <b>stable content first, volatile content last</b>, and never put timestamps or request IDs in the system prompt.</li>
+  <li><b>Semantic cache.</b> Embed the query, nearest-neighbour lookup, return the stored answer above a threshold τ. Biggest savings, but it is the only layer that can serve a <em>wrong</em> answer. It needs scope partitioning (tenant, ACL group, locale), TTLs tied to source-document versions, and an offline-measured false-hit rate. LiteLLM's own docs warn that semantic caching replays stale responses on multi-turn and agentic traffic.</li>
+  <li><b>Token-cost model (Day 29).</b> Cost per query = calls/query × [(static prefix × cache factor) + retrieved + user] × input price + output × output price. The term people forget is <b>calls per query</b>: query rewriting, reranking LLMs, retries, and agent steps multiply everything. In the lab model a 20% change in calls/query moves cost 20%; a 20% change in the cached prefix moves it about 7%.</li>
+  <li><b>NFRs that belong in the HLD:</b> p95 time-to-first-token, p95 end-to-end latency, groundedness/faithfulness floor on the golden set, availability (with degraded mode defined), cost per query ceiling, RPO/RTO for the vector index and conversation store, data residency.</li>
+</ul>
+
+<h2 id="tradeoffs">Trade-offs &amp; decision table</h2>
+<div class="tbl"><table>
+<thead><tr><th>Lever</th><th>Pick when</th><th>Failure mode</th><th>Cost / latency effect</th></tr></thead>
+<tbody>
+<tr><td><b>Exact-match cache</b> (Redis key = hash of normalised prompt + model + params)</td><td>Repeated system jobs, batch summarisation, deterministic tool calls</td><td>Near-zero hit rate on free-text chat</td><td>Hit ≈ 1–5 ms; full saving per hit</td></tr>
+<tr><td><b>Provider prefix caching</b></td><td>Long stable system prompt, tool schemas, few-shot, or a big shared document</td><td>Silent misses from a dynamic token early in the prompt; write premium wasted on low-traffic prefixes</td><td>Cached input at ~0.1× price; lower TTFT on long prompts</td></tr>
+<tr><td><b>Semantic cache</b> (RedisVL, LiteLLM redis/qdrant-semantic)</td><td>High-volume FAQ-style intents with stable answers (HR policy, IT how-to)</td><td>False hits on near-duplicates ("casual" vs "sick" leave), cross-tenant leakage, stale answers after a policy update</td><td>Hit skips retrieval + LLM: seconds to ~10s of ms. Adds an embedding call on every miss</td></tr>
+<tr><td><b>Retrieval-result cache</b> (query → chunk IDs)</td><td>Expensive hybrid + rerank pipelines; you still want a fresh generation</td><td>Stale after re-index unless keyed by index version</td><td>Saves rerank latency; LLM cost unchanged</td></tr>
+<tr><td><b>Context trimming</b> (fewer, better chunks after rerank)</td><td>Always evaluate first; often the biggest win</td><td>Context recall drops; groundedness regresses</td><td>Linear input-token saving, faster prefill</td></tr>
+<tr><td><b>Model routing</b> (small model for easy intents)</td><td>Clear intent classes, eval set per class</td><td>Router mistakes send hard questions to a weak model</td><td>Large per-call saving; adds router latency</td></tr>
+</tbody></table></div>
+
+<h2 id="lab">Hands-on lab (~75 min)</h2>
+<p><b>Goal:</b> build the two numbers you'd defend in a review: a monthly cost estimate with sensitivity, and a measured false-hit rate for a semantic cache at your chosen threshold. Everything runs on CPU; Ollama is used only in the optional demo and runs natively on Windows (no WSL2 or Docker needed). Redis is deliberately avoided here because on Windows it needs Docker Desktop or WSL2.</p>
+<h3>Setup (PowerShell)</h3>
+<div class="code"><div class="lbl">PowerShell</div><button class="copy" type="button">Copy</button><pre><code>mkdir genai-d38; cd genai-d38
+py -3.13 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+python -m pip install "sentence-transformers>=5" numpy ollama
+# optional demo model (about 2 GB, fits the RTX 3050 6 GB)
+ollama pull llama3.2:3b</code></pre></div>
+<p class="note"><b>Note:</b> the first run downloads <code>all-MiniLM-L6-v2</code> (~90 MB) from Hugging Face. If PowerShell blocks <code>Activate.ps1</code>, run <code>Set-ExecutionPolicy -Scope CurrentUser RemoteSigned</code> once.</p>
+
+<h3>Part A · Token-cost model with sensitivity (20 min)</h3>
+<div class="code"><div class="lbl">cost_model.py</div><button class="copy" type="button">Copy</button><pre><code>&quot;&quot;&quot;Token-cost model for a RAG assistant, with prompt caching and a semantic cache.
+Prices below are ILLUSTRATIVE placeholders (USD per 1M tokens). Replace with your
+provider&#x27;s current price sheet before using the numbers in a review.&quot;&quot;&quot;
+from dataclasses import dataclass, replace
+
+@dataclass
+class Workload:
+    users: int = 50_000
+    active_ratio: float = 0.30          # share of users active on a working day
+    queries_per_active_user: float = 4
+    working_days: int = 22
+    llm_calls_per_query: float = 1.6    # rewrite + answer, occasional retry/agent step
+    static_prefix_tok: int = 2_500      # system prompt + tool schemas + few-shot
+    retrieved_tok: int = 3_000          # top-k chunks after rerank
+    user_tok: int = 120                 # question + short history
+    output_tok: int = 350
+
+@dataclass
+class Pricing:
+    input_per_m: float = 3.00
+    output_per_m: float = 15.00
+    cache_read_mult: float = 0.10       # e.g. 0.1x base input on a prefix-cache hit
+    cache_write_mult: float = 1.25      # e.g. 1.25x for a 5-minute cache write
+
+def monthly_cost(w: Workload, p: Pricing, prefix_hit: float = 0.0, sem_hit: float = 0.0):
+    queries = w.users * w.active_ratio * w.queries_per_active_user * w.working_days
+    calls = queries * (1 - sem_hit) * w.llm_calls_per_query
+    static_eff = w.static_prefix_tok * (prefix_hit * p.cache_read_mult
+                                        + (1 - prefix_hit) * (p.cache_write_mult if prefix_hit else 1.0))
+    in_tok = calls * (static_eff + w.retrieved_tok + w.user_tok)
+    out_tok = calls * w.output_tok
+    cost = in_tok / 1e6 * p.input_per_m + out_tok / 1e6 * p.output_per_m
+    return queries, cost
+
+if __name__ == &quot;__main__&quot;:
+    w, p = Workload(), Pricing()
+    scenarios = [(&quot;Baseline (no caching)&quot;, 0.0, 0.0),
+                 (&quot;Prompt caching, 90% prefix hits&quot;, 0.9, 0.0),
+                 (&quot;+ semantic cache, 15% hits&quot;, 0.9, 0.15),
+                 (&quot;+ trim retrieved context to 1,800 tok&quot;, 0.9, 0.15)]
+    base = None
+    for name, ph, sh in scenarios:
+        ww = replace(w, retrieved_tok=1_800) if &quot;trim&quot; in name else w
+        q, c = monthly_cost(ww, p, ph, sh)
+        base = base or c
+        print(f&quot;{name:&lt;40} queries/mo={q:&gt;10,.0f}  cost/mo=${c:&gt;9,.0f}  ({c/base:6.1%} of baseline)  per query=${c/q:.4f}&quot;)
+    # Sensitivity: which knob moves cost most? (+20% on each)
+    print(&quot;\nSensitivity of baseline cost to +20% on each input:&quot;)
+    _, c0 = monthly_cost(w, p)
+    for f in [&quot;llm_calls_per_query&quot;, &quot;static_prefix_tok&quot;, &quot;retrieved_tok&quot;, &quot;output_tok&quot;, &quot;queries_per_active_user&quot;]:
+        _, c1 = monthly_cost(replace(w, **{f: getattr(w, f) * 1.2}), p)
+        print(f&quot;  {f:&lt;26} {c1/c0-1:+6.1%}&quot;)</code></pre></div>
+<p>Expected output (with the placeholder prices; this exact output was produced by running the script):</p>
+<div class="code"><div class="lbl">output</div><button class="copy" type="button">Copy</button><pre><code>Baseline (no caching)                    queries/mo= 1,320,000  cost/mo=$   46,696  (100.0% of baseline)  per query=$0.0354
+Prompt caching, 90% prefix hits          queries/mo= 1,320,000  cost/mo=$   34,262  ( 73.4% of baseline)  per query=$0.0260
++ semantic cache, 15% hits               queries/mo= 1,320,000  cost/mo=$   29,123  ( 62.4% of baseline)  per query=$0.0221
++ trim retrieved context to 1,800 tok    queries/mo= 1,320,000  cost/mo=$   22,660  ( 48.5% of baseline)  per query=$0.0172
+
+Sensitivity of baseline cost to +20% on each input:
+  llm_calls_per_query        +20.0%
+  static_prefix_tok           +6.8%
+  retrieved_tok               +8.1%
+  output_tok                  +4.7%
+  queries_per_active_user    +20.0%</code></pre></div>
+<p><b>Takeaway:</b> trimming retrieved context saved more than the semantic cache did, at zero correctness risk. Calls per query and traffic are the dominant sensitivities, so they're what you must pin down with the business.</p>
+
+<h3>Part B · Semantic cache: hit rate vs false-hit rate (40 min)</h3>
+<div class="code"><div class="lbl">semcache.py</div><button class="copy" type="button">Copy</button><pre><code>&quot;&quot;&quot;Semantic cache lab: measure hit rate vs FALSE-hit rate across thresholds,
+then (optionally) show latency saved against a local Ollama model.
+Run:  python semcache.py --sweep        (no LLM needed)
+      python semcache.py --demo         (needs `ollama pull llama3.2:3b`)&quot;&quot;&quot;
+import argparse, time
+import numpy as np
+from sentence_transformers import SentenceTransformer
+
+EMB = SentenceTransformer(&quot;sentence-transformers/all-MiniLM-L6-v2&quot;)  # 384-d, CPU-friendly
+
+# (query, intent_id, scope). Scope = tenant / ACL partition; never share hits across scopes.
+SEED = [
+    (&quot;How do I reset my VPN password?&quot;, &quot;vpn_reset&quot;, &quot;it&quot;),
+    (&quot;How do I reset my email password?&quot;, &quot;mail_reset&quot;, &quot;it&quot;),
+    (&quot;What is the leave carry-forward limit?&quot;, &quot;leave_cf&quot;, &quot;hr&quot;),
+    (&quot;How many sick leaves do I get per year?&quot;, &quot;sick_quota&quot;, &quot;hr&quot;),
+    (&quot;How do I claim travel reimbursement?&quot;, &quot;travel_claim&quot;, &quot;finance&quot;),
+    (&quot;What is the per-diem for Bengaluru travel?&quot;, &quot;perdiem_blr&quot;, &quot;finance&quot;),
+]
+PROBES = [  # paraphrases (should hit) and traps (look similar, different answer)
+    (&quot;I forgot my VPN password, how can I reset it?&quot;, &quot;vpn_reset&quot;, &quot;it&quot;),
+    (&quot;steps to reset vpn pwd&quot;, &quot;vpn_reset&quot;, &quot;it&quot;),
+    (&quot;How do I reset my Outlook password?&quot;, &quot;mail_reset&quot;, &quot;it&quot;),
+    (&quot;How do I reset my laptop BIOS password?&quot;, &quot;bios_reset&quot;, &quot;it&quot;),          # trap
+    (&quot;How much leave can I carry forward to next year?&quot;, &quot;leave_cf&quot;, &quot;hr&quot;),
+    (&quot;How many casual leaves do I get per year?&quot;, &quot;casual_quota&quot;, &quot;hr&quot;),     # trap
+    (&quot;Process for submitting a travel expense claim?&quot;, &quot;travel_claim&quot;, &quot;finance&quot;),
+    (&quot;What is the per-diem for Mumbai travel?&quot;, &quot;perdiem_mum&quot;, &quot;finance&quot;),   # trap
+    (&quot;How do I reset my VPN password?&quot;, &quot;vpn_reset&quot;, &quot;hr&quot;),                  # scope trap
+]
+
+class SemanticCache:
+    def __init__(self, threshold: float):
+        self.t, self.vecs, self.items = threshold, [], []
+    def _emb(self, text):
+        return EMB.encode([text], normalize_embeddings=True)[0]
+    def put(self, q, answer, intent, scope):
+        self.vecs.append(self._emb(q)); self.items.append((answer, intent, scope))
+    def get(self, q, scope):
+        if not self.vecs:
+            return None, 0.0
+        sims = np.vstack(self.vecs) @ self._emb(q)                      # cosine (normalised)
+        sims = np.where([it[2] == scope for it in self.items], sims, -1.0)  # scope filter FIRST
+        i = int(sims.argmax())
+        return (self.items[i], float(sims[i])) if sims[i] &gt;= self.t else (None, float(sims[i]))
+
+def sweep():
+    print(f&quot;{&#x27;thr&#x27;:&gt;5} {&#x27;hits&#x27;:&gt;5} {&#x27;false&#x27;:&gt;6} {&#x27;hit%&#x27;:&gt;6} {&#x27;false%&#x27;:&gt;7}&quot;)
+    for thr in (0.60, 0.70, 0.75, 0.80, 0.85, 0.90, 0.95):
+        c = SemanticCache(thr)
+        for q, intent, scope in SEED:
+            c.put(q, f&quot;&lt;answer for {intent}&gt;&quot;, intent, scope)
+        hits = false = 0
+        for q, intent, scope in PROBES:
+            item, sim = c.get(q, scope)
+            if item:
+                hits += 1
+                false += item[1] != intent
+        print(f&quot;{thr:&gt;5.2f} {hits:&gt;5} {false:&gt;6} {hits/len(PROBES):&gt;6.0%} {false/max(hits,1):&gt;7.0%}&quot;)
+
+def demo(model=&quot;llama3.2:3b&quot;, thr=0.85):
+    import ollama
+    c = SemanticCache(thr)
+    for q, intent, scope in [SEED[0], PROBES[0], PROBES[3]]:
+        t0 = time.perf_counter()
+        item, sim = c.get(q, scope)
+        if item:
+            print(f&quot;HIT  sim={sim:.3f} {1000*(time.perf_counter()-t0):7.1f} ms  &lt;- {q}&quot;)
+            continue
+        r = ollama.chat(model=model, messages=[{&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: q + &quot; Answer in 2 lines.&quot;}])
+        dt = time.perf_counter() - t0
+        print(f&quot;MISS sim={sim:.3f} {1000*dt:7.1f} ms  in={r.prompt_eval_count} out={r.eval_count} tok &lt;- {q}&quot;)
+        c.put(q, r.message.content, intent, scope)
+
+if __name__ == &quot;__main__&quot;:
+    ap = argparse.ArgumentParser()
+    ap.add_argument(&quot;--sweep&quot;, action=&quot;store_true&quot;); ap.add_argument(&quot;--demo&quot;, action=&quot;store_true&quot;)
+    a = ap.parse_args()
+    if a.demo: demo()
+    else: sweep()</code></pre></div>
+<div class="code"><div class="lbl">PowerShell</div><button class="copy" type="button">Copy</button><pre><code>python semcache.py --sweep
+python semcache.py --demo     # optional, needs Ollama running</code></pre></div>
+<p><b>What to expect</b> (exact similarities vary by model version, so read the shape, not the digits):</p>
+<ul>
+  <li>Low thresholds (0.60–0.75) show the highest hit% but non-zero <span class="bad">false%</span>: the BIOS, casual-leave and Mumbai traps match their look-alike seeds.</li>
+  <li>High thresholds (0.90+) push false% to 0, but hit% falls, and casual paraphrases like "steps to reset vpn pwd" start missing.</li>
+  <li>The scope trap (same VPN question, <code>hr</code> scope) <span class="ok">never hits</span> at any threshold, because the scope filter runs before ranking.</li>
+  <li>In <code>--demo</code>, the miss costs seconds on the 3B model; the hit costs only the embedding time, in tens of ms.</li>
+</ul>
+<p>Write one sentence for your notes: "At τ = __, hit rate __%, false-hit rate __% on 9 probes, so semantic cache is (approved / rejected) for (intent class)."</p>
+<h3>Stretch goals</h3>
+<ol>
+  <li>Add a <b>verifier</b>: on a semantic hit with similarity between τ and τ+0.05, ask the local LLM "Do these two questions have the same answer? yes/no" before serving. Measure what it does to false% and to latency.</li>
+  <li>Extend <code>cost_model.py</code> with an <b>embedding + vector DB line</b> and a <b>DR line</b> (warm standby region at 30% capacity), then print a one-page cost table you could paste into an HLD.</li>
+</ol>
+
+<h2 id="repos">GitHub repos to study</h2>
+<ul>
+  <li><a href="https://github.com/BerriAI/litellm">BerriAI/litellm</a>: read <code>litellm/caching/</code> (exact and semantic backends) and the proxy's spend tracking. It also supports watsonx.ai as a provider, so it can serve as a gateway in front of Granite.</li>
+  <li><a href="https://github.com/redis/redis-vl-python">redis/redis-vl-python</a>: the <code>extensions/</code> semantic cache, with filterable fields (use them for tenant/ACL scope) and TTL handling.</li>
+  <li><a href="https://github.com/AgentOps-AI/tokencost">AgentOps-AI/tokencost</a>: maintained price table plus token counting. A good reference for keeping a cost model's price sheet data-driven instead of hard-coded.</li>
+</ul>
+
+<h2 id="read">Read</h2>
+<ul>
+  <li><a href="https://platform.claude.com/docs/en/build-with-claude/prompt-caching">Anthropic: Prompt caching</a>. Read the pricing multipliers, the "what invalidates the cache" table, and the breakpoint rules.</li>
+  <li><a href="https://developers.openai.com/api/docs/guides/prompt-caching">OpenAI: Prompt caching guide</a>, plus the <a href="https://developers.openai.com/cookbook/examples/prompt_caching_201">Prompt Caching 201 cookbook</a> on structuring prompts for hit rate.</li>
+  <li><a href="https://docs.litellm.ai/docs/proxy/caching_semantic">LiteLLM: Semantic caching</a>. Note the scoping option and the warning about agentic traffic.</li>
+</ul>
+
+<h2 id="qs">8 hard interview questions</h2>
+<details><summary><span class="tag">Day 13</span>Q1. Your semantic cache shows a 35% hit rate and the team wants to roll it out globally. What do you need to see before approving?</summary><p>The false-hit rate, not the hit rate. I&#x27;d ask for a labelled probe set (paraphrases plus adversarial near-duplicates) per intent class, false-hit % at the proposed τ, and the cost of a false hit in each class (a wrong leave policy is cheap; a wrong compliance answer is not). I&#x27;d also want proof that the cache is partitioned by tenant, ACL group and locale before similarity is ranked, that keys include the source-document version, and that it is off for multi-turn and agentic flows. Rollout goes behind a flag with a &#x27;was this answer right?&#x27; signal and sampled LLM-judge review of hits.</p></details>
+<details><summary><span class="tag">Day 13</span>Q2. Prompt caching is enabled but cached_tokens is near zero in production. Diagnose it.</summary><p>Something dynamic is sitting in the prefix: a timestamp, user name, request ID, or retrieved chunks placed before the stable instructions. Other causes are tool definitions being reordered or serialised non-deterministically (on Anthropic a tool change invalidates tools, system and messages), the prompt being under the minimum cacheable length, traffic too sparse for the TTL, or requests spread across cache shards (use prompt_cache_key on OpenAI). Fix: canonicalise tool JSON, move all per-request content to the tail, and alert on cached-token ratio per route.</p></details>
+<details><summary><span class="tag">Day 13</span>Q3. How do you invalidate a semantic cache when HR updates a policy document?</summary><p>Treat the cache as derived data of the index. Store with each entry the doc IDs and versions it was grounded on (from the citations). The ingestion pipeline emits a doc-updated event, and a consumer deletes entries tagged with that doc ID. Alternatively put the index version in the cache namespace, so a re-index rotates the whole namespace. Add a TTL as a backstop. Never rely on TTL alone for policy content.</p></details>
+<details><summary><span class="tag">Day 13</span>Q4. Where should caching live: application, gateway, or provider?</summary><p>Provider prefix caching always: it&#x27;s free correctness-wise and needs only prompt discipline. Put exact and semantic caches in the gateway (LiteLLM, APIM, Kong) when several apps share intents and you want central metrics, scoping and kill-switches. Put them in the application when the cache needs domain context the gateway can&#x27;t see, such as ACL groups, intent classification or document versions. In regulated setups the application usually owns the semantic cache, because scoping is a security control.</p></details>
+<details><summary><span class="tag">Day 29</span>Q5. Build a token-cost estimate for a new assistant live, on a whiteboard. What are the inputs and the biggest uncertainty?</summary><p>Users × active ratio × queries/user/day × working days gives queries. Then × calls/query × (static prefix × cache factor + retrieved + user) × input price, plus output tokens × output price, plus embeddings, vector DB, reranker, observability and egress. Present it as low/base/high with sensitivity. The biggest uncertainty is usually calls/query (agent loops, retries) and adoption, not price, so I&#x27;d put a budget guard (per-user rate limits, max agent steps) in the design rather than trust the estimate.</p></details>
+<details><summary><span class="tag">Day 29</span>Q6. What NFRs would you put in the HLD of a GenAI assistant that you would not put in a normal web app?</summary><p>p95 time-to-first-token separately from end-to-end latency; a groundedness/faithfulness floor on a versioned golden set as a release gate; refusal/abstention rate; cost per query and per user ceilings; tokens-per-minute quota headroom per provider and region; a model and prompt version pinning policy; a defined degraded mode (retrieval-only answers); guardrail block rate and PII-leak tolerance (zero); and data residency for prompts, logs and caches, not only the documents.</p></details>
+<details><summary><span class="tag">Day 29</span>Q7. How do you design DR for an LLM dependency you don&#x27;t control?</summary><p>Assume region, quota and model-deprecation failures. Use a gateway with ordered fallbacks: same model in a second region, then an alternative model that has been pre-evaluated on the golden set and has its own prompt variant. Circuit breakers on 429 and 5xx. Replicate or snapshot the vector index and conversation store to the DR region within residency limits. Have a degraded mode that returns ranked sources without generation. Set RTO/RPO per component (index rebuild time is often the real RTO) and run game-days. The fallback model needs its own eval pass; that&#x27;s the most commonly skipped step.</p></details>
+<details><summary><span class="tag">Day 29</span>Q8. Explain to a non-technical steering committee why the cheapest model isn&#x27;t the cheapest option.</summary><p>Total cost is model price × number of calls × tokens per call, plus the cost of wrong answers. A cheaper model that needs more retries, longer prompts, or more human escalations can cost more overall, and its errors land on employees or customers. I show one table: cost per resolved question (not per call) and accuracy on our own test set, for two or three models. Then we pick the cheapest model that clears the accuracy bar, and route only the hard questions to the expensive one.</p></details>
+
+<h2 id="scenario">Design scenario</h2>
+<p><b>Prompt:</b> "Our HR/IT knowledge assistant serves 50k employees in India and the EU. It costs ₹38 lakh a month and p95 latency is 9 s. The CFO wants cost halved within a quarter; legal says EU data must stay in the EU; the CIO wants it to survive a full regional outage of the primary LLM provider with RTO 30 min. Walk us through your plan."</p>
+<details><summary>Model answer outline</summary>
+<ol>
+  <li><b>Measure before cutting.</b> Instrument per-request tokens by component (prefix, retrieved, user, output) and calls per query using Langfuse or OTel GenAI spans. Feed the real distribution into the cost model and run sensitivity. Typical findings: 2–3 calls per query, and 5–8k retrieved tokens.</li>
+  <li><b>Correctness-neutral levers first:</b> reorder prompts for prefix caching (target over 80% cached prefix), cut top-k after reranking from 10 to 4–5 with the golden-set groundedness as a gate, collapse query rewrite into the answer call where eval allows, and route simple intents to a small model.</li>
+  <li><b>Semantic cache only for whitelisted intents</b> (policy FAQs, IT how-tos), partitioned by region + ACL group + language, keyed with the source-doc version, τ chosen from a measured false-hit budget (for example ≤0.5%), with a 24h TTL plus invalidation on re-index.</li>
+  <li><b>Residency:</b> separate EU and India stacks (vector index, caches, logs, conversation store); the gateway routes by user home region. Caches are data stores too and fall under residency.</li>
+  <li><b>DR:</b> the gateway (LiteLLM or APIM) holds a primary and a secondary model deployment in a second in-jurisdiction region or provider. The fallback model has been pre-evaluated on the golden set. The vector index is replicated or snapshotted (RPO 24h is fine for docs; conversation store needs tighter). There is a degraded mode (search results with links, no generation), and DR is tested quarterly.</li>
+  <li><b>Latency:</b> stream tokens (TTFT matters more than total), run retrieval and rerank in parallel with guardrail checks, and prefix caching cuts prefill.</li>
+  <li><b>Deliverables:</b> before/after cost model, an NFR table, ADRs for caching and failover, and an eval-gated rollout behind a feature flag at 10% → 50% → 100%.</li>
+</ol></details>
+
+<h2 id="adr">Architect's lens: ADR-038</h2>
+<dl class="adr">
+  <dt>Title</dt><dd>Layered caching policy for the enterprise knowledge assistant</dd>
+  <dt>Context</dt><dd>Cost is 2× budget. Traffic is roughly 40% repeated FAQ intents. The system is multi-tenant with ACL-filtered retrieval and spans two residency regions. Answers must cite current policy.</dd>
+  <dt>Options</dt><dd>(A) Global semantic cache on all traffic. (B) Provider prefix caching plus context trimming only. (C) B plus a scoped semantic cache for whitelisted intents, behind a feature flag.</dd>
+  <dt>Decision</dt><dd><b>C.</b> Prefix caching and trimming are on everywhere. The semantic cache is limited to intents with a measured false-hit rate ≤0.5% at the chosen τ, partitioned by region/ACL/locale, with keys that include the source-document version, and it is disabled for multi-turn and agentic flows.</dd>
+  <dt>Consequences</dt><dd>+ Most of the saving comes from correctness-neutral levers, and cache risk is bounded and measurable. − More moving parts: intent classifier, invalidation hooks on re-index, a cache-hit dashboard. The false-hit eval must run in CI whenever the embedding model or τ changes. Revisit in 90 days with production hit/false-hit telemetry.</dd>
+</dl>
+
+<h2 id="next">Tomorrow</h2>
+<p>Day 39 revision drill: LangGraph state and checkpointing (Day 17) and CI/CD rollback with blue-green deployments (Day 26), with failure-recovery as the theme.</p>
+
+<footer>Prices and cache multipliers were checked against the provider docs on 16 Nov 2026 and change often, so confirm against the live price sheet before quoting them in a review. The cost model's prices are placeholders.</footer>
+</main>
+</div>
+<script>
+document.querySelectorAll('.copy').forEach(function(b){
+  b.addEventListener('click',function(){
+    var code=b.parentElement.querySelector('pre').innerText;
+    var done=function(){b.textContent='Copied';setTimeout(function(){b.textContent='Copy'},1500)};
+    var fallback=function(){var r=document.createRange();r.selectNodeContents(b.parentElement.querySelector('pre'));var s=getSelection();s.removeAllRanges();s.addRange(r);b.textContent='Selected, press Ctrl+C'};
+    try{navigator.clipboard.writeText(code).then(done,fallback)}catch(e){fallback()}
+  });
+});
+</script>

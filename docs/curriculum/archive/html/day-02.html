@@ -1,0 +1,495 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>GenAI Prep · Day 2 — Prompt Engineering &amp; Structured Output</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+<style>
+/* Layout: study-pack reader — sticky contents rail on wide screens, single reading column (~70ch) on phones. */
+:root{
+  --bg:#f6f7f9; --surface:#ffffff; --fg:#17202e; --muted:#5a6578; --line:#dde2ea;
+  --accent:#2a55c9; --accent-soft:#e7edfb; --warn:#a4570c; --warn-soft:#fbf0e3; --ok:#1f7a4f; --ok-soft:#e5f4ec;
+  --code-bg:#0f1622; --code-fg:#dbe4f2; --code-dim:#8494ad;
+  --f-display:"IBM Plex Sans Condensed","Arial Narrow",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0e131b; --surface:#151c27; --fg:#e3e8f0; --muted:#97a3b6; --line:#273244;
+  --accent:#7f9ff0; --accent-soft:#1c2740; --warn:#e7a35a; --warn-soft:#2c2116; --ok:#5cc595; --ok-soft:#14281f;
+  --code-bg:#0a0f16; --code-fg:#dbe4f2; --code-dim:#7d8ca4; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0e131b; --surface:#151c27; --fg:#e3e8f0; --muted:#97a3b6; --line:#273244;
+  --accent:#7f9ff0; --accent-soft:#1c2740; --warn:#e7a35a; --warn-soft:#2c2116; --ok:#5cc595; --ok-soft:#14281f;
+  --code-bg:#0a0f16; --code-fg:#dbe4f2; --code-dim:#7d8ca4; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font:16px/1.65 var(--f-body);padding-inline:16px;padding-block:0 64px}
+a{color:var(--accent);text-underline-offset:2px}
+a:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wrap{max-width:1120px;margin:0 auto;display:grid;grid-template-columns:220px minmax(0,1fr);gap:48px}
+@media (max-width:860px){.wrap{grid-template-columns:minmax(0,1fr)} nav.toc{display:none}}
+nav.toc{position:sticky;top:env(safe-area-inset-top,0px);align-self:start;padding-top:40px;font-size:14px}
+nav.toc ol{list-style:none;margin:0;padding:0;display:grid;gap:6px;counter-reset:t}
+nav.toc li{counter-increment:t}
+nav.toc a{color:var(--muted);text-decoration:none;display:flex;gap:8px}
+nav.toc a::before{content:counter(t);font-family:var(--f-mono);font-size:12px;color:var(--accent);min-width:1.2em;padding-top:2px}
+nav.toc a:hover{color:var(--fg)}
+main{min-width:0;max-width:760px}
+header.hero{padding-block:40px 24px;border-bottom:1px solid var(--line);margin-bottom:8px}
+.eyebrow{font:500 12px/1 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--accent);display:flex;gap:12px;flex-wrap:wrap}
+h1{font:700 clamp(30px,5vw,44px)/1.1 var(--f-display);margin:14px 0 12px;text-wrap:balance;letter-spacing:-.01em}
+.lede{color:var(--muted);margin:0;max-width:62ch}
+.schema-strip{margin-top:20px;font:13px/1.5 var(--f-mono);color:var(--muted);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:10px 14px;overflow-x:auto;white-space:pre}
+.schema-strip b{color:var(--accent);font-weight:500}
+section{padding-block:36px 4px;scroll-margin-top:16px}
+h2{font:600 26px/1.2 var(--f-display);margin:0 0 14px;display:flex;gap:12px;align-items:baseline;text-wrap:balance}
+h2 .n{font:500 14px var(--f-mono);color:var(--accent)}
+h3{font:600 18px/1.3 var(--f-display);margin:26px 0 8px}
+p,li{max-width:68ch}
+ul,ol{padding-left:1.2em}
+li+li{margin-top:4px}
+code{font:0.88em var(--f-mono);background:var(--accent-soft);padding:1px 5px;border-radius:4px}
+.callout{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:14px 18px;margin:16px 0}
+.callout.warn{background:var(--warn-soft);border-color:transparent}
+.callout.warn strong{color:var(--warn)}
+.callout.ok{background:var(--ok-soft);border-color:transparent}
+.callout.ok strong{color:var(--ok)}
+.callout p{margin:0}
+.fig{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:16px;margin:18px 0;overflow-x:auto}
+.fig svg{display:block;min-width:640px;width:100%;height:auto}
+.fig figcaption{font-size:13px;color:var(--muted);margin-top:8px}
+.fig .bx{fill:var(--bg);stroke:var(--line);stroke-width:1.5}
+.fig .bxa{fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5}
+.fig .bxw{fill:var(--warn-soft);stroke:var(--warn);stroke-width:1.5}
+.fig .t{fill:var(--fg);font:600 13px var(--f-body)}
+.fig .s{fill:var(--muted);font:11.5px var(--f-mono)}
+.fig .ar{stroke:var(--muted);stroke-width:1.5;fill:none}
+.fig .arw{stroke:var(--warn);stroke-width:1.5;fill:none;stroke-dasharray:4 3}
+.fig .tw{fill:var(--warn);font:500 11.5px var(--f-mono)}
+.fig .tok{fill:var(--surface);stroke:var(--line)}
+.fig .tokx{fill:var(--bg);stroke:var(--line);opacity:.55}
+.fig .toka{fill:var(--accent)}
+.fig .tt{fill:var(--fg);font:11px var(--f-mono)}
+.fig .ttx{fill:var(--muted);font:11px var(--f-mono);text-decoration:line-through}
+.fig .tta{fill:var(--surface);font:500 11px var(--f-mono)}
+.tbl{overflow-x:auto;margin:14px 0;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;min-width:720px;font-size:14px;line-height:1.5}
+th,td{text-align:left;vertical-align:top;padding:10px 12px;border-bottom:1px solid var(--line)}
+th{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);background:var(--bg)}
+tr:last-child td{border-bottom:0}
+td:first-child{font-weight:600;white-space:nowrap}
+.pill{display:inline-block;font:500 11px var(--f-mono);padding:2px 7px;border-radius:99px;background:var(--accent-soft);color:var(--accent);white-space:nowrap}
+.pill.w{background:var(--warn-soft);color:var(--warn)}
+.pill.g{background:var(--ok-soft);color:var(--ok)}
+.code{position:relative;margin:14px 0;border-radius:8px;background:var(--code-bg);color:var(--code-fg)}
+.code .bar{display:flex;justify-content:space-between;align-items:center;padding:6px 8px 6px 14px;border-bottom:1px solid #ffffff14;font:12px var(--f-mono);color:var(--code-dim)}
+.code button{font:500 12px var(--f-mono);background:#ffffff12;color:var(--code-fg);border:1px solid #ffffff24;border-radius:5px;padding:4px 10px;cursor:pointer}
+.code button:hover{background:#ffffff22}
+.code pre{margin:0;padding:14px;overflow-x:auto;font:13px/1.55 var(--f-mono);tab-size:4}
+.code pre code{background:none;padding:0;font:inherit;color:inherit}
+.meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin:14px 0}
+.meta div{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:12px 14px;font-size:14px}
+.meta b{display:block;font:500 11px var(--f-mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:4px}
+.repos{display:grid;gap:10px;list-style:none;padding:0}
+.repos li{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:12px 16px;max-width:none}
+.repos a{font:500 15px var(--f-mono)}
+.repos .sig{font:12px var(--f-mono);color:var(--muted);margin-left:6px}
+details.q{background:var(--surface);border:1px solid var(--line);border-radius:8px;margin:10px 0}
+details.q summary{cursor:pointer;padding:12px 16px;font-weight:600;list-style:none;display:flex;gap:10px}
+details.q summary::before{content:"Q" counter(q);counter-increment:q;font:500 13px var(--f-mono);color:var(--accent);padding-top:2px}
+details.q summary::-webkit-details-marker{display:none}
+#interview{counter-reset:q}
+details.q .a{padding:0 16px 12px 16px;border-top:1px solid var(--line)}
+details.q[open] summary{color:var(--accent)}
+.adr{display:grid;grid-template-columns:130px minmax(0,1fr);border:1px solid var(--line);border-radius:8px;background:var(--surface);overflow:hidden}
+.adr>div{padding:12px 16px;border-bottom:1px solid var(--line)}
+.adr>div:nth-child(odd){font:500 12px var(--f-mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);background:var(--bg)}
+.adr>div:nth-last-child(-n+2){border-bottom:0}
+.adr p,.adr ul{margin:0 0 6px}
+@media (max-width:560px){.adr{grid-template-columns:minmax(0,1fr)}.adr>div:nth-child(odd){border-bottom:0;padding-bottom:0}}
+.tomorrow{margin-top:40px;padding:18px 20px;border-radius:8px;background:var(--accent-soft);font-size:15px}
+.tomorrow b{font:500 12px var(--f-mono);text-transform:uppercase;letter-spacing:.06em;color:var(--accent);display:block;margin-bottom:4px}
+.sources{font-size:13px;color:var(--muted)}
+.sources li{max-width:none;word-break:break-word}
+.themebtn{position:fixed;right:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));font:500 12px var(--f-mono);background:var(--surface);color:var(--fg);border:1px solid var(--line);border-radius:99px;padding:6px 12px;cursor:pointer}
+@media (prefers-reduced-motion:no-preference){html{scroll-behavior:smooth}}
+</style>
+
+<div class="wrap">
+<nav class="toc" aria-label="Contents">
+  <ol>
+    <li><a href="#why">Why it matters</a></li>
+    <li><a href="#concept">Concept brief</a></li>
+    <li><a href="#tradeoffs">Trade-offs</a></li>
+    <li><a href="#exercise">Hands-on</a></li>
+    <li><a href="#repos">Repos</a></li>
+    <li><a href="#read">Read</a></li>
+    <li><a href="#interview">Interview</a></li>
+    <li><a href="#adr">Architect's lens</a></li>
+    <li><a href="#tomorrow">Tomorrow</a></li>
+  </ol>
+</nav>
+
+<main>
+<header class="hero">
+  <div class="eyebrow"><span>Day 2 / 30</span><span>Week 1 · LLM &amp; retrieval foundations</span><span>Sun 11 Oct 2026</span></div>
+  <h1>Prompt engineering &amp; structured output</h1>
+  <p class="lede">Treat the prompt as versioned code and the output as a typed contract. Today covers JSON schema, constrained decoding, few-shot, templates and versioning, and when each one actually holds up in production.</p>
+  <div class="schema-strip">{ <b>"prompt"</b>: "triage@v2#878718ba", <b>"decoder"</b>: "json_schema", <b>"validator"</b>: "pydantic 2.14", <b>"reask"</b>: 1 }</div>
+</header>
+
+<section id="why">
+  <h2><span class="n">1</span>Why this matters for the JD</h2>
+  <p>The JD's first must-have names <em>prompting, token limits and hallucination control</em>. Every enterprise use case it lists (doc Q&amp;A, copilots, workflow automation, support) ends with an LLM handing data to a system that expects a shape. Structured output is where an LLM becomes a dependable component. The "preferred" lines on <em>multi-provider integration</em> and <em>prompt versioning</em> come down to one question: how do you keep the same contract across OpenAI, Anthropic, Gemini, watsonx and open-source models?</p>
+</section>
+
+<section id="concept">
+  <h2><span class="n">2</span>Concept brief</h2>
+
+  <h3>The reliability ladder</h3>
+  <p>There are four levels of guarantee. Each costs a little more and promises a little more:</p>
+  <ol>
+    <li><b>Prompt-only.</b> "Respond in JSON." This is a request, not a guarantee. Small models wrap the JSON in prose or <code>```json</code> fences, drop keys, or invent enum values.</li>
+    <li><b>JSON mode</b> (<code>format="json"</code>, <code>response_format={"type":"json_object"}</code>). The output is valid JSON with <em>no shape guarantee</em>. It removes parse errors but leaves schema errors.</li>
+    <li><b>Schema-constrained decoding.</b> At each step the decoder masks out tokens that would break a grammar compiled from your JSON Schema. Required keys, types and enums are guaranteed <em>by construction</em>. Hosted examples: OpenAI <code>text.format</code> with <code>strict: true</code> and Anthropic <code>output_config.format</code>. Self-hosted: Ollama <code>format=&lt;schema&gt;</code>, and vLLM/SGLang with XGrammar as the default backend.</li>
+    <li><b>Constrained decoding + semantic validation + re-ask.</b> A grammar can't express "summary ≤ 20 words", "end_date after start_date" or "the product must exist in the CMDB". Pydantic validators catch those cases, and the error goes back to the model for one bounded retry. Instructor and PydanticAI implement this pattern.</li>
+  </ol>
+
+  <figure class="fig">
+    <svg viewBox="0 0 760 300" role="img" aria-label="Pipeline: versioned prompt template, LLM with grammar mask over logits, JSON parse, Pydantic validation, with a re-ask loop on validation failure.">
+      <defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker>
+      <marker id="ahw" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="var(--warn)"/></marker></defs>
+      <rect class="bx" x="10" y="30" width="150" height="70" rx="8"/>
+      <text class="t" x="24" y="56">Prompt registry</text><text class="s" x="24" y="76">triage@v2#8787</text><text class="s" x="24" y="91">vars: {schema,ticket}</text>
+      <rect class="bxa" x="200" y="30" width="190" height="70" rx="8"/>
+      <text class="t" x="214" y="56">LLM + grammar mask</text><text class="s" x="214" y="76">logits ⊙ allowed(state)</text><text class="s" x="214" y="91">XGrammar / llguidance</text>
+      <rect class="bx" x="430" y="30" width="130" height="70" rx="8"/>
+      <text class="t" x="444" y="56">Parse JSON</text><text class="s" x="444" y="76">syntax: guaranteed</text><text class="s" x="444" y="91">unless truncated</text>
+      <rect class="bx" x="600" y="30" width="150" height="70" rx="8"/>
+      <text class="t" x="614" y="56">Pydantic validate</text><text class="s" x="614" y="76">semantics, x-field</text><text class="s" x="614" y="91">business rules</text>
+      <path class="ar" d="M160 65 H196" marker-end="url(#ah)"/><path class="ar" d="M390 65 H426" marker-end="url(#ah)"/><path class="ar" d="M560 65 H596" marker-end="url(#ah)"/>
+      <path class="arw" d="M675 100 V128 H295 V104" marker-end="url(#ahw)"/>
+      <text class="tw" x="400" y="146">ValidationError → re-ask with error text (max 1–2)</text>
+      <text class="s" x="200" y="186">Inside the mask at one decoding step, after  {"priority": "</text>
+      <rect class="toka" x="200" y="198" width="56" height="26" rx="4"/><text class="tta" x="216" y="215">P1</text>
+      <rect class="tok" x="262" y="198" width="56" height="26" rx="4"/><text class="tt" x="278" y="215">P2</text>
+      <rect class="tok" x="324" y="198" width="56" height="26" rx="4"/><text class="tt" x="340" y="215">P3</text>
+      <rect class="tokx" x="386" y="198" width="76" height="26" rx="4"/><text class="ttx" x="396" y="215">High</text>
+      <rect class="tokx" x="468" y="198" width="76" height="26" rx="4"/><text class="ttx" x="478" y="215">urgent</text>
+      <rect class="tokx" x="550" y="198" width="76" height="26" rx="4"/><text class="ttx" x="560" y="215">Sure!</text>
+      <text class="s" x="200" y="252">Disallowed tokens get logit −∞. The model can only choose among valid continuations,</text>
+      <text class="s" x="200" y="268">so the shape is guaranteed but correctness is not. A valid "P1" can still be the wrong answer.</text>
+    </svg>
+    <figcaption>Grammar for syntax, validators for semantics, evals for correctness. Three separate layers, and none of them replaces the others.</figcaption>
+  </figure>
+
+  <h3>What constrained decoding does <em>not</em> guarantee</h3>
+  <ul>
+    <li><b>Completion.</b> If the output hits <code>max_tokens</code>, the JSON is cut off. The mask keeps the prefix valid but cannot close it. Always check the stop reason.</li>
+    <li><b>Refusals.</b> OpenAI returns a separate <code>refusal</code> field. Other providers may return a stop reason or plain text. Treat a refusal as its own case and don't try to parse it.</li>
+    <li><b>Correct values.</b> A model under a strict schema will fill required fields with plausible values even when the input has nothing to support them. That is hallucination through the schema. Make "unknown" a legal value (nullable or an enum member) so the model can abstain. This links to Day 4.</li>
+    <li><b>Reasoning quality.</b> <a href="https://arxiv.org/abs/2408.02442">Tam et al. 2024</a> reported reasoning drops under strict format rules. The <a href="https://blog.dottxt.ai/say-what-you-mean.html">.txt rebuttal</a> showed most of the drop came from prompt mismatch and how answers were parsed. In practice: put a <code>reasoning</code> field <em>before</em> the label fields, since keys are generated in schema order, or think first and format in a second step.</li>
+  </ul>
+
+  <h3>Prompt templates and versioning</h3>
+  <p>In production a prompt is a deployable artifact, just like a model. The minimum discipline:</p>
+  <ul>
+    <li><b>Immutable versions plus movable labels.</b> Use <code>triage@v2</code> with a content hash, and point a <code>production</code> label at a version. Rollback means moving the label, not redeploying. Langfuse, LangSmith and watsonx.ai prompt template assets (<code>PromptTemplateManager</code> in <code>ibm-watsonx-ai</code>) all follow this model.</li>
+    <li><b>Record the prompt version, model ID and schema hash on every trace.</b> Without all three you can't explain a regression.</li>
+    <li><b>Gate changes on a golden set.</b> A prompt edit is a code change and goes through the same eval CI (covered on Day 26).</li>
+    <li><b>Keep few-shot examples in the template, version-controlled.</b> Two or three examples covering the edge cases (the P1-vs-P2 boundary, a ticket with PII) usually help more than extra rules. Rotate or trim them with the token budget from Day 1 in mind.</li>
+  </ul>
+
+  <div class="callout"><p><strong>Provider map (Oct 2026).</strong> OpenAI: <code>responses.parse(text_format=Model)</code> → <code>output_parsed</code>. Anthropic: <code>messages.parse(output_format=Model)</code> → <code>parsed_output</code>, sent on the wire as <code>output_config.format</code>; the older <code>output_format</code> parameter needs a beta header and is deprecated. Strict tool use is a separate <code>strict: true</code> flag. Ollama: <code>chat(format=Model.model_json_schema())</code>. watsonx.ai: prompt templates are governed assets; check per-model JSON/<code>response_format</code> support in the chat API before relying on it.</p></div>
+</section>
+
+<section id="tradeoffs">
+  <h2><span class="n">3</span>Trade-offs &amp; decision table</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>Option</th><th>Pick when</th><th>Failure modes</th><th>Cost / latency</th></tr></thead>
+    <tbody>
+      <tr><td>Prompt-only JSON</td><td>Prototyping, or a provider/model with no structured mode</td><td>Fences and prose around the JSON, missing keys, invented enums, silent drift after model upgrades</td><td><span class="pill">baseline</span> Hidden cost: retries and parser code</td></tr>
+      <tr><td>JSON mode</td><td>Free-form objects, or when the schema is too dynamic to compile</td><td>Valid JSON in the wrong shape; can loop on whitespace if the prompt never mentions JSON</td><td><span class="pill">≈ baseline</span></td></tr>
+      <tr><td>Strict schema (hosted)</td><td>Extraction, classification, routing and any machine-consumed output on OpenAI, Claude or Gemini</td><td>Schema-subset 400s (Claude rejects <code>minimum</code>/<code>maxLength</code>; OpenAI wants every key required); truncation; plausible-but-wrong values</td><td><span class="pill g">low</span> Schema tokens count as input; first request for a new schema may pay a grammar-compile delay</td></tr>
+      <tr><td>Grammar engine (self-hosted)</td><td>vLLM/SGLang/TGI or Ollama on-prem, regulated data, custom grammars (regex, EBNF, SQL subsets)</td><td>Slow compile on huge or deeply nested schemas; backend quirks across engines; tokenizer edge cases</td><td><span class="pill g">low</span> XGrammar mask overhead is near zero per token after compile</td></tr>
+      <tr><td>Tool / function calling</td><td>The model must <em>choose</em> among several actions, each with its own args</td><td>Wrong tool chosen; args valid but semantically wrong; no tool called</td><td><span class="pill">medium</span> Tool definitions add to the prompt on every call</td></tr>
+      <tr><td>Validate + re-ask (Instructor, PydanticAI)</td><td>Cross-field and business rules a grammar can't express</td><td>Retry storms, latency spikes, a retry that "fixes" one field and breaks another</td><td><span class="pill w">1–3× on failure</span> Cap retries, and alert on retry rate as an SLO</td></tr>
+      <tr><td>Two-pass (reason → format)</td><td>Hard reasoning where format pressure hurts accuracy</td><td>Twice the calls; the formatter can misread the reasoning</td><td><span class="pill w">≈ 2×</span> Use a small, cheap model for the format pass</td></tr>
+    </tbody>
+  </table></div>
+  <div class="callout warn"><p><strong>Review trap:</strong> "We use structured outputs, so the data is clean." Structured outputs guarantee the <em>shape</em>. Field-level accuracy still needs a golden set and an eval number.</p></div>
+</section>
+
+<section id="exercise">
+  <h2><span class="n">4</span>Hands-on: the structured-output bench (≈75 min)</h2>
+  <p>Build a helpdesk ticket-triage extractor and measure four strategies on the same golden set: prompt-only, JSON mode, schema-constrained, and schema + re-ask. You'll end with real numbers on parse rate, schema validity, field accuracy and latency on your own GPU. That is the evidence you'd bring to a design review.</p>
+  <div class="meta">
+    <div><b>Runs on</b>RTX 3050 6 GB · 16 GB RAM · native Windows (no WSL/Docker)</div>
+    <div><b>Models</b><code>qwen3:4b</code> (2.5 GB) and <code>granite4:3b</code> (2.1 GB), both 4-bit and fully on GPU</div>
+    <div><b>Libraries</b>ollama 0.6.3 · pydantic 2.14.0 (latest on PyPI today)</div>
+  </div>
+
+  <h3>Setup (PowerShell)</h3>
+  <div class="code"><div class="bar"><span>powershell</span><button type="button">Copy</button></div><pre><code># 1. Install Ollama (or use the installer from ollama.com/download)
+winget install Ollama.Ollama
+ollama pull qwen3:4b
+ollama pull granite4:3b
+
+# 2. Project + venv
+mkdir day02-structured; cd day02-structured
+py -3.13 -m venv .venv
+.\.venv\Scripts\Activate.ps1      # if blocked: Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
+python -m pip install --upgrade pip
+python -m pip install "ollama&gt;=0.6.3" "pydantic&gt;=2.14"
+
+# 3. Save the script below as triage_bench.py, then:
+python triage_bench.py              # qwen3:4b
+python triage_bench.py granite4:3b  # IBM Granite 4 micro</code></pre></div>
+
+  <h3>Starter code: <code>triage_bench.py</code></h3>
+  <div class="code"><div class="bar"><span>python 3.13</span><button type="button">Copy</button></div><pre><code>&quot;&quot;&quot;Day 2 - Structured output bench: prompt-only vs JSON mode vs schema-constrained vs schema+reask.
+
+Run:  python triage_bench.py                 (default model qwen3:4b)
+      python triage_bench.py granite4:3b     (compare IBM Granite 4 micro)
+&quot;&quot;&quot;
+import hashlib
+from importlib.metadata import version
+import json
+import re
+import statistics
+import sys
+import time
+from typing import Literal
+
+import ollama
+from pydantic import BaseModel, Field, ValidationError, field_validator
+
+MODEL = sys.argv[1] if len(sys.argv) &gt; 1 else &quot;qwen3:4b&quot;
+MAX_REASK = 2
+
+
+# ---------- 1. The contract: one Pydantic model is the single source of truth ----------
+class Ticket(BaseModel):
+    category: Literal[&quot;billing&quot;, &quot;access&quot;, &quot;bug&quot;, &quot;feature_request&quot;, &quot;other&quot;]
+    priority: Literal[&quot;P1&quot;, &quot;P2&quot;, &quot;P3&quot;]
+    product: str = Field(description=&quot;System named in the ticket, or &#x27;unknown&#x27;&quot;)
+    pii_present: bool = Field(description=&quot;True if an email, phone number or employee ID appears&quot;)
+    summary: str = Field(description=&quot;One sentence, at most 20 words&quot;)
+
+    # Semantic rule a grammar cannot enforce -&gt; caught by the validator, fixed by re-ask.
+    @field_validator(&quot;summary&quot;)
+    @classmethod
+    def short_summary(cls, v: str) -&gt; str:
+        if len(v.split()) &gt; 20:
+            raise ValueError(f&quot;summary has {len(v.split())} words; must be &lt;= 20&quot;)
+        return v
+
+
+SCHEMA = Ticket.model_json_schema()
+
+# ---------- 2. Versioned prompt templates (in real life: a registry, not a dict) ----------
+PROMPTS = {
+    &quot;triage@v2&quot;: (
+        &quot;You are an L1 triage assistant for an enterprise IT helpdesk.\n&quot;
+        &quot;Rules:\n&quot;
+        &quot;- P1 = outage or security risk affecting many users; P2 = one user blocked; P3 = everything else.\n&quot;
+        &quot;- category is one of: billing, access, bug, feature_request, other.\n&quot;
+        &quot;- pii_present is true if the ticket contains an email, phone number or employee ID.\n&quot;
+        &quot;- product is the system named, or \&quot;unknown\&quot;.\n&quot;
+        &quot;- summary is one sentence, at most 20 words.\n&quot;
+        &quot;Respond ONLY with JSON matching this schema:\n{schema}\n\nTicket:\n{ticket}&quot;
+    ),
+}
+PROMPT_ID = &quot;triage@v2&quot;
+PROMPT_HASH = hashlib.sha256(PROMPTS[PROMPT_ID].encode()).hexdigest()[:8]
+
+# ---------- 3. A tiny golden set (expand to 30+ for anything you&#x27;d report) ----------
+GOLDEN = [
+    (&quot;SAP Concur is down for the whole Pune office since 9am, nobody can submit expenses.&quot;,
+     {&quot;category&quot;: &quot;bug&quot;, &quot;priority&quot;: &quot;P1&quot;, &quot;pii_present&quot;: False}),
+    (&quot;I was charged twice for my Copilot licence this month. Ref emp ID E104522.&quot;,
+     {&quot;category&quot;: &quot;billing&quot;, &quot;priority&quot;: &quot;P3&quot;, &quot;pii_present&quot;: True}),
+    (&quot;Locked out of Okta after password reset, can&#x27;t do any work. Call me on +91 98200 11223.&quot;,
+     {&quot;category&quot;: &quot;access&quot;, &quot;priority&quot;: &quot;P2&quot;, &quot;pii_present&quot;: True}),
+    (&quot;Would be great if the Jira dashboard could export to Excel.&quot;,
+     {&quot;category&quot;: &quot;feature_request&quot;, &quot;priority&quot;: &quot;P3&quot;, &quot;pii_present&quot;: False}),
+    (&quot;Suspicious login alerts on the VPN for 40+ users in finance, possible credential stuffing.&quot;,
+     {&quot;category&quot;: &quot;access&quot;, &quot;priority&quot;: &quot;P1&quot;, &quot;pii_present&quot;: False}),
+    (&quot;ServiceNow form throws a 500 error when I attach a PDF over 5 MB. priya.k@example.com&quot;,
+     {&quot;category&quot;: &quot;bug&quot;, &quot;priority&quot;: &quot;P3&quot;, &quot;pii_present&quot;: True}),
+    (&quot;Where do I find the holiday calendar for 2027?&quot;,
+     {&quot;category&quot;: &quot;other&quot;, &quot;priority&quot;: &quot;P3&quot;, &quot;pii_present&quot;: False}),
+    (&quot;Invoice INV-8831 from Snowflake shows the wrong cost centre, finance needs it fixed.&quot;,
+     {&quot;category&quot;: &quot;billing&quot;, &quot;priority&quot;: &quot;P3&quot;, &quot;pii_present&quot;: False}),
+]
+
+STRATEGIES = [&quot;prompt_only&quot;, &quot;json_mode&quot;, &quot;schema&quot;, &quot;schema+reask&quot;]
+THINK = False if MODEL.startswith(&quot;qwen3&quot;) else None  # turn off Qwen3 &quot;thinking&quot; for extraction
+
+
+def call(messages, fmt):
+    kwargs = dict(model=MODEL, messages=messages, format=fmt,
+                  options={&quot;temperature&quot;: 0, &quot;num_ctx&quot;: 4096, &quot;num_predict&quot;: 300})
+    if THINK is not None:
+        kwargs[&quot;think&quot;] = THINK
+    return ollama.chat(**kwargs).message.content
+
+
+def strip_fences(text: str) -&gt; str:
+    m = re.search(r&quot;\{.*\}&quot;, text, re.S)  # prompt-only output often wraps JSON in prose/```json
+    return m.group(0) if m else text
+
+
+def run_one(ticket: str, strategy: str):
+    prompt = PROMPTS[PROMPT_ID].format(schema=json.dumps(SCHEMA), ticket=ticket)
+    messages = [{&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: prompt}]
+    fmt = {&quot;prompt_only&quot;: None, &quot;json_mode&quot;: &quot;json&quot;}.get(strategy, SCHEMA)
+    attempts = MAX_REASK + 1 if strategy == &quot;schema+reask&quot; else 1
+    parsed_json, err = False, None
+    for i in range(attempts):
+        raw = call(messages, fmt)
+        try:
+            data = json.loads(strip_fences(raw))
+            parsed_json = True
+            return Ticket.model_validate(data), parsed_json, i, None
+        except (json.JSONDecodeError, ValidationError) as e:
+            err = e
+            # Re-ask: feed the validator&#x27;s error back - the Instructor pattern, by hand.
+            messages += [{&quot;role&quot;: &quot;assistant&quot;, &quot;content&quot;: raw},
+                         {&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: f&quot;Your JSON failed validation:\n{e}\nReturn corrected JSON only.&quot;}]
+    return None, parsed_json, attempts - 1, err
+
+
+def main():
+    print(f&quot;model={MODEL}  prompt={PROMPT_ID}#{PROMPT_HASH}  ollama-python={version(&#x27;ollama&#x27;)}  pydantic={version(&#x27;pydantic&#x27;)}&quot;)
+    call([{&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: &quot;ping&quot;}], None)  # warm-up: load weights into VRAM
+    rows = []
+    for strategy in STRATEGIES:
+        lat, ok_json, ok_schema, retries, correct = [], 0, 0, 0, {&quot;category&quot;: 0, &quot;priority&quot;: 0, &quot;pii_present&quot;: 0}
+        for ticket, gold in GOLDEN:
+            t0 = time.perf_counter()
+            obj, parsed, n_retry, err = run_one(ticket, strategy)
+            lat.append(time.perf_counter() - t0)
+            ok_json += parsed
+            retries += n_retry
+            if obj:
+                ok_schema += 1
+                for k in correct:
+                    correct[k] += getattr(obj, k) == gold[k]
+            else:
+                print(f&quot;  [{strategy}] FAIL: {str(err).splitlines()[0][:90]}&quot;)
+        n = len(GOLDEN)
+        rows.append((strategy, ok_json / n, ok_schema / n, correct[&quot;category&quot;] / n, correct[&quot;priority&quot;] / n,
+                     correct[&quot;pii_present&quot;] / n, statistics.mean(lat), max(lat), retries))
+
+    hdr = f&quot;{&#x27;strategy&#x27;:&lt;14}{&#x27;json%&#x27;:&gt;7}{&#x27;valid%&#x27;:&gt;8}{&#x27;cat&#x27;:&gt;6}{&#x27;prio&#x27;:&gt;6}{&#x27;pii&#x27;:&gt;6}{&#x27;mean_s&#x27;:&gt;8}{&#x27;max_s&#x27;:&gt;7}{&#x27;reasks&#x27;:&gt;8}&quot;
+    print(&quot;\n&quot; + hdr + &quot;\n&quot; + &quot;-&quot; * len(hdr))
+    for r in rows:
+        print(f&quot;{r[0]:&lt;14}{r[1]:&gt;7.0%}{r[2]:&gt;8.0%}{r[3]:&gt;6.0%}{r[4]:&gt;6.0%}{r[5]:&gt;6.0%}{r[6]:&gt;8.2f}{r[7]:&gt;7.2f}{r[8]:&gt;8}&quot;)
+
+
+if __name__ == &quot;__main__&quot;:
+    main()
+</code></pre></div>
+
+  <h3>Expected output</h3>
+  <p>Exact numbers depend on the model, quantization and driver. The sample below is illustrative, not a measured result.</p>
+  <div class="code"><div class="bar"><span>illustrative</span><button type="button">Copy</button></div><pre><code>model=qwen3:4b  prompt=triage@v2#878718ba  ollama-python=0.6.3  pydantic=2.14.0
+  [prompt_only] FAIL: Expecting value: line 1 column 1 (char 0)
+  [json_mode] FAIL: 1 validation error for Ticket
+
+strategy        json%  valid%   cat  prio   pii  mean_s  max_s  reasks
+----------------------------------------------------------------------
+prompt_only       88%     88%   75%   62%   88%    1.9    3.4       0
+json_mode        100%     88%   75%   62%   88%    1.6    2.2       0
+schema           100%    100%   88%   62%  100%    1.5    2.0       0
+schema+reask     100%    100%   88%   62%  100%    1.7    3.1       1</code></pre></div>
+  <p>Things to look for:</p>
+  <ol>
+    <li>Valid JSON doesn't mean a valid object; compare <code>json%</code> with <code>valid%</code> in the JSON-mode row.</li>
+    <li>The schema row reaches 100% valid, but <b>priority accuracy barely changes</b>. Constrained decoding fixes shape, not judgment.</li>
+    <li>Re-ask only does something when a validator catches a <em>semantic</em> rule, such as the 20-word summary.</li>
+    <li>Granite 4 vs Qwen3: which one is better calibrated on P1 vs P2? Write one line on why that matters for a support SLA.</li>
+  </ol>
+
+  <h3>Stretch goals</h3>
+  <ol>
+    <li><b>Field-order experiment.</b> Add <code>reasoning: str</code> to <code>Ticket</code>, first as the first field and then as the last. Re-run and compare <code>prio</code>. Keys are generated in schema order, so reasoning-first should help the borderline P1/P2 tickets. Write up the result as evidence for or against the "Let Me Speak Freely" claim.</li>
+    <li><b>Provider parity + eval gate.</b> Add a second <code>call()</code> using Anthropic <code>client.messages.parse(output_format=Ticket)</code> or OpenAI <code>client.responses.parse(text_format=Ticket)</code>. Note which schema features each provider rejects or rewrites. Then make the script <code>sys.exit(1)</code> if <code>valid% &lt; 100</code> or <code>cat &lt; 0.85</code>. That exit code is your first CI eval gate (Day 26).</li>
+  </ol>
+</section>
+
+<section id="repos">
+  <h2><span class="n">5</span>GitHub repos to study</h2>
+  <ul class="repos">
+    <li><a href="https://github.com/567-labs/instructor">567-labs/instructor</a><span class="sig">~14k★ · v1.17.0 on PyPI, Sep 2026</span><br>Study the retry/re-ask loop and the <code>Mode</code> abstraction. It shows one way to map a single Pydantic contract onto tools, JSON mode and native structured output across providers.</li>
+    <li><a href="https://github.com/dottxt-ai/outlines">dottxt-ai/outlines</a><span class="sig">~15.9k★ · v1.3.3, Aug 2026</span><br>Read how a JSON Schema becomes a regex/FSM, and the backend adapters (vLLM, Ollama, transformers, llama.cpp). This is the clearest code for "how constrained decoding works".</li>
+    <li><a href="https://github.com/mlc-ai/xgrammar">mlc-ai/xgrammar</a><span class="sig">~1.9k★ · v0.2.8, Sep 2026 · XGrammar-2 in May 2026</span><br>The default structured-generation backend in vLLM, SGLang and TensorRT-LLM. Look at the pushdown-automaton design and the context-independent token cache, which explain why per-token overhead is near zero.</li>
+    <li><a href="https://github.com/guidance-ai/guidance">guidance-ai/guidance</a><span class="sig">~21.8k★</span><br>Interleaved generation and control flow (select, regex, gen inside templates). It's a useful contrast to the "one schema per call" model when you design templated, multi-field prompts.</li>
+  </ul>
+</section>
+
+<section id="read">
+  <h2><span class="n">6</span>Read / watch</h2>
+  <ul>
+    <li><a href="https://platform.claude.com/docs/en/build-with-claude/structured-outputs">Anthropic: Structured outputs</a>. Read the supported/unsupported JSON Schema list; it is the most explicit description of a provider schema subset you'll find. Also covers <code>output_config.format</code> vs strict tool use.</li>
+    <li><a href="https://developers.openai.com/api/docs/guides/structured-outputs">OpenAI: Structured Outputs guide</a>. Covers <code>text.format</code> with <code>strict</code>, <code>parse()</code> helpers, and refusal handling.</li>
+    <li><a href="https://arxiv.org/abs/2408.02442">"Let Me Speak Freely?" (Tam et al.)</a> together with <a href="https://blog.dottxt.ai/say-what-you-mean.html">.txt's "Say What You Mean" rebuttal</a>. Read them as a pair; it's a good exercise in judging an eval methodology before you trust a headline claim.</li>
+  </ul>
+  <p class="sources">Exercise reference: <a href="https://docs.ollama.com/capabilities/structured-outputs">Ollama structured outputs docs</a> · <a href="https://ibm.github.io/watsonx-ai-python-sdk/v1.6.3/prompt_template_manager.html">watsonx.ai PromptTemplateManager</a></p>
+</section>
+
+<section id="interview">
+  <h2><span class="n">7</span>Interview questions</h2>
+  <details class="q"><summary>JSON mode, strict structured outputs and constrained decoding: what does each guarantee?</summary><div class="a">
+    <p>JSON mode guarantees syntactically valid JSON and nothing more. Strict structured outputs guarantee the output matches a supplied JSON Schema (required keys, types, enums) within the provider's supported subset. Constrained decoding is the mechanism behind strict mode: the schema is compiled to a grammar and invalid tokens are masked at each step. None of them guarantee completion (truncation at max_tokens), absence of refusals, or correct values. For those you need stop-reason checks, refusal handling, validators and evals.</p></div></details>
+  <details class="q"><summary>Does forcing JSON hurt model quality? How would you settle it for your use case?</summary><div class="a">
+    <p>The evidence is mixed. Tam et al. reported drops on reasoning tasks, and the .txt rebuttal attributed most of that to prompt mismatch and how answers were parsed. I wouldn't rely on either; I'd measure. Run a golden-set A/B (free-text vs constrained) with identical prompts. Mitigations: put a reasoning field before the answer fields, keep schemas shallow, or split into reason-then-format with a cheap formatter model. For extraction and classification, constraints usually help because they remove the parsing failures.</p></div></details>
+  <details class="q"><summary>Our triage bot returns valid JSON 100% of the time, but 9% of tickets get the wrong priority. Walk me through it.</summary><div class="a">
+    <p>It's a correctness problem, not a format problem. (1) Slice the errors with a confusion matrix: are they mostly on the P1/P2 boundary? (2) Check the label definitions in the prompt; vague rubrics produce vague labels. Add 2–3 few-shot examples right at the boundary. (3) Add a reasoning-first field so the model commits to evidence before the label. (4) Check that the golden labels are consistent; measure inter-annotator agreement. (5) If it's still above the SLA, route low-confidence cases (logprobs or self-reported confidence plus rules) to a human or a stronger model. Ship each change behind an eval gate with the prompt version on every trace.</p></div></details>
+  <details class="q"><summary>How do you version and roll out prompts across three providers?</summary><div class="a">
+    <p>Templates live in a registry (Langfuse, LangSmith, watsonx prompt template assets, or git plus a hash). Versions are immutable, and labels like <code>staging</code>/<code>production</code> are movable. A prompt version is pinned to a model ID, because a prompt tuned for one model is a different artifact on another. Each change runs per-provider golden-set evals in CI, then a canary (5–10% of traffic) with online metrics: validity, retry rate, accuracy proxies, cost per call. Rollback means moving the label. Every trace carries the prompt version, model ID and schema hash.</p></div></details>
+  <details class="q"><summary>Design a multi-provider abstraction for structured output when each provider supports a different schema subset.</summary><div class="a">
+    <p>Keep one canonical Pydantic model as the contract. Per-provider adapters derive a <em>wire schema</em>: they drop or relocate unsupported keywords (e.g. move <code>maxLength</code> into the description for Claude, make every key required plus nullable for OpenAI strict, emit the full schema to XGrammar on vLLM). After the response, always validate against the <em>full canonical</em> model, so constraints the provider couldn't enforce are still checked, with one bounded re-ask. Add contract tests per adapter in CI, and use a gateway (LiteLLM or similar, Day 23) for routing and fallback. Fallback should only go to providers that pass the same golden set.</p></div></details>
+</section>
+
+<section id="adr">
+  <h2><span class="n">8</span>Architect's lens: ADR-007</h2>
+  <p style="font:500 14px var(--f-mono);color:var(--muted);margin-top:-6px">Structured output strategy for the ticket-triage service · Status: Accepted</p>
+  <div class="adr">
+    <div>Context</div><div><p>The triage service feeds ServiceNow routing. It must run on Azure OpenAI (primary), Claude (secondary) and Granite on vLLM on-prem for regulated business units. Malformed output currently causes ~3% dead-letter tickets. Routing SLA: P1 misclassification under 2%.</p></div>
+    <div>Options</div><div><ul><li>A. Prompt-only JSON plus a tolerant parser</li><li>B. Native strict structured output per provider</li><li>C. B plus a canonical Pydantic contract, semantic validators and a single re-ask</li><li>D. Tool calling for all extraction</li></ul></div>
+    <div>Decision</div><div><p><b>C.</b> One Pydantic model is the source of truth. Adapters emit each provider's supported schema subset (XGrammar via vLLM guided decoding on-prem). Full validation runs after every call, with at most one re-ask. Each enum includes <code>unknown</code> so the model can abstain. Prompts live in a registry and are pinned per model.</p></div>
+    <div>Consequences</div><div><ul><li><span class="pill g">+</span> Dead-letter rate from format errors drops to ~0; the remaining errors are semantic and measurable.</li><li><span class="pill g">+</span> Provider swap = adapter + golden-set pass, not a rewrite.</li><li><span class="pill w">−</span> Adapter maintenance as provider schema support changes; needs contract tests.</li><li><span class="pill w">−</span> Re-ask adds tail latency, so p95 latency and retry rate become SLOs with alerts.</li><li>Revisit if a provider ships full JSON Schema support or retry rate exceeds 5%.</li></ul></div>
+  </div>
+</section>
+
+<section id="tomorrow">
+  <div class="tomorrow"><b>Tomorrow · Day 3</b>Fine-tuning vs RAG vs prompting: a decision framework, LoRA/QLoRA/PEFT, and when InstructLab-style tuning wins.</div>
+</section>
+</main>
+</div>
+
+<button class="themebtn" type="button" id="themeToggle" aria-label="Toggle light or dark theme">◐ Theme</button>
+
+<script>
+document.querySelectorAll('.code button').forEach(function(btn){
+  btn.addEventListener('click', function(){
+    var code = btn.closest('.code').querySelector('pre code');
+    var text = code.innerText;
+    function done(){ btn.textContent='Copied'; setTimeout(function(){btn.textContent='Copy'},1500); }
+    function fallback(){ var r=document.createRange(); r.selectNodeContents(code); var s=getSelection(); s.removeAllRanges(); s.addRange(r); btn.textContent='Selected, press Ctrl+C'; setTimeout(function(){btn.textContent='Copy'},2500); }
+    try{ navigator.clipboard.writeText(text).then(done, fallback); }catch(e){ fallback(); }
+  });
+});
+(function(){
+  var root=document.documentElement, key='genai-prep-theme';
+  try{ var t=localStorage.getItem(key); if(t) root.setAttribute('data-theme',t); }catch(e){}
+  document.getElementById('themeToggle').addEventListener('click',function(){
+    var cur=root.getAttribute('data-theme') || (matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');
+    var next=cur==='dark'?'light':'dark'; root.setAttribute('data-theme',next);
+    try{ localStorage.setItem(key,next); }catch(e){}
+  });
+})();
+</script>
+
+</body></html>

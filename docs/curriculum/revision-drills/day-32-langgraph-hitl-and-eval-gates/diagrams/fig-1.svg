@@ -1,0 +1,33 @@
+<svg font-family="Source Sans 3, system-ui, sans-serif" font-size="13" style="background:#ffffff" viewbox="0 0 700 330" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="ar" markerheight="7" markerwidth="7" orient="auto" refx="9" refy="5" viewbox="0 0 10 10"><path d="M0,0 L10,5 L0,10 z" fill="#555"></path></marker></defs>
+<text fill="#555" font-size="12" font-weight="700" letter-spacing="1" x="10" y="20">RELEASE PIPELINE</text>
+<g fill="#555" stroke="#555">
+<rect height="52" rx="6" width="110" x="10" y="32"></rect><rect height="52" rx="6" width="120" x="150" y="32"></rect>
+<rect height="52" rx="6" width="110" x="300" y="32"></rect><rect height="52" rx="6" width="130" x="440" y="32"></rect>
+</g>
+<rect fill="#555" height="52" rx="6" stroke="#555" width="90" x="600" y="32"></rect>
+<g fill="#555" text-anchor="middle">
+<text font-weight="700" x="65" y="55">Pull request</text><text fill="#555" x="65" y="72">prompt / graph</text>
+<text font-weight="700" x="210" y="55">PR eval gate</text><text fill="#555" x="210" y="72">50 golden · schema</text>
+<text font-weight="700" x="355" y="55">Nightly evals</text><text fill="#555" x="355" y="72">full set · judge</text>
+<text font-weight="700" x="505" y="55">Staging canary</text><text fill="#555" x="505" y="72">resume old threads</text>
+<text font-weight="700" x="645" y="55">Prod</text><text fill="#555" x="645" y="72">5% → 100%</text>
+</g>
+<g stroke="#555"><line marker-end="url(#ar)" x1="120" x2="148" y1="58" y2="58"></line><line marker-end="url(#ar)" x1="270" x2="298" y1="58" y2="58"></line><line marker-end="url(#ar)" x1="410" x2="438" y1="58" y2="58"></line><line marker-end="url(#ar)" x1="570" x2="598" y1="58" y2="58"></line></g>
+<rect fill="#555" height="34" rx="6" stroke="#555" width="300" x="200" y="112"></rect>
+<text fill="#555" text-anchor="middle" x="350" y="134">Release bundle registry: image · prompts · model · index · graph v</text>
+<line stroke="#555" stroke-dasharray="4 3" x1="350" x2="350" y1="112" y2="86"></line>
+<line marker-end="url(#ar)" stroke="#555" stroke-dasharray="4 3" x1="350" x2="350" y1="146" y2="196"></line>
+<text fill="#555" font-size="12" font-weight="700" letter-spacing="1" x="10" y="180">RUNTIME</text>
+<rect fill="#555" height="60" rx="6" stroke="#555" width="110" x="10" y="200"></rect>
+<text fill="#555" font-weight="700" text-anchor="middle" x="65" y="226">Claims API</text><text fill="#555" text-anchor="middle" x="65" y="244">8k/day</text>
+<rect fill="#555" height="60" rx="8" stroke="#555" stroke-width="1.5" width="180" x="260" y="200"></rect>
+<text fill="#555" font-weight="700" text-anchor="middle" x="350" y="224">LangGraph agent</text><text fill="#555" text-anchor="middle" x="350" y="242">stateless pods</text>
+<line marker-end="url(#ar)" stroke="#555" x1="120" x2="258" y1="230" y2="230"></line>
+<g fill="#555" stroke="#555"><rect height="30" rx="6" width="170" x="520" y="180"></rect><rect height="30" rx="6" width="170" x="520" y="220"></rect><rect height="30" rx="6" width="170" x="520" y="260"></rect></g>
+<g fill="#555"><text x="532" y="200">Policy wording RAG</text><text x="532" y="240">Fraud signals MCP</text><text x="532" y="280">Adjuster UI (&gt; ₹50k)</text></g>
+<g stroke="#555"><line marker-end="url(#ar)" x1="440" x2="518" y1="218" y2="196"></line><line marker-end="url(#ar)" x1="440" x2="518" y1="232" y2="235"></line><line marker-end="url(#ar)" x1="440" x2="518" y1="246" y2="274"></line></g>
+<rect fill="#555" height="34" rx="6" stroke="#555" width="180" x="260" y="290"></rect>
+<text fill="#555" text-anchor="middle" x="350" y="312">Postgres checkpoints (encrypted)</text>
+<line marker-end="url(#ar)" stroke="#555" x1="350" x2="350" y1="260" y2="288"></line>
+</svg>

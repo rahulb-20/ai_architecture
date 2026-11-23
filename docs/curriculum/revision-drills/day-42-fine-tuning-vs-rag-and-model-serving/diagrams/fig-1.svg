@@ -1,0 +1,36 @@
+<svg font-family="IBM Plex Sans, Segoe UI, Arial, sans-serif" aria-label="Request flow: tenants call a gateway that checks auth, quota and cache, then routes to a self-hosted vLLM base model with LoRA adapters, or falls back to a managed provider; RAG context is added before the call." role="img" style="background:#ffffff" viewbox="0 0 760 270" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="ar" markerheight="8" markerwidth="8" orient="auto" refx="7" refy="4"><path d="M0,0 L8,4 L0,8 z" fill="#555"></path></marker></defs>
+<g fill="#555" font-family="IBM Plex Sans, system-ui, sans-serif" font-size="12">
+<rect fill="#555" height="46" rx="5" stroke="#555" width="110" x="10" y="40"></rect><text font-weight="600" text-anchor="middle" x="65" y="60">Tenant apps</text><text fill="#555" text-anchor="middle" x="65" y="76">finance · hr · ops</text>
+<rect fill="#555" height="46" rx="5" stroke="#555" width="110" x="10" y="150"></rect><text font-weight="600" text-anchor="middle" x="65" y="170">Retriever</text><text fill="#555" text-anchor="middle" x="65" y="186">facts + ACLs</text>
+<rect fill="#555" height="200" rx="6" stroke="#555" width="230" x="170" y="20"></rect>
+<text fill="#555" font-weight="700" text-anchor="middle" x="285" y="42">AI gateway (tier-0 asset)</text>
+<g font-size="11.5">
+<text x="186" y="68">1 · AuthN + virtual key → tenant</text>
+<text x="186" y="90">2 · Token quota (TPM / monthly)</text>
+<text x="186" y="112">3 · Guardrails · PII mask</text>
+<text x="186" y="134">4 · Cache (tenant-scoped key)</text>
+<text x="186" y="156">5 · Router: adapter / model / region</text>
+<text x="186" y="178">6 · Breaker + fallback chain</text>
+<text x="186" y="200">7 · Usage + trace → cost ledger</text>
+</g>
+<rect fill="#555" height="120" rx="6" stroke="#555" width="290" x="460" y="20"></rect>
+<text font-weight="700" text-anchor="middle" x="605" y="42">vLLM · one base model on GPU</text>
+<rect fill="#555" height="30" rx="4" stroke="#555" width="80" x="476" y="56"></rect><text font-size="11" text-anchor="middle" x="516" y="75">lora: finance</text>
+<rect fill="#555" height="30" rx="4" stroke="#555" width="80" x="565" y="56"></rect><text font-size="11" text-anchor="middle" x="605" y="75">lora: hr</text>
+<rect fill="#555" height="30" rx="4" stroke="#555" width="80" x="654" y="56"></rect><text font-size="11" text-anchor="middle" x="694" y="75">lora: ops</text>
+<text fill="#555" font-size="11" text-anchor="middle" x="605" y="110">continuous batching mixes adapters</text>
+<text fill="#555" font-size="11" text-anchor="middle" x="605" y="126">--max-loras · --max-lora-rank</text>
+<rect fill="#555" height="60" rx="6" stroke="#555" stroke-dasharray="5 4" width="290" x="460" y="170"></rect>
+<text font-weight="700" text-anchor="middle" x="605" y="194">Fallback: managed endpoint</text>
+<text fill="#555" font-size="11" text-anchor="middle" x="605" y="212">watsonx.ai · Bedrock · Azure OpenAI (same region)</text>
+</g>
+<g fill="none" stroke="#555" stroke-width="1.4">
+<path d="M120 63 H168" marker-end="url(#ar)"></path>
+<path d="M120 173 H168" marker-end="url(#ar)"></path>
+<path d="M400 90 H458" marker-end="url(#ar)"></path>
+<path d="M400 190 H458" marker-end="url(#ar)" stroke-dasharray="4 3"></path>
+</g>
+<text fill="#555" font-family="IBM Plex Mono, monospace" font-size="10.5" text-anchor="middle" x="430" y="84">primary</text>
+<text fill="#555" font-family="IBM Plex Mono, monospace" font-size="10.5" text-anchor="middle" x="430" y="184">on 5xx/open</text>
+</svg>

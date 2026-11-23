@@ -1,0 +1,45 @@
+<svg font-family="IBM Plex Sans, Segoe UI, Arial, sans-serif" aria-label="Three panels: HNSW layered graph search, IVF partitions with nprobe, and product quantization compressing a vector into subvector codes" role="img" style="background:#ffffff" viewbox="0 0 900 330" xmlns="http://www.w3.org/2000/svg">
+
+<!-- HNSW -->
+<text class="t" x="20" y="26">HNSW · navigate</text>
+<text class="s" x="20" y="44">enter at top layer, descend greedily</text>
+<line class="lay" x1="20" x2="270" y1="95" y2="95"></line><line class="lay" x1="20" x2="270" y1="175" y2="175"></line><line class="lay" x1="20" x2="270" y1="265" y2="265"></line>
+<text class="s" x="22" y="88">L2</text><text class="s" x="22" y="168">L1</text><text class="s" x="22" y="258">L0</text>
+<path class="edge" d="M60 95 L230 95"></path>
+<path class="edge" d="M60 175 L120 175 L180 175 L240 175"></path>
+<path class="edge" d="M50 265 L85 265 L120 265 L150 265 L180 265 L210 265 L250 265"></path>
+<path class="path" d="M60 95 L230 95 L230 175 L180 175 L180 265 L210 265"></path>
+<circle class="nd hot" cx="60" cy="95" r="7"></circle><circle class="nd hot" cx="230" cy="95" r="7"></circle>
+<circle class="nd" cx="60" cy="175" r="6"></circle><circle class="nd" cx="120" cy="175" r="6"></circle><circle class="nd hot" cx="180" cy="175" r="6"></circle><circle class="nd hot" cx="230" cy="175" r="6"></circle>
+<circle class="nd" cx="50" cy="265" r="5"></circle><circle class="nd" cx="85" cy="265" r="5"></circle><circle class="nd" cx="120" cy="265" r="5"></circle><circle class="nd" cx="150" cy="265" r="5"></circle><circle class="nd hot" cx="180" cy="265" r="5"></circle><circle class="nd hot" cx="210" cy="265" r="5"></circle><circle class="nd" cx="250" cy="265" r="5"></circle>
+<circle class="q" cx="205" cy="290" r="6"></circle><text class="s" x="216" y="294">query</text>
+<text class="m" x="20" y="318">M, efConstruction, efSearch</text>
+<!-- IVF -->
+<text class="t" x="320" y="26">IVF · partition</text>
+<text class="s" x="320" y="44">k-means cells; scan nprobe nearest</text>
+<polygon class="cell" points="320,70 420,60 440,150 340,170"></polygon>
+<polygon class="probe" points="420,60 540,75 530,160 440,150"></polygon>
+<polygon class="cell" points="540,75 580,80 580,200 530,160"></polygon>
+<polygon class="probe" points="340,170 440,150 450,250 330,260"></polygon>
+<polygon class="probe" points="440,150 530,160 520,250 450,250"></polygon>
+<polygon class="cell" points="530,160 580,200 580,280 520,250"></polygon>
+<polygon class="cell" points="330,260 450,250 460,295 320,295"></polygon>
+<circle class="nd" cx="370" cy="110" r="3"></circle><circle class="nd" cx="480" cy="100" r="3"></circle><circle class="nd" cx="500" cy="130" r="3"></circle><circle class="nd" cx="380" cy="210" r="3"></circle><circle class="nd" cx="410" cy="230" r="3"></circle><circle class="nd" cx="480" cy="200" r="3"></circle><circle class="nd" cx="500" cy="230" r="3"></circle><circle class="nd" cx="560" cy="120" r="3"></circle><circle class="nd" cx="555" cy="240" r="3"></circle>
+<circle class="q" cx="455" cy="175" r="6"></circle>
+<text class="m" x="320" y="318">nlist ≈ 4–16·√N, nprobe = 3/7</text>
+<!-- PQ -->
+<text class="t" x="620" y="26">PQ · compress</text>
+<text class="s" x="620" y="44">split into m subvectors → 1-byte centroid ids</text>
+<text class="s" x="620" y="80">float32 vector · 384 d · 1,536 B</text>
+<rect class="box" height="30" width="260" x="620" y="90"></rect>
+<line class="edge" x1="652" x2="652" y1="90" y2="120"></line><line class="edge" x1="685" x2="685" y1="90" y2="120"></line><line class="edge" x1="717" x2="717" y1="90" y2="120"></line><line class="edge" x1="750" x2="750" y1="90" y2="120"></line><line class="edge" x1="782" x2="782" y1="90" y2="120"></line><line class="edge" x1="815" x2="815" y1="90" y2="120"></line><line class="edge" x1="847" x2="847" y1="90" y2="120"></line>
+<text class="s" x="620" y="140">m = 48 subvectors × 8 dims</text>
+<path class="path" d="M750 150 L750 185" marker-end="url(#ar)"></path>
+<defs><marker id="ar" markerheight="7" markerwidth="7" orient="auto" refx="8" refy="5" viewbox="0 0 10 10"><path d="M0 0 L10 5 L0 10z" fill="#555"></path></marker></defs>
+<text class="s" x="760" y="172">nearest of 256 centroids</text>
+<rect class="code" height="30" width="15" x="690" y="195"></rect><rect class="code" height="30" width="15" x="707" y="195"></rect><rect class="code" height="30" width="15" x="724" y="195"></rect><rect class="code" height="30" width="15" x="741" y="195"></rect><rect class="code" height="30" width="15" x="758" y="195"></rect><rect class="code" height="30" width="15" x="775" y="195"></rect><rect class="code" height="30" width="15" x="792" y="195"></rect>
+<text class="m" x="690" y="248">48 B code · 32× smaller</text>
+<text class="s" x="620" y="276">distances via lookup tables (ADC);</text>
+<text class="s" x="620" y="294">lossy → re-rank top candidates</text>
+<text class="m" x="620" y="318">M (subq), nbits, k_factor</text>
+</svg>

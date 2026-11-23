@@ -1,0 +1,429 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>GenAI Prep · Day 8 — Vector DB Selection</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: single reading column (~72ch) with wide tables/code allowed to scroll; section index in a sticky top strip. */
+:root{
+  --bg:#f6f7f9; --surface:#ffffff; --ink:#18202b; --muted:#5a6676; --line:#dde2e8;
+  --accent:#0f6b6f; --accent-soft:#e3f1f0; --warn:#9a5b00; --warn-soft:#fbf0dd; --bad:#a3262f; --good:#1d7a3a;
+  --code-bg:#f0f2f5;
+  --f-display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;
+  --f-body:"IBM Plex Sans",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,"Cascadia Code",Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#11161c; --surface:#171e26; --ink:#e3e8ee; --muted:#9aa6b4; --line:#2a3440;
+  --accent:#5cc4c0; --accent-soft:#16302f; --warn:#e7b25a; --warn-soft:#33270f; --bad:#f08a90; --good:#6fd08d;
+  --code-bg:#0d1217; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#11161c; --surface:#171e26; --ink:#e3e8ee; --muted:#9aa6b4; --line:#2a3440;
+  --accent:#5cc4c0; --accent-soft:#16302f; --warn:#e7b25a; --warn-soft:#33270f; --bad:#f08a90; --good:#6fd08d;
+  --code-bg:#0d1217; color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font:16px/1.62 var(--f-body);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 64px}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.wrap{max-width:860px;margin:0 auto}
+header.hero{padding-block:40px 24px;border-bottom:1px solid var(--line)}
+.eyebrow{font:500 12px/1 var(--f-mono);letter-spacing:.12em;text-transform:uppercase;color:var(--accent)}
+h1{font:700 clamp(30px,5vw,46px)/1.08 var(--f-display);margin:12px 0 12px;text-wrap:balance;letter-spacing:-.01em}
+.lede{color:var(--muted);max-width:66ch;margin:0}
+.meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
+.chip{font:500 12px/1 var(--f-mono);padding:6px 9px;border:1px solid var(--line);border-radius:999px;color:var(--muted);background:var(--surface)}
+nav.toc{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);border-bottom:1px solid var(--line);
+  display:flex;gap:4px;overflow-x:auto;padding-block:10px;scrollbar-width:thin}
+nav.toc a{font:500 13px/1 var(--f-body);color:var(--muted);text-decoration:none;padding:7px 10px;border-radius:6px;white-space:nowrap}
+nav.toc a:hover,nav.toc a:focus-visible{background:var(--accent-soft);color:var(--accent);outline:none}
+section{padding-block:36px 8px;scroll-margin-top:56px}
+h2{font:700 26px/1.2 var(--f-display);margin:0 0 14px;text-wrap:balance;display:flex;gap:12px;align-items:baseline}
+h2 .n{font:500 13px/1 var(--f-mono);color:var(--accent);min-width:2ch}
+h3{font:600 17px/1.3 var(--f-body);margin:26px 0 8px}
+p,li{max-width:70ch}
+ul,ol{padding-left:1.2em}
+li{margin-block:4px}
+a{color:var(--accent)}
+strong{font-weight:600}
+code{font:0.9em var(--f-mono);background:var(--code-bg);padding:1px 5px;border-radius:4px}
+.callout{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:14px 16px;margin:16px 0}
+.callout.warn{background:var(--warn-soft);border-color:transparent}
+.callout.warn b{color:var(--warn)}
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:8px;background:var(--surface);margin:14px 0}
+table{border-collapse:collapse;width:100%;min-width:720px;font-size:14px;line-height:1.45}
+th,td{text-align:left;vertical-align:top;padding:10px 12px;border-bottom:1px solid var(--line)}
+th{font:600 12px/1.3 var(--f-mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);background:var(--code-bg)}
+tr:last-child td{border-bottom:0}
+td:first-child{font-weight:600;white-space:nowrap}
+.num{font-variant-numeric:tabular-nums;font-family:var(--f-mono);font-size:13px}
+.lo{color:var(--bad);font-weight:600}.hi{color:var(--good);font-weight:600}
+.code{position:relative;margin:14px 0;border:1px solid var(--line);border-radius:8px;background:var(--code-bg)}
+.code .bar{display:flex;justify-content:space-between;align-items:center;padding:6px 8px 6px 12px;border-bottom:1px solid var(--line);font:500 12px/1 var(--f-mono);color:var(--muted)}
+.code pre{margin:0;padding:14px;overflow-x:auto;font:13px/1.55 var(--f-mono);color:var(--ink);tab-size:4}
+button.copy{font:500 12px/1 var(--f-body);color:var(--accent);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:6px 10px;cursor:pointer}
+button.copy:hover{border-color:var(--accent)}
+button.copy:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.diagram{overflow-x:auto;margin:18px 0;border:1px solid var(--line);border-radius:8px;background:var(--surface);padding:12px}
+.diagram svg{display:block;min-width:640px;width:100%;height:auto}
+svg .box{fill:var(--surface);stroke:var(--line);stroke-width:1.5}
+svg .idx{fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5}
+svg .t{fill:var(--ink);font:600 14px var(--f-body)}
+svg .s{fill:var(--muted);font:12px var(--f-body)}
+svg .m{fill:var(--accent);font:500 11px var(--f-mono)}
+svg .dot{stroke:none}
+svg .d1{fill:var(--accent)} svg .d2{fill:var(--warn)} svg .d3{fill:var(--bad)}
+details.qa{border:1px solid var(--line);border-radius:8px;background:var(--surface);margin:10px 0}
+details.qa summary{cursor:pointer;padding:12px 16px;font-weight:600;list-style-position:outside}
+details.qa summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:8px}
+details.qa .a{padding:0 16px 14px;color:var(--ink)}
+details.qa[open] summary{border-bottom:1px solid var(--line);margin-bottom:10px}
+.adr{display:grid;grid-template-columns:140px 1fr;gap:0;border:1px solid var(--line);border-radius:8px;background:var(--surface);overflow:hidden}
+.adr>div{padding:12px 16px;border-bottom:1px solid var(--line);min-width:0}
+.adr>div:nth-last-child(-n+2){border-bottom:0}
+.adr .k{font:600 12px/1.4 var(--f-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--muted);background:var(--code-bg)}
+.adr p{margin:0 0 6px}
+.repo{display:grid;gap:10px}
+.repo div{border-left:3px solid var(--accent);padding:4px 0 4px 14px}
+.repo b{font-family:var(--f-mono);font-weight:500;font-size:14px}
+footer{margin-top:40px;padding-top:16px;border-top:1px solid var(--line);color:var(--muted);font-size:14px}
+@media (max-width:560px){.adr{grid-template-columns:1fr}.adr .k{border-bottom:0;padding-bottom:4px}}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+html{scroll-behavior:smooth}
+</style>
+
+<div class="wrap">
+<header class="hero">
+  <div class="eyebrow">Week 2 · Production retrieval · Day 8 of 30</div>
+  <h1>Vector DB selection: filtering, tenancy and the real cost of "just add a where clause"</h1>
+  <p class="lede">Pinecone, Weaviate, Chroma, Milvus, Azure AI Search, Elastic and pgvector all do ANN. They differ in how they filter, how they isolate tenants, and who runs them at 2 a.m. Today is about choosing on those axes and proving the choice with numbers.</p>
+  <div class="meta">
+    <span class="chip">chromadb 1.5.9</span><span class="chip">lancedb 0.40.0</span><span class="chip">pgvector 0.8.7</span><span class="chip">pinecone SDK 10.0</span><span class="chip">weaviate-client 4.23</span><span class="chip">~75 min hands-on</span>
+  </div>
+</header>
+
+<nav class="toc" aria-label="Sections">
+  <a href="#why">Why</a><a href="#concept">Concept</a><a href="#tradeoffs">Trade-offs</a><a href="#exercise">Exercise</a><a href="#repos">Repos</a><a href="#read">Read</a><a href="#interview">Interview</a><a href="#adr">ADR</a><a href="#tomorrow">Tomorrow</a>
+</nav>
+
+<section id="why">
+  <h2><span class="n">1</span>Why this matters for the JD</h2>
+  <p>The JD names seven stores by brand under <strong>"Vector DBs &amp; retrieval … metadata filtering"</strong>. An interviewer will not ask what HNSW is again; they will ask which store you would pick for <em>their</em> constraints and how you keep tenant A's documents out of tenant B's answers. That ties straight into the good-to-haves on <strong>RBAC/IAM, compliance, NFRs, decision logs and cost estimates</strong>.</p>
+</section>
+
+<section id="concept">
+  <h2><span class="n">2</span>Concept brief</h2>
+
+  <h3>Select on five axes, not on benchmark charts</h3>
+  <ol>
+    <li><strong>Filtered-search behaviour.</strong> Real enterprise queries always carry a filter: tenant, ACL group, region, doc type, effective date. How the engine combines filter and ANN decides recall, more than raw QPS does.</li>
+    <li><strong>Tenancy model.</strong> Silo, bridge or pool (diagram below). This sets your isolation story, your noisy-neighbour risk and your cost floor.</li>
+    <li><strong>Hybrid and rerank story.</strong> Native BM25/sparse and fusion (Weaviate, Elastic, Azure AI Search, Milvus, Pinecone) vs bolt-on (pgvector + Postgres FTS, Chroma). Day 9 goes deep here.</li>
+    <li><strong>Operational ownership.</strong> Managed serverless (Pinecone, Azure AI Search), managed-or-self-host (Weaviate, Milvus/Zilliz, Elastic), or "it's already our database" (pgvector on RDS/Aurora/Azure Flexible Server/AlloyDB). Who patches, who scales, who gets paged.</li>
+    <li><strong>Enterprise fit.</strong> Private endpoints, CMK encryption, data residency, audit logs, RBAC in the control plane, and whether procurement already has a contract.</li>
+  </ol>
+
+  <h3>Pre-filter, post-filter and in-filter</h3>
+  <p><strong>Post-filter</strong> runs ANN for top-k, then drops rows that fail the filter. With a selective filter (a small tenant, 0.5% of rows) you get back 0–2 results instead of 10. That is a silent recall failure, and it hits your smallest customers hardest.</p>
+  <p><strong>Pre-filter</strong> computes the allowed set first, then searches only those rows. It is correct, but it is brute force when the set is small and it can break HNSW graph connectivity when the set is medium-sized.</p>
+  <p><strong>In-filter / filtered traversal</strong> checks the filter during graph traversal and widens the search until k matches are found. Weaviate's ACORN-style filtering, Qdrant's payload-aware HNSW and pgvector 0.8's <code>hnsw.iterative_scan</code> all work this way. pgvector before 0.8 was the classic overfiltering trap: <code>ORDER BY embedding &lt;=&gt; $1 LIMIT 10</code> with a <code>WHERE</code> clause could return fewer than 10 rows.</p>
+  <p>Good engines also pick a strategy based on selectivity: brute force for tiny sets, filtered ANN for large ones. Today's exercise makes you watch that happen.</p>
+
+  <h3>Three tenancy models</h3>
+  <div class="diagram" role="img" aria-label="Diagram of silo, bridge and pool tenancy models for vector databases">
+  <svg viewBox="0 0 900 300" xmlns="http://www.w3.org/2000/svg">
+    <!-- Silo -->
+    <rect class="box" x="10" y="10" width="280" height="280" rx="10"/>
+    <text class="t" x="28" y="38">Silo · index per tenant</text>
+    <text class="s" x="28" y="58">Pinecone index · Chroma collection</text>
+    <text class="s" x="28" y="74">Azure AI Search index · Elastic index</text>
+    <rect class="idx" x="28" y="92" width="72" height="84" rx="6"/><text class="m" x="40" y="112">T-A</text>
+    <rect class="idx" x="114" y="92" width="72" height="84" rx="6"/><text class="m" x="126" y="112">T-B</text>
+    <rect class="idx" x="200" y="92" width="72" height="84" rx="6"/><text class="m" x="212" y="112">T-C</text>
+    <circle class="dot d1" cx="48" cy="140" r="5"/><circle class="dot d1" cx="66" cy="152" r="5"/><circle class="dot d1" cx="80" cy="136" r="5"/>
+    <circle class="dot d2" cx="136" cy="146" r="5"/><circle class="dot d2" cx="160" cy="134" r="5"/>
+    <circle class="dot d3" cx="234" cy="148" r="5"/>
+    <text class="s" x="28" y="210">+ hard isolation, per-tenant delete/CMK</text>
+    <text class="s" x="28" y="230">+ no filter recall risk</text>
+    <text class="s" x="28" y="250">− index-count limits, per-index cost floor</text>
+    <text class="s" x="28" y="270">− cold-start for 10k+ tiny tenants</text>
+    <!-- Bridge -->
+    <rect class="box" x="310" y="10" width="280" height="280" rx="10"/>
+    <text class="t" x="328" y="38">Bridge · partition per tenant</text>
+    <text class="s" x="328" y="58">Pinecone namespace · Weaviate tenant</text>
+    <text class="s" x="328" y="74">Milvus partition key · Postgres RLS + partitions</text>
+    <rect class="idx" x="328" y="92" width="244" height="84" rx="6"/><text class="m" x="340" y="112">one cluster · shards per tenant</text>
+    <line x1="410" y1="120" x2="410" y2="170" stroke="var(--accent)" stroke-dasharray="3 3"/>
+    <line x1="490" y1="120" x2="490" y2="170" stroke="var(--accent)" stroke-dasharray="3 3"/>
+    <circle class="dot d1" cx="356" cy="146" r="5"/><circle class="dot d1" cx="380" cy="156" r="5"/>
+    <circle class="dot d2" cx="440" cy="140" r="5"/><circle class="dot d2" cx="462" cy="156" r="5"/>
+    <circle class="dot d3" cx="530" cy="148" r="5"/>
+    <text class="s" x="328" y="210">+ logical isolation, scales to many tenants</text>
+    <text class="s" x="328" y="230">+ offload idle tenants (Weaviate tenant states)</text>
+    <text class="s" x="328" y="250">− cross-tenant search needs fan-out</text>
+    <text class="s" x="328" y="270">− shared blast radius, quota per cluster</text>
+    <!-- Pool -->
+    <rect class="box" x="610" y="10" width="280" height="280" rx="10"/>
+    <text class="t" x="628" y="38">Pool · shared index + filter</text>
+    <text class="s" x="628" y="58">where tenant = :t on every query</text>
+    <text class="s" x="628" y="74">any engine with metadata filtering</text>
+    <rect class="idx" x="628" y="92" width="244" height="84" rx="6"/><text class="m" x="640" y="112">one index · tenant is a column</text>
+    <circle class="dot d1" cx="660" cy="150" r="5"/><circle class="dot d3" cx="682" cy="136" r="5"/><circle class="dot d2" cx="704" cy="156" r="5"/>
+    <circle class="dot d1" cx="730" cy="140" r="5"/><circle class="dot d2" cx="760" cy="150" r="5"/><circle class="dot d1" cx="790" cy="136" r="5"/>
+    <circle class="dot d1" cx="820" cy="156" r="5"/><circle class="dot d2" cx="846" cy="142" r="5"/>
+    <text class="s" x="628" y="210">+ cheapest, simplest, cross-tenant queries easy</text>
+    <text class="s" x="628" y="230">− one missing filter = data leak</text>
+    <text class="s" x="628" y="250">− recall depends on filter strategy</text>
+    <text class="s" x="628" y="270">− noisy neighbours, hard per-tenant delete</text>
+  </svg>
+  </div>
+  <p>In practice, mature platforms run a <strong>tiered hybrid</strong>: silo for the few regulated or very large tenants, bridge or pool for the long tail. In AWS SaaS terms this is the same silo/bridge/pool vocabulary you would use for any multi-tenant data tier, and that is the right register for a design review.</p>
+
+  <h3>Map to the IBM stack</h3>
+  <p>watsonx.data ships Milvus as its integrated vector store, and watsonx.ai RAG patterns commonly sit on Elasticsearch or Milvus. When an IBM client asks "Milvus or Elastic?", the honest split is: Elastic if they already run it for search and logs and want BM25 + vectors + ACL filtering in one place; Milvus if vector volume is large (hundreds of millions+) and they want GPU indexes, partition-key tenancy and a dedicated vector tier.</p>
+</section>
+
+<section id="tradeoffs">
+  <h2><span class="n">3</span>Trade-offs &amp; decision table</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>Store</th><th>Pick when</th><th>Tenancy primitive</th><th>Filtering notes</th><th>Failure modes</th><th>Cost / latency shape</th></tr></thead>
+    <tbody>
+      <tr><td>Pinecone (serverless)</td><td>No platform team; spiky or unknown load; want SLAs fast</td><td>Namespaces (bridge), recommended for tenant isolation</td><td>Metadata filters on any query; namespace scoping is cheaper than filters</td><td>Vendor lock-in; data residency limited to offered regions; cold reads after idle</td><td>Pay per read/write units + storage; cheap at low QPS, revisit at sustained high QPS</td></tr>
+      <tr><td>Weaviate</td><td>Many tenants with uneven activity; want native hybrid</td><td>First-class multi-tenancy: shard per tenant, tenant states (active / inactive / offloaded)</td><td>Filtered HNSW with ACORN strategy; BM25 + vector fusion built in</td><td>Memory-hungry HNSW; tenant count planning per node</td><td>Self-host or Weaviate Cloud; offloading idle tenants cuts RAM cost a lot</td></tr>
+      <tr><td>Chroma</td><td>Prototypes, dev loops, embedded single-node apps; Chroma Cloud for small prod</td><td>Collections; tenant/database namespaces in the client</td><td>Simple <code>where</code> metadata and document filters; brute-force fallback on small filtered sets</td><td>Not a fit for strict HA or very large self-hosted corpora</td><td>Free locally; latency fine to low millions of vectors on one box</td></tr>
+      <tr><td>Milvus / Zilliz</td><td>100M–billions of vectors; GPU indexes; IBM watsonx.data clients</td><td>Database / collection / partition / partition key</td><td>Scalar indexes + filtered search; partition key prunes before ANN</td><td>Distributed mode is many moving parts (etcd, object storage, message queue)</td><td>Best $/vector at very large scale; high ops cost if self-hosted</td></tr>
+      <tr><td>Azure AI Search</td><td>Azure-first enterprise; need private endpoints, Entra ID RBAC, semantic ranker, document-level security</td><td>Index per tenant (silo) or filter field (pool) for security trimming</td><td>Pre-filter by default on vector queries; filterable fields must be declared up front</td><td>Index schema changes need reindex; tier limits on index count and storage</td><td>Fixed cost per search unit (replicas × partitions); predictable, not elastic</td></tr>
+      <tr><td>Elasticsearch / OpenSearch</td><td>Already running Elastic; hybrid search, ACL filters and analytics in one engine</td><td>Index per tenant, or a routing / filter field</td><td>Mature filter DSL; kNN with filter applied during HNSW search; quantized vectors to save RAM</td><td>JVM heap and off-heap vector memory tuning; shard sizing mistakes</td><td>Reuse existing cluster; RAM-heavy at high dimensions</td></tr>
+      <tr><td>pgvector</td><td>Under ~10–50M vectors; data already in Postgres; need transactions, joins, RLS</td><td>Row-level security + tenant column, or partitions per tenant</td><td>0.8+ iterative index scans fix overfiltering; HNSW or IVFFlat; halfvec/binary to save space</td><td>Index build memory (<code>maintenance_work_mem</code>); vacuum and bloat; planner choosing a sequential scan</td><td>Cheapest if Postgres already exists; scale-up limits before scale-out</td></tr>
+    </tbody>
+  </table></div>
+  <div class="callout"><strong>Rule of thumb for reviews:</strong> start from the database the organization already operates (Postgres, Elastic, Azure AI Search). Move to a dedicated vector DB only when a measured NFR fails: p95 latency, recall under filters, vector count, or tenant count. "We might need scale" is not a measured NFR.</div>
+</section>
+
+<section id="exercise">
+  <h2><span class="n">4</span>Hands-on: multi-tenant filtered search, measured</h2>
+  <p><strong>Goal (75 min):</strong> build the same 40k-vector, 40-tenant corpus three ways and measure recall@10 against exact search, plus p50/p95 latency, separately for the biggest and the smallest tenant. Tenant sizes are Zipf-skewed, like real business units. You will see the two failure modes from the concept brief appear in numbers.</p>
+  <p>No GPU, Docker or model downloads are needed. Vectors are synthetic and clustered, 384-dimensional (the size of MiniLM / bge-small embeddings), so the run is deterministic and fast. Both packages ship native Windows wheels.</p>
+
+  <h3>Setup (PowerShell)</h3>
+  <div class="code"><div class="bar"><span>PowerShell</span><button class="copy" type="button">Copy</button></div><pre>mkdir day08-vdb; cd day08-vdb
+py -3.13 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+python -m pip install "chromadb==1.5.9" "lancedb==0.40.0" numpy pyarrow pandas
+# save the script below as vdb_tenancy_bench.py, then:
+python vdb_tenancy_bench.py</pre></div>
+  <p>If activation is blocked, run <code>Set-ExecutionPolicy -Scope CurrentUser RemoteSigned</code> once. LanceDB may print Rust deprecation warnings to stderr. They are harmless.</p>
+
+  <h3>Starter code</h3>
+  <div class="code"><div class="bar"><span>vdb_tenancy_bench.py</span><button class="copy" type="button">Copy</button></div><pre>&quot;&quot;&quot;Day 8 - Multi-tenant filtered vector search: Chroma vs LanceDB.
+
+Compares three tenancy layouts on the same synthetic corpus:
+  A) Chroma, one shared collection + metadata filter (where={&quot;tenant&quot;: ...})
+  B) Chroma, one collection per tenant (physical isolation)
+  C) LanceDB, one table + ANN index + scalar index on tenant + prefilter
+Reports recall@10 against exact (brute-force) filtered search, p50/p95 latency,
+and the on-disk footprint. Tenant sizes are Zipf-skewed, like real enterprises
+(a few huge business units, a long tail of small teams).
+&quot;&quot;&quot;
+import os, shutil, time, statistics
+import numpy as np
+import pyarrow as pa
+import chromadb
+import lancedb
+from lancedb.index import IvfHnswSq, Bitmap
+
+N, DIM, TENANTS, K, QUERIES = 40_000, 384, 40, 10, 200
+ROOT = os.path.abspath(&quot;./vdb_bench_data&quot;)
+rng = np.random.default_rng(42)
+
+def norm(x):
+    return (x / np.linalg.norm(x, axis=1, keepdims=True)).astype(&quot;float32&quot;)
+
+# --- synthetic corpus with clustered vectors (more realistic than pure noise) ---
+centers = norm(rng.normal(size=(64, DIM)))
+assign = rng.integers(0, 64, N)
+vecs = norm(centers[assign] + 0.25 * rng.normal(size=(N, DIM)))
+w = 1 / np.arange(1, TENANTS + 1) ** 1.1          # Zipf skew
+tenant = rng.choice(TENANTS, size=N, p=w / w.sum())
+tenant_ids = np.array([f&quot;t{t:02d}&quot; for t in tenant])
+doc_type = rng.choice([&quot;policy&quot;, &quot;faq&quot;, &quot;contract&quot;, &quot;ticket&quot;], N)
+ids = [f&quot;d{i}&quot; for i in range(N)]
+counts = {t: int((tenant_ids == t).sum()) for t in np.unique(tenant_ids)}
+big, small = max(counts, key=counts.get), min(counts, key=counts.get)
+print(f&quot;corpus={N} dim={DIM} tenants={len(counts)} | biggest {big}={counts[big]} smallest {small}={counts[small]}&quot;)
+
+# queries: 50% from the biggest tenant, 50% from the smallest (stress both ends)
+q_tenants = [big] * (QUERIES // 2) + [small] * (QUERIES // 2)
+qvecs = norm(centers[rng.integers(0, 64, QUERIES)] + 0.25 * rng.normal(size=(QUERIES, DIM)))
+
+def exact(qv, t):
+    idx = np.where(tenant_ids == t)[0]
+    sims = vecs[idx] @ qv
+    return {ids[i] for i in idx[np.argsort(-sims)[:K]]}
+
+truth = [exact(q, t) for q, t in zip(qvecs, q_tenants)]
+
+def du(path):
+    return sum(os.path.getsize(os.path.join(d, f)) for d, _, fs in os.walk(path) for f in fs) / 1e6
+
+def run(name, fn):
+    lat, rec = [], []
+    for q, t, gt in zip(qvecs, q_tenants, truth):
+        s = time.perf_counter(); got = fn(q, t); lat.append((time.perf_counter() - s) * 1000)
+        rec.append(len(set(got) &amp; gt) / K)
+    big_rec = statistics.mean(rec[: QUERIES // 2]); small_rec = statistics.mean(rec[QUERIES // 2 :])
+    p = np.percentile(lat, [50, 95])
+    print(f&quot;{name:&lt;34} recall@10 big={big_rec:.3f} small={small_rec:.3f}  p50={p[0]:.2f}ms p95={p[1]:.2f}ms&quot;)
+
+shutil.rmtree(ROOT, ignore_errors=True)
+
+# ---------- A) Chroma shared collection + metadata filter ----------
+# ef_search is THE recall/latency knob for HNSW. Set it at creation time.
+ch = chromadb.PersistentClient(path=os.path.join(ROOT, &quot;chroma_shared&quot;))
+bs = ch.get_max_batch_size()
+for ef in (100, 400):
+    col = ch.create_collection(f&quot;docs_ef{ef}&quot;, configuration={&quot;hnsw&quot;: {&quot;space&quot;: &quot;cosine&quot;, &quot;ef_search&quot;: ef}})
+    t0 = time.perf_counter()
+    for i in range(0, N, bs):
+        col.add(ids=ids[i:i+bs], embeddings=vecs[i:i+bs],
+                metadatas=[{&quot;tenant&quot;: tenant_ids[j], &quot;doc_type&quot;: doc_type[j]} for j in range(i, min(i+bs, N))])
+    print(f&quot;[A] chroma shared ef={ef} ingest {time.perf_counter()-t0:.1f}s&quot;)
+    run(f&quot;A chroma shared + where (ef={ef})&quot;,
+        lambda q, t, c=col: c.query(query_embeddings=[q], n_results=K, where={&quot;tenant&quot;: t})[&quot;ids&quot;][0])
+print(f&quot;[A] disk (both collections) {du(os.path.join(ROOT,&#x27;chroma_shared&#x27;)):.0f} MB&quot;)
+
+# ---------- B) Chroma collection per tenant ----------
+chb = chromadb.PersistentClient(path=os.path.join(ROOT, &quot;chroma_per_tenant&quot;))
+cols = {}
+t0 = time.perf_counter()
+for t in counts:
+    idx = np.where(tenant_ids == t)[0]
+    c = chb.create_collection(f&quot;docs_{t}&quot;, configuration={&quot;hnsw&quot;: {&quot;space&quot;: &quot;cosine&quot;, &quot;ef_search&quot;: 100}})
+    for i in range(0, len(idx), bs):
+        part = idx[i:i+bs]
+        c.add(ids=[ids[j] for j in part], embeddings=vecs[part])
+    cols[t] = c
+print(f&quot;[B] chroma per-tenant ingest {time.perf_counter()-t0:.1f}s, disk {du(os.path.join(ROOT,&#x27;chroma_per_tenant&#x27;)):.0f} MB&quot;)
+run(&quot;B chroma collection-per-tenant&quot;, lambda q, t: cols[t].query(query_embeddings=[q], n_results=min(K, counts[t]))[&quot;ids&quot;][0])
+
+# ---------- C) LanceDB single table + IVF index + scalar index + prefilter ----------
+db = lancedb.connect(os.path.join(ROOT, &quot;lance&quot;))
+tbl_data = pa.table({
+    &quot;id&quot;: ids, &quot;tenant&quot;: tenant_ids.tolist(), &quot;doc_type&quot;: doc_type.tolist(),
+    &quot;vector&quot;: pa.FixedSizeListArray.from_arrays(pa.array(vecs.ravel()), DIM),
+})
+t0 = time.perf_counter()
+tbl = db.create_table(&quot;docs&quot;, data=tbl_data, mode=&quot;overwrite&quot;)
+tbl.create_index(&quot;vector&quot;, config=IvfHnswSq(distance_type=&quot;cosine&quot;, num_partitions=16))
+tbl.create_scalar_index(&quot;tenant&quot;, index_type=&quot;BITMAP&quot;)
+print(f&quot;[C] lancedb ingest+index {time.perf_counter()-t0:.1f}s, disk {du(os.path.join(ROOT,&#x27;lance&#x27;)):.0f} MB&quot;)
+
+def lance_q(q, t, nprobes=8):
+    return [r[&quot;id&quot;] for r in tbl.search(q).where(f&quot;tenant = &#x27;{t}&#x27;&quot;, prefilter=True)
+            .nprobes(nprobes).limit(K).to_list()]
+
+run(&quot;C lancedb prefilter nprobes=8&quot;, lance_q)
+run(&quot;C lancedb prefilter nprobes=16&quot;, lambda q, t: lance_q(q, t, 16))</pre></div>
+
+  <h3>Expected output</h3>
+  <p>This is a reference run on a Linux CPU sandbox. Your laptop's absolute latencies will differ, but the pattern should hold.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Layout</th><th>Recall@10, big tenant (10,714 docs)</th><th>Recall@10, small tenant (187 docs)</th><th>p50</th><th>p95</th></tr></thead>
+    <tbody>
+      <tr><td>A · Chroma shared + where, ef=100</td><td class="num lo">0.528</td><td class="num hi">1.000</td><td class="num">38.3 ms</td><td class="num">53.4 ms</td></tr>
+      <tr><td>A · Chroma shared + where, ef=400</td><td class="num hi">0.906</td><td class="num hi">1.000</td><td class="num">48.3 ms</td><td class="num">89.1 ms</td></tr>
+      <tr><td>B · Chroma collection per tenant</td><td class="num lo">0.537</td><td class="num hi">1.000</td><td class="num">1.2 ms</td><td class="num">1.4 ms</td></tr>
+      <tr><td>C · LanceDB prefilter, nprobes=8</td><td class="num lo">0.561</td><td class="num lo">0.575</td><td class="num">5.6 ms</td><td class="num">7.5 ms</td></tr>
+      <tr><td>C · LanceDB prefilter, nprobes=16</td><td class="num">0.833</td><td class="num">0.979</td><td class="num">6.8 ms</td><td class="num">9.5 ms</td></tr>
+    </tbody>
+  </table></div>
+  <h3>What to conclude (write these in your notes)</h3>
+  <ul>
+    <li><strong>Defaults are not a recall guarantee.</strong> At ef_search=100, the big tenant gets about 53% recall. Raising ef to 400 lifts it to about 91% at roughly 1.3× the p50. Synthetic isotropic data is harder than real embeddings, but the lesson stands: you must measure recall on your own data before you sign off an NFR.</li>
+    <li><strong>The small tenant is perfect in Chroma</strong> because a 187-row allowed set gets brute-forced. Selectivity-aware planning protects small tenants.</li>
+    <li><strong>The small tenant breaks in LanceDB at nprobes=8.</strong> Its 187 docs are spread across all 16 IVF partitions, and probing half of them misses about 40% of its true neighbours. This is the partition-pruning version of overfiltering.</li>
+    <li><strong>Collection per tenant is about 30× faster at p50</strong> than the shared collection with a filter, at the same recall. Isolation buys latency as well as security, until the collection count becomes an ops problem.</li>
+  </ul>
+
+  <h3>Stretch goals</h3>
+  <ol>
+    <li><strong>pgvector iterative scans</strong> (needs Docker Desktop with the WSL2 backend): <code>docker run -d -p 5432:5432 -e POSTGRES_PASSWORD=pg pgvector/pgvector:pg17</code>, then load the same data with <code>psycopg</code> + <code>pgvector</code> (pip). Build an HNSW index, query with <code>WHERE tenant = %s ORDER BY embedding &lt;=&gt; %s LIMIT 10</code>, and compare result counts and recall with <code>SET hnsw.iterative_scan = off</code> vs <code>relaxed_order</code>.</li>
+    <li><strong>Tiered tenancy router:</strong> put tenants above 5% of the corpus into dedicated collections and the long tail into one shared collection. Wrap both behind a <code>search(tenant, q)</code> function and add a test that asserts no returned ID belongs to another tenant (your leak test for CI). Report recall and p95 for the blended workload.</li>
+  </ol>
+</section>
+
+<section id="repos">
+  <h2><span class="n">5</span>GitHub repos to study</h2>
+  <div class="repo">
+    <div><b><a href="https://github.com/pgvector/pgvector">pgvector/pgvector</a></b><br>Read the README sections on "Filtering" and "Iterative Index Scans", then CHANGELOG.md. 0.8.7 shipped on 2026-10-01 with an IVFFlat build fix.</div>
+    <div><b><a href="https://github.com/lancedb/lancedb">lancedb/lancedb</a></b><br>Look at the Python <code>index.py</code> configs (IvfPq, IvfHnswSq, Bitmap) and how prefilter vs postfilter is exposed in the query builder. Active: 0.40.0 released 2026-10-07.</div>
+    <div><b><a href="https://github.com/chroma-core/chroma">chroma-core/chroma</a></b><br>The Rust core (<code>rust/</code>) shows how metadata filtering and brute-force fallback are planned; the Python client shows tenant/database scoping.</div>
+    <div><b><a href="https://github.com/zilliztech/VectorDBBench">zilliztech/VectorDBBench</a></b><br>Its filtered-search and streaming test cases are a template for your own selection benchmark. Treat vendor-run results with care. v2.0.0 released 2026-09-10.</div>
+  </div>
+</section>
+
+<section id="read">
+  <h2><span class="n">6</span>Read / watch</h2>
+  <ul>
+    <li><a href="https://docs.pinecone.io/guides/index-data/implement-multitenancy">Pinecone: Implement multitenancy using namespaces</a>. A short, opinionated guide on the bridge model; note what they say about per-tenant deletes and costs.</li>
+    <li><a href="https://docs.weaviate.io/weaviate/manage-collections/multi-tenancy">Weaviate: Multi-tenancy</a>. Tenant lifecycle and states; the best reference for designing around thousands of mostly-idle tenants.</li>
+    <li><a href="https://aws.amazon.com/blogs/database/supercharging-vector-search-performance-and-relevance-with-pgvector-0-8-0-on-amazon-aurora-postgresql">AWS: pgvector 0.8.0 on Aurora PostgreSQL</a>. Before/after numbers for iterative scans on filtered queries, a good case to cite in reviews.</li>
+  </ul>
+</section>
+
+<section id="interview">
+  <h2><span class="n">7</span>Interview questions</h2>
+  <details class="qa" open><summary>A client wants "Pinecone because it's the best vector DB". They run 30M chunks on Azure, have Postgres everywhere and strict data residency in India. How do you respond?</summary><div class="a">
+    <p>Reframe it as an NFR-driven choice. 30M chunks is within pgvector territory on Azure Database for PostgreSQL Flexible Server (HNSW, halfvec to halve memory, iterative scans for filters). Azure AI Search is the other natural candidate: private endpoints, Entra RBAC, Indian regions and built-in hybrid + semantic ranking. Pinecone is viable only if its region and private networking options meet residency and the security team accepts a new vendor. I would shortlist two, run a two-week bake-off on their own data with filtered recall@10, p95 and monthly cost at projected QPS, and record the result in an ADR.</p></div></details>
+  <details class="qa"><summary>Your RAG bot's smallest customers complain that answers are "empty" while large customers are fine. What's your first hypothesis?</summary><div class="a">
+    <p>Overfiltering. With post-filtering, or partition pruning (IVF nprobes too low), a tenant that is 0.5% of the corpus gets fewer than k results after the filter. Confirm by logging result counts per query per tenant. Fixes: switch to pre-filter or filtered traversal (pgvector iterative scans, Weaviate ACORN), raise ef or nprobes, move small tenants to namespaces or partitions, or route very selective filters to brute force. Add a per-tenant result-count metric to the dashboard so it never regresses silently.</p></div></details>
+  <details class="qa"><summary>How do you guarantee tenant isolation in a pooled vector index?</summary><div class="a">
+    <p>Never trust the caller to add the filter. Inject the tenant filter server-side from the authenticated identity (a JWT claim mapped to a tenant ID) in a single retrieval service; no other component can query the store directly (network policy plus IAM). Use DB-level enforcement where available: Postgres RLS, Azure AI Search security filters, or namespaces as a hard scope. Add a contract test in CI that seeds two tenants and asserts zero cross-tenant IDs, and audit-log tenant + query + returned doc IDs. For regulated tenants, use silo with separate keys.</p></div></details>
+  <details class="qa"><summary>When would you not use a dedicated vector database at all?</summary><div class="a">
+    <p>When the corpus is under tens of millions of vectors, the data and ACLs already live in Postgres or Elastic, and you need transactional consistency between documents and their embeddings (no dual-write drift). One fewer system means less IAM, backup, DR and on-call surface. Revisit when a measured NFR fails: p95 under load, filtered recall, index build time, or memory cost.</p></div></details>
+  <details class="qa"><summary>How do you estimate memory for an HNSW index of 50M × 1024-dim float32 vectors, and how do you cut it?</summary><div class="a">
+    <p>Raw vectors: 50M × 1024 × 4 B ≈ 205 GB. The HNSW graph adds roughly M × 2 × 4–8 B per vector for links; at M=16 that is about 6–13 GB. Plus replicas. Ways to cut it: Matryoshka truncation to 512 or 256 dims (2–4×), float16/halfvec (2×), int8 scalar quantization (4×), binary quantization with rescoring (32× on the first pass), PQ or DiskANN-style on-disk indexes, and offloading idle tenants. Each one trades recall, so re-measure filtered recall on the golden set after every step.</p></div></details>
+</section>
+
+<section id="adr">
+  <h2><span class="n">8</span>Architect's lens · ADR-014</h2>
+  <div class="adr">
+    <div class="k">Title</div><div><p>Vector store and tenancy model for the multi-BU knowledge assistant</p></div>
+    <div class="k">Context</div><div><p>12 business units (2 regulated), about 25M chunks growing 40% a year, Azure landing zone, Postgres already operated by the platform team, India data residency, p95 retrieval ≤ 150 ms, filtered recall@10 ≥ 0.95 on the golden set, per-BU deletion within 30 days on request.</p></div>
+    <div class="k">Options</div><div><p>(1) Pinecone serverless with namespace per BU. (2) Azure AI Search with an index per regulated BU and a security-filter field for the rest. (3) pgvector on Azure PostgreSQL Flexible Server with RLS + a tenant column, and a separate database for regulated BUs.</p></div>
+    <div class="k">Decision</div><div><p>Option 2. It meets residency and private-endpoint needs natively, provides hybrid + semantic ranking without extra services, and its fixed search-unit pricing fits the finance team's budgeting. Regulated BUs get silo indexes with their own CMK; the rest share a pooled index with server-side injected filters.</p></div>
+    <div class="k">Consequences</div><div><p>+ One managed service, Entra RBAC, audit via Azure Monitor. − Schema changes need reindex pipelines; index-count tier limits must be watched; cost is fixed even at low traffic. Revisit if the corpus passes 100M chunks or recall under filters drops below the NFR. Option 3 remains the fallback if cost pressure grows.</p></div>
+  </div>
+</section>
+
+<section id="tomorrow">
+  <h2><span class="n">9</span>Tomorrow</h2>
+  <p><strong>Day 9:</strong> Hybrid search (BM25 + dense, reciprocal rank fusion) and reranking with cross-encoders and Cohere / bge rerankers.</p>
+</section>
+
+<footer>
+  <strong>Sources:</strong>
+  <a href="https://raw.githubusercontent.com/pgvector/pgvector/master/CHANGELOG.md">pgvector CHANGELOG</a> ·
+  <a href="https://www.postgresql.org/about/news/pgvector-080-released-2952/">pgvector 0.8.0 release</a> ·
+  <a href="https://docs.pinecone.io/guides/index-data/implement-multitenancy">Pinecone multitenancy</a> ·
+  <a href="https://docs.weaviate.io/weaviate/manage-collections/multi-tenancy">Weaviate multi-tenancy</a> ·
+  <a href="https://aws.amazon.com/blogs/database/supercharging-vector-search-performance-and-relevance-with-pgvector-0-8-0-on-amazon-aurora-postgresql">AWS pgvector 0.8.0 blog</a> ·
+  <a href="https://pypi.org/project/chromadb/">chromadb on PyPI</a> ·
+  <a href="https://pypi.org/project/lancedb/">lancedb on PyPI</a> ·
+  <a href="https://pypi.org/project/vectordb-bench/">vectordb-bench on PyPI</a> ·
+  <a href="https://pypi.org/project/pinecone/">pinecone on PyPI</a> ·
+  <a href="https://pypi.org/project/weaviate-client/">weaviate-client on PyPI</a>
+</footer>
+</div>
+
+<script>
+document.querySelectorAll('button.copy').forEach(function(btn){
+  btn.addEventListener('click',function(){
+    var pre=btn.closest('.code').querySelector('pre');var text=pre.innerText;
+    function done(){btn.textContent='Copied';setTimeout(function(){btn.textContent='Copy'},1500)}
+    function fallback(){var r=document.createRange();r.selectNodeContents(pre);var s=getSelection();s.removeAllRanges();s.addRange(r);btn.textContent='Selected, press Ctrl+C'}
+    try{navigator.clipboard.writeText(text).then(done,fallback)}catch(e){fallback()}
+  });
+});
+</script>
+
+</body></html>

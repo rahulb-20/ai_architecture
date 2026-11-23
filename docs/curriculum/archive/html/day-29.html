@@ -1,0 +1,598 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>GenAI Prep · Day 29 — Architect deliverables</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: single reading column (~72ch) with a sticky section index on wide screens; review-board document feel */
+:root{
+  --bg:#f5f7f9; --surface:#ffffff; --ink:#16212b; --muted:#56636f; --line:#d9e0e6;
+  --accent:#0d6a8a; --accent-soft:#e3f0f5; --warn:#a15c00; --warn-soft:#fbf0de; --ok:#2f7a4a;
+  --code-bg:#0f1b24; --code-fg:#dbe6ee;
+  --f-display:"IBM Plex Sans Condensed","Arial Narrow",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0e151b; --surface:#152029; --ink:#e3eaf0; --muted:#97a6b3; --line:#2a3945;
+  --accent:#5cbad9; --accent-soft:#16303c; --warn:#e7a54a; --warn-soft:#33281a; --ok:#6cc58d;
+  --code-bg:#09111a; --code-fg:#d6e2ea; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0e151b; --surface:#152029; --ink:#e3eaf0; --muted:#97a6b3; --line:#2a3945;
+  --accent:#5cbad9; --accent-soft:#16303c; --warn:#e7a54a; --warn-soft:#33281a; --ok:#6cc58d;
+  --code-bg:#09111a; --code-fg:#d6e2ea; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:16px/1.62 var(--f-body);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 64px}
+.wrap{max-width:1120px;margin:0 auto;display:grid;grid-template-columns:200px minmax(0,1fr);gap:48px}
+@media (max-width:860px){.wrap{grid-template-columns:minmax(0,1fr)}nav.toc{display:none}}
+nav.toc{position:sticky;top:calc(env(safe-area-inset-top,0px) + 24px);align-self:start;padding-top:40px;font-size:13px}
+nav.toc ol{list-style:none;margin:0;padding:0;display:grid;gap:6px;counter-reset:s}
+nav.toc a{color:var(--muted);text-decoration:none}
+nav.toc a:hover,nav.toc a:focus-visible{color:var(--accent)}
+main{min-width:0;max-width:760px}
+header{padding-block:40px 24px;border-bottom:1px solid var(--line);margin-bottom:8px}
+.eyebrow{font:500 12px/1 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+h1{font:700 clamp(30px,5vw,44px)/1.1 var(--f-display);margin:12px 0 12px;text-wrap:balance;letter-spacing:-.01em}
+.lede{color:var(--muted);font-size:17px;margin:0;max-width:62ch}
+.meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+.chip{font:500 12px/1 var(--f-mono);padding:6px 9px;border:1px solid var(--line);border-radius:4px;color:var(--muted);background:var(--surface)}
+section{padding-block:28px;border-bottom:1px solid var(--line)}
+h2{font:600 24px/1.2 var(--f-display);margin:0 0 14px;display:flex;gap:12px;align-items:baseline;text-wrap:balance}
+h2 .n{font:500 13px var(--f-mono);color:var(--accent)}
+h3{font:600 18px/1.3 var(--f-display);margin:24px 0 8px}
+p,li{max-width:68ch}
+ul,ol{padding-left:22px}
+li{margin-block:4px}
+a{color:var(--accent)}
+code{font:0.88em var(--f-mono);background:var(--accent-soft);padding:1px 5px;border-radius:3px}
+.formula{font:500 14.5px/1.7 var(--f-mono);background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--accent);padding:14px 16px;overflow-x:auto;white-space:pre}
+.callout{background:var(--warn-soft);border-left:3px solid var(--warn);padding:12px 16px;margin:16px 0;font-size:15px}
+.callout b{color:var(--warn)}
+.tbl{overflow-x:auto;margin:14px 0;border:1px solid var(--line);border-radius:6px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:14px;min-width:640px}
+th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);background:var(--bg)}
+tr:last-child td{border-bottom:0}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;font-family:var(--f-mono)}
+.fig{margin:18px 0;background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:14px;overflow-x:auto}
+.fig svg{display:block;width:100%;min-width:620px;height:auto}
+.fig figcaption{font-size:13px;color:var(--muted);margin-top:8px}
+svg text{font-family:var(--f-body)}
+.code{position:relative;margin:14px 0}
+.code .bar{display:flex;justify-content:space-between;align-items:center;background:var(--code-bg);color:var(--code-fg);opacity:.95;
+  font:500 12px var(--f-mono);padding:8px 12px;border-radius:6px 6px 0 0;border-bottom:1px solid rgba(255,255,255,.08)}
+.code pre{margin:0;background:var(--code-bg);color:var(--code-fg);padding:14px 16px;border-radius:0 0 6px 6px;overflow-x:auto;font:13px/1.55 var(--f-mono);tab-size:4}
+.copy{font:500 12px var(--f-mono);background:transparent;color:var(--code-fg);border:1px solid rgba(255,255,255,.25);border-radius:4px;padding:4px 10px;cursor:pointer}
+.copy:hover,.copy:focus-visible{border-color:var(--accent);outline:none;color:#fff}
+.steps{counter-reset:st;list-style:none;padding:0;display:grid;gap:10px}
+.steps li{counter-increment:st;display:grid;grid-template-columns:34px minmax(0,1fr);gap:10px;max-width:none}
+.steps li::before{content:counter(st);font:600 13px var(--f-mono);color:var(--accent);border:1px solid var(--accent);border-radius:50%;width:26px;height:26px;display:grid;place-items:center}
+.qa{border:1px solid var(--line);border-radius:6px;background:var(--surface);margin:10px 0}
+.qa summary{cursor:pointer;padding:12px 16px;font-weight:600;list-style:none;display:grid;grid-template-columns:28px minmax(0,1fr);gap:6px}
+.qa summary::-webkit-details-marker{display:none}
+.qa summary .q{font:600 13px var(--f-mono);color:var(--accent);padding-top:2px}
+.qa summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.qa .a{padding:0 16px 14px 50px;font-size:15px}
+.qa .a p{margin:6px 0}
+.repo{display:grid;gap:2px;padding:12px 0;border-bottom:1px dashed var(--line)}
+.repo:last-child{border-bottom:0}
+.repo a{font:500 14.5px var(--f-mono);word-break:break-word}
+.repo span{color:var(--muted);font-size:15px}
+.adr{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:4px 20px 16px}
+.adr dl{display:grid;grid-template-columns:130px minmax(0,1fr);gap:8px 16px;margin:12px 0 0}
+@media (max-width:560px){.adr dl{grid-template-columns:minmax(0,1fr)}.adr dt{margin-top:8px}}
+.adr dt{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);padding-top:3px}
+.adr dd{margin:0}
+.status{display:inline-block;font:600 11px var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--ok);border:1px solid var(--ok);padding:3px 7px;border-radius:3px}
+.tomorrow{font-size:17px}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:16px}
+.two > div{min-width:0}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:12px 16px}
+.panel h4{font:600 13px var(--f-mono);text-transform:uppercase;letter-spacing:.05em;color:var(--accent);margin:4px 0 6px}
+.panel ul{margin:0;padding-left:18px;font-size:15px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+<nav class="toc" aria-label="Sections">
+  <ol>
+    <li><a href="#why">1 · Why it matters</a></li>
+    <li><a href="#brief">2 · Concept brief</a></li>
+    <li><a href="#tradeoffs">3 · Trade-offs</a></li>
+    <li><a href="#exercise">4 · Hands-on</a></li>
+    <li><a href="#repos">5 · Repos</a></li>
+    <li><a href="#read">6 · Read</a></li>
+    <li><a href="#interview">7 · Interview</a></li>
+    <li><a href="#adr">8 · Architect's lens</a></li>
+    <li><a href="#tomorrow">9 · Tomorrow</a></li>
+  </ol>
+</nav>
+<main>
+<header>
+  <div class="eyebrow">Week 4 · Cloud, production &amp; architecture · Day 29 of 30</div>
+  <h1>Architect deliverables: HLD/LLD, NFRs, ADRs, token-cost model, DR</h1>
+  <p class="lede">The documents that get a GenAI design through an architecture review board, and the numbers behind them. Today you build a cost and capacity model you can defend line by line.</p>
+  <div class="meta"><span class="chip">Sat 7 Nov 2026</span><span class="chip">~75 min hands-on</span><span class="chip">CPU only · no GPU needed</span><span class="chip">tiktoken 0.14 · LiteLLM price map</span></div>
+</header>
+
+<section id="why">
+  <h2><span class="n">01</span>Why this matters for the JD</h2>
+  <p>The JD lists <b>HLD/LLD, NFRs, decision logs, cost estimates</b> and <b>scalability, resilience, DR, compliance</b> as good-to-haves, and "explaining complex AI simply to stakeholders" as a soft skill. In practice these decide the interview. Panels for architect roles stop asking "what is RAG" and start asking "what does it cost at 50k users, what happens when the provider is down, and where did you write that decision down".</p>
+</section>
+
+<section id="brief">
+  <h2><span class="n">02</span>Concept brief</h2>
+
+  <h3>The deliverable set, and the question each one answers</h3>
+  <figure class="fig">
+    <svg viewBox="0 0 760 300" role="img" aria-labelledby="d1t">
+      <title id="d1t">Architect deliverables flow from business problem to review board</title>
+      <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker></defs>
+      <rect x="10" y="118" width="110" height="64" rx="6" fill="var(--accent-soft)" stroke="var(--accent)"/>
+      <text x="65" y="145" text-anchor="middle" font-size="13" font-weight="600" fill="var(--ink)">Business</text>
+      <text x="65" y="163" text-anchor="middle" font-size="13" font-weight="600" fill="var(--ink)">problem + KPIs</text>
+      <g font-size="12.5" fill="var(--ink)">
+        <rect x="170" y="20" width="170" height="54" rx="6" fill="var(--surface)" stroke="var(--line)"/>
+        <text x="182" y="42" font-weight="600">NFRs</text><text x="182" y="60" fill="var(--muted)" font-size="11.5">Good, fast, cheap, safe enough?</text>
+        <rect x="170" y="88" width="170" height="54" rx="6" fill="var(--surface)" stroke="var(--line)"/>
+        <text x="182" y="110" font-weight="600">HLD (C4 L1–L2)</text><text x="182" y="128" fill="var(--muted)" font-size="11.5">What boxes, which trust zones?</text>
+        <rect x="170" y="156" width="170" height="54" rx="6" fill="var(--surface)" stroke="var(--line)"/>
+        <text x="182" y="178" font-weight="600">Cost + capacity model</text><text x="182" y="196" fill="var(--muted)" font-size="11.5">$/month, peak TPM, quota</text>
+        <rect x="170" y="224" width="170" height="54" rx="6" fill="var(--surface)" stroke="var(--line)"/>
+        <text x="182" y="246" font-weight="600">ADR log</text><text x="182" y="264" fill="var(--muted)" font-size="11.5">Why this, not that?</text>
+        <rect x="400" y="54" width="170" height="54" rx="6" fill="var(--surface)" stroke="var(--line)"/>
+        <text x="412" y="76" font-weight="600">LLD (C4 L3 + contracts)</text><text x="412" y="94" fill="var(--muted)" font-size="11.5">Prompts, schemas, timeouts</text>
+        <rect x="400" y="122" width="170" height="54" rx="6" fill="var(--surface)" stroke="var(--line)"/>
+        <text x="412" y="144" font-weight="600">Eval plan + gates</text><text x="412" y="162" fill="var(--muted)" font-size="11.5">How do we know it works?</text>
+        <rect x="400" y="190" width="170" height="54" rx="6" fill="var(--surface)" stroke="var(--line)"/>
+        <text x="412" y="212" font-weight="600">DR / resilience plan</text><text x="412" y="230" fill="var(--muted)" font-size="11.5">RTO/RPO, degraded modes</text>
+      </g>
+      <rect x="620" y="96" width="130" height="108" rx="6" fill="var(--accent)" />
+      <text x="685" y="138" text-anchor="middle" font-size="13" font-weight="600" fill="var(--bg)">Review board</text>
+      <text x="685" y="157" text-anchor="middle" font-size="11.5" fill="var(--bg)">+ 1-page exec</text>
+      <text x="685" y="173" text-anchor="middle" font-size="11.5" fill="var(--bg)">summary</text>
+      <g stroke="var(--muted)" stroke-width="1.3" fill="none" marker-end="url(#ar)">
+        <path d="M120,140 L166,48"/><path d="M120,146 L166,115"/><path d="M120,154 L166,183"/><path d="M120,162 L166,250"/>
+        <path d="M340,115 L396,82"/><path d="M340,47 L396,140"/><path d="M340,183 L396,215"/>
+        <path d="M570,82 L616,130"/><path d="M570,149 L616,150"/><path d="M570,217 L616,172"/>
+        <path d="M340,251 C560,290 610,240 640,206"/>
+      </g>
+    </svg>
+    <figcaption>NFRs come first because every later number (cost, capacity, RTO) is a consequence of them. The ADR log runs across everything.</figcaption>
+  </figure>
+
+  <h3>GenAI NFRs differ from classic web NFRs</h3>
+  <p>A classic NFR sheet covers availability, latency and throughput. A GenAI sheet adds quality, safety and cost as first-class, measurable requirements, and changes the units for the rest.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Category</th><th>Example target (knowledge assistant)</th><th>How it is measured</th></tr></thead>
+    <tbody>
+      <tr><td>Answer quality</td><td>Faithfulness ≥ 0.90, answer relevance ≥ 0.85 on a 300-question golden set; abstains on ≥ 90% of unanswerable questions</td><td>RAGAS/DeepEval in CI (Day 11, 26)</td></tr>
+      <tr><td>Latency</td><td>TTFT p95 ≤ 1.5 s; full answer p95 ≤ 6 s; retrieval p95 ≤ 300 ms</td><td>OTel GenAI spans (Day 27)</td></tr>
+      <tr><td>Throughput</td><td>Sustain <b>peak tokens per minute</b>, not RPS. A 3k-token prompt and a 50-token prompt are not the same request.</td><td>Gateway metrics, provider 429 rate</td></tr>
+      <tr><td>Cost</td><td>≤ $0.005 per answered query; ≤ $X per active user per month; hard budget alert at 80%</td><td>LiteLLM / Langfuse cost tracking</td></tr>
+      <tr><td>Safety</td><td>0 PII leaks in red-team suite; prompt-injection block rate ≥ 95% on a known attack set</td><td>Guardrail eval suite (Day 21, 28)</td></tr>
+      <tr><td>Freshness</td><td>Source change visible in answers within 4 h; deletions within 1 h (right-to-erasure)</td><td>Index lag metric per source</td></tr>
+      <tr><td>Availability</td><td>99.9% for "answer with citations"; 99.95% for degraded "search results only" mode</td><td>Synthetic probes per mode</td></tr>
+      <tr><td>Residency &amp; audit</td><td>Prompts and completions processed in-region (India / EU data zone); 1-year audit log of prompts, sources and user</td><td>Policy + config review</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>HLD vs LLD for a GenAI system</h3>
+  <div class="two">
+    <div class="panel"><h4>HLD</h4><ul>
+      <li>C4 context + container diagrams</li>
+      <li>Trust boundaries: where prompts, documents and PII cross networks or tenants</li>
+      <li>Model provider(s), gateway, vector store, identity provider</li>
+      <li>Data flows for ingest, query and feedback</li>
+      <li>NFR summary, cost envelope, DR tier</li>
+    </ul></div>
+    <div class="panel"><h4>LLD</h4><ul>
+      <li>Prompt contracts: template ID, version, input/output JSON schema</li>
+      <li>Chunking and index schema, metadata filters, ACL fields</li>
+      <li>Agent graph state schema, tool contracts, retries, timeouts</li>
+      <li>Fallback chain and circuit-breaker thresholds</li>
+      <li>Eval thresholds that gate each release</li>
+    </ul></div>
+  </div>
+
+  <h3>The token-cost and capacity model</h3>
+  <div class="formula">T_in  = system + k × chunk + history + query + Σ(aux calls: rewrite, guard, judge)
+T_out = answer + Σ(aux outputs)
+Cost/month = Q_month × (1 − semantic_cache_hit)
+             × [ T_in × ((1−c)·P_in + c·P_cached) + T_out × P_out ]
+Peak TPM   = Q_peak_per_min × (1 − cache_hit) × (T_in + T_out)</div>
+  <p>Three things surprise stakeholders. First, input dominates RAG cost: retrieved context is usually 70–85% of tokens, so <code>k</code> and chunk size are cost levers, not just quality levers. Second, quota and provisioned capacity (Azure PTU, Bedrock provisioned throughput, watsonx dedicated deployments) are sized on <b>peak TPM</b>, which a monthly average hides by 4–6×. Third, a point estimate is the wrong output. Give P50 and P90 and name the assumption that drives the spread, which is almost always adoption.</p>
+
+  <h3>DR and resilience: failure modes specific to GenAI</h3>
+  <ul>
+    <li><b>Provider or regional outage, or capacity exhaustion (429s).</b> Mitigate with a gateway fallback chain: same model in a second region, then a different provider's model with a prompt variant you have already evaluated.</li>
+    <li><b>Model retirement and silent version changes.</b> Pin model versions, track retirement dates in the ADR log, and run the golden set before every switch.</li>
+    <li><b>Embedding model loss.</b> Vectors from different embedding models are not interchangeable. If the embedding model is retired, your RTO becomes the full re-embed time. Keep the source documents as the system of record and treat the index as derived data.</li>
+    <li><b>Index corruption or bad ingest.</b> Snapshot the index, version ingests, and be able to roll back to the previous snapshot.</li>
+    <li><b>Prompt or guardrail regression.</b> Version prompts like code, with rollback (Day 26).</li>
+  </ul>
+  <p>Design <b>degraded modes</b> explicitly, from best to worst: full answer → answer from a smaller fallback model → "search results only" with links and no generation → static "service unavailable, here is the intranet search". Each mode gets its own availability target. That one idea usually satisfies a review board's DR question better than active-active everything.</p>
+
+  <h3>Explaining it to stakeholders</h3>
+  <p>Translate every metric into the reader's unit. A CFO wants cost per employee per month and the P90 case. A CISO wants where data goes and who can see what. A business owner wants accuracy expressed as "out of 100 questions, about 90 get a correct, cited answer, 7 get 'I don't know, ask HR', and 3 are wrong in ways we catch through feedback". Avoid "the model knows" and "AI decides". Say "the system retrieves policy text and summarises it, with a link to the source".</p>
+</section>
+
+<section id="tradeoffs">
+  <h2><span class="n">03</span>Trade-offs &amp; decision tables</h2>
+  <h3>Capacity purchasing model</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Option</th><th>Pick when</th><th>Failure mode</th><th>Cost / latency</th></tr></thead>
+    <tbody>
+      <tr><td><b>Pay-as-you-go (serverless tokens)</b></td><td>Pilot, spiky or unknown load, &lt; ~40% steady utilisation</td><td>429s at peak; noisy-neighbour latency; quota is per region and per subscription</td><td>Linear in tokens; latency variance highest</td></tr>
+      <tr><td><b>Provisioned throughput (PTU, Bedrock PT, watsonx dedicated)</b></td><td>Steady, predictable load; latency SLO is contractual</td><td>Paying for idle capacity; overflow still needs PAYG spillover; term commitments</td><td>Fixed monthly; lowest, most stable latency</td></tr>
+      <tr><td><b>Self-hosted open model (vLLM / KServe on GPUs)</b></td><td>Strict residency or air-gap; very high steady volume; fine-tuned small model is good enough</td><td>You own GPU capacity, patching, scaling and evals; quality gap vs frontier models</td><td>GPU $/hr ÷ measured tokens/hr; break-even only at high utilisation</td></tr>
+      <tr><td><b>Hybrid: small model default, frontier model on escalation</b></td><td>Most enterprise assistants</td><td>Router misclassification; two prompt sets to maintain and evaluate</td><td>Typically 40–70% cheaper than frontier-only</td></tr>
+    </tbody>
+  </table></div>
+  <h3>DR posture</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Posture</th><th>RTO (generation)</th><th>Pick when</th><th>Watch out for</th></tr></thead>
+    <tbody>
+      <tr><td>Degraded mode only</td><td>Instant to search-only</td><td>Internal, non-critical assistant</td><td>Users notice; set expectations in the SLA</td></tr>
+      <tr><td>Multi-region, same provider</td><td>Minutes (gateway failover)</td><td>Residency allows a second region in the same data zone</td><td>Correlated provider-wide incidents; quota in the secondary region</td></tr>
+      <tr><td>Multi-provider fallback</td><td>Seconds to minutes</td><td>Customer-facing or regulated workflow</td><td>Prompt and eval drift between models; extra DPA / legal review</td></tr>
+      <tr><td>Active-active multi-region + replicated index</td><td>Near zero</td><td>Revenue-critical, global users</td><td>2× index cost; consistency of ACL updates across regions</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="exercise">
+  <h2><span class="n">04</span>Hands-on: cost &amp; capacity model for 50k employees</h2>
+  <p><b>Goal (75 min):</b> build a model that turns workload assumptions into $/month, $/query, P50/P90 and peak TPM for six models, then use the output to write one NFR sheet, one ADR and a one-paragraph exec summary. Prices come from LiteLLM's public price map, so the script stays current.</p>
+  <div class="callout"><b>Price caveat.</b> The LiteLLM map tracks list prices. Before you quote a client, check the provider's pricing page for the exact region and data-zone SKU, and any enterprise discount.</div>
+
+  <h3>Setup (PowerShell)</h3>
+  <div class="code"><div class="bar"><span>PowerShell</span><button class="copy" type="button">Copy</button></div><pre><code>mkdir genai-day29; cd genai-day29
+py -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+python -m pip install "tiktoken==0.14.0"
+# save the script below as cost_model.py, then:
+python cost_model.py
+python cost_model.py --list granite      # find other model keys
+python cost_model.py --cache-hit 0.3 --prompt-cache 0.1</code></pre></div>
+  <p>The first run downloads the ~3.5 MB price map and the tiktoken BPE file. If your corporate proxy blocks <code>openaipublic.blob.core.windows.net</code>, the script falls back to a chars÷4 estimate and tells you so.</p>
+
+  <h3>cost_model.py</h3>
+  <div class="code"><div class="bar"><span>cost_model.py · Python 3.13 · stdlib + tiktoken</span><button class="copy" type="button">Copy</button></div><pre><code>&quot;&quot;&quot;
+Day 29 - Token-cost &amp; capacity model for an enterprise GenAI assistant.
+Stdlib + tiktoken only. Prices come from LiteLLM&#x27;s public price map
+(cached to prices.json), so the numbers move when providers change prices.
+
+Usage:
+    python cost_model.py                 # base case, prints report + writes cost_report.md
+    python cost_model.py --users 50000 --adoption 0.35 --cache-hit 0.25
+&quot;&quot;&quot;
+from __future__ import annotations
+
+import argparse
+import json
+import pathlib
+import random
+import statistics
+import urllib.request
+from dataclasses import dataclass, replace
+
+import tiktoken
+
+PRICE_URL = (
+    &quot;https://raw.githubusercontent.com/BerriAI/litellm/main/&quot;
+    &quot;model_prices_and_context_window.json&quot;
+)
+PRICE_CACHE = pathlib.Path(__file__).with_name(&quot;prices.json&quot;)
+
+# Keys must exist in LiteLLM&#x27;s price map. Run with --list granite to search.
+MODELS = [
+    &quot;gpt-5-mini&quot;,
+    &quot;azure/gpt-4.1-mini&quot;,
+    &quot;claude-haiku-4-5&quot;,
+    &quot;claude-sonnet-4-5&quot;,
+    &quot;gemini/gemini-2.5-flash&quot;,
+    &quot;watsonx/ibm/granite-4-h-small&quot;,
+]
+
+SYSTEM_PROMPT = &quot;&quot;&quot;You are the ACME internal knowledge assistant. Answer only from the
+provided context. Cite sources as [doc_id]. If the context is insufficient,
+say so and suggest who to contact. Never reveal personal data. Respond in the
+user&#x27;s language. Keep answers under 200 words unless asked for detail.&quot;&quot;&quot;
+
+
+@dataclass(frozen=True)
+class Workload:
+    users: int = 50_000
+    adoption: float = 0.35          # share of employees active on a working day
+    queries_per_user: float = 6.0   # per active user per day
+    working_days: int = 22
+    peak_factor: float = 4.0        # peak-hour QPS vs. average working-hour QPS
+    working_hours: float = 9.0
+    k_chunks: int = 6               # retrieved chunks per query
+    chunk_tokens: int = 350
+    history_tokens: int = 600       # condensed conversation memory
+    query_tokens: int = 40
+    output_tokens: int = 280
+    rewrite_calls: float = 1.0      # extra small LLM calls (query rewrite, guard)
+    rewrite_in: int = 300
+    rewrite_out: int = 40
+    semantic_cache_hit: float = 0.15   # answered without an LLM call
+    prompt_cache_share: float = 0.0    # share of input billed at cached rate
+    #  (system prompt is static -&gt; cacheable; set e.g. 0.1 to model it)
+
+
+def load_prices(refresh: bool = False) -&gt; dict:
+    if refresh or not PRICE_CACHE.exists():
+        print(f&quot;Downloading price map -&gt; {PRICE_CACHE.name}&quot;)
+        with urllib.request.urlopen(PRICE_URL, timeout=60) as r:
+            PRICE_CACHE.write_bytes(r.read())
+    return json.loads(PRICE_CACHE.read_text(encoding=&quot;utf-8&quot;))
+
+
+def count_tokens(text: str) -&gt; int:
+    # o200k_base is the GPT-4o/4.1/5 tokenizer. Other vendors differ by
+    # roughly 10-25%; treat this as an estimate and calibrate from real logs.
+    try:
+        return len(tiktoken.get_encoding(&quot;o200k_base&quot;).encode(text))
+    except Exception as e:  # first run downloads the BPE file; corp proxies block it
+        print(f&quot;[warn] tiktoken unavailable ({type(e).__name__}); using chars/4 heuristic&quot;)
+        return max(1, len(text) // 4)
+
+
+def per_query_tokens(w: Workload, system_tokens: int) -&gt; tuple[int, int]:
+    main_in = system_tokens + w.k_chunks * w.chunk_tokens + w.history_tokens + w.query_tokens
+    tin = main_in + int(w.rewrite_calls * w.rewrite_in)
+    tout = w.output_tokens + int(w.rewrite_calls * w.rewrite_out)
+    return tin, tout
+
+
+def monthly(w: Workload, price: dict, system_tokens: int) -&gt; dict:
+    tin, tout = per_query_tokens(w, system_tokens)
+    q_month = w.users * w.adoption * w.queries_per_user * w.working_days
+    llm_q = q_month * (1 - w.semantic_cache_hit)
+    p_in = price.get(&quot;input_cost_per_token&quot;) or 0.0
+    p_out = price.get(&quot;output_cost_per_token&quot;) or 0.0
+    p_cached = price.get(&quot;cache_read_input_token_cost&quot;) or p_in
+    in_cost_q = tin * ((1 - w.prompt_cache_share) * p_in + w.prompt_cache_share * p_cached)
+    cost = llm_q * (in_cost_q + tout * p_out)
+    # capacity: peak tokens-per-minute is what you size quotas/PTUs/GPUs on
+    avg_qps = q_month / w.working_days / (w.working_hours * 3600)
+    peak_qps = avg_qps * w.peak_factor * (1 - w.semantic_cache_hit)
+    peak_tpm = peak_qps * 60 * (tin + tout)
+    return {
+        &quot;queries&quot;: q_month,
+        &quot;tin&quot;: tin,
+        &quot;tout&quot;: tout,
+        &quot;cost&quot;: cost,
+        &quot;per_query&quot;: cost / q_month,
+        &quot;per_user&quot;: cost / (w.users * w.adoption),
+        &quot;peak_qps&quot;: peak_qps,
+        &quot;peak_tpm&quot;: peak_tpm,
+        &quot;fits_ctx&quot;: tin &lt;= (price.get(&quot;max_input_tokens&quot;) or 10**9),
+    }
+
+
+def monte_carlo(w: Workload, price: dict, sys_t: int, n: int = 2000) -&gt; tuple[float, float]:
+    rng = random.Random(42)
+    out = []
+    for _ in range(n):
+        s = replace(
+            w,
+            adoption=min(1.0, max(0.05, rng.gauss(w.adoption, w.adoption * 0.3))),
+            queries_per_user=max(1.0, rng.lognormvariate(0, 0.4) * w.queries_per_user),
+            output_tokens=int(max(50, rng.gauss(w.output_tokens, w.output_tokens * 0.35))),
+            k_chunks=rng.choice([max(1, w.k_chunks - 2), w.k_chunks, w.k_chunks + 2]),
+        )
+        out.append(monthly(s, price, sys_t)[&quot;cost&quot;])
+    out.sort()
+    return statistics.median(out), out[int(0.9 * n)]
+
+
+def main() -&gt; None:
+    ap = argparse.ArgumentParser()
+    ap.add_argument(&quot;--users&quot;, type=int, default=50_000)
+    ap.add_argument(&quot;--adoption&quot;, type=float, default=0.35)
+    ap.add_argument(&quot;--cache-hit&quot;, type=float, default=0.15)
+    ap.add_argument(&quot;--prompt-cache&quot;, type=float, default=0.0)
+    ap.add_argument(&quot;--refresh&quot;, action=&quot;store_true&quot;)
+    ap.add_argument(&quot;--list&quot;, metavar=&quot;TEXT&quot;, help=&quot;search model keys and exit&quot;)
+    a = ap.parse_args()
+
+    prices = load_prices(a.refresh)
+    if a.list:
+        print(&quot;\n&quot;.join(k for k in prices if a.list.lower() in k.lower()))
+        return
+
+    w = Workload(users=a.users, adoption=a.adoption,
+                 semantic_cache_hit=a.cache_hit, prompt_cache_share=a.prompt_cache)
+    sys_t = count_tokens(SYSTEM_PROMPT)
+    tin, tout = per_query_tokens(w, sys_t)
+
+    lines = [
+        &quot;# Token-cost model&quot;,
+        f&quot;Users {w.users:,} | adoption {w.adoption:.0%} | {w.queries_per_user} q/user/day | &quot;
+        f&quot;semantic-cache hit {w.semantic_cache_hit:.0%}&quot;,
+        f&quot;System prompt = {sys_t} tokens (o200k_base or heuristic). &quot;
+        f&quot;Per query: {tin:,} in / {tout:,} out&quot;,
+        &quot;&quot;,
+        &quot;| Model | $/month | $/query | $/active user | P50 | P90 | peak TPM |&quot;,
+        &quot;|---|---:|---:|---:|---:|---:|---:|&quot;,
+    ]
+    for m in MODELS:
+        p = prices.get(m)
+        if not p:
+            lines.append(f&quot;| {m} | not in price map (try --list) | | | | | |&quot;)
+            continue
+        r = monthly(w, p, sys_t)
+        p50, p90 = monte_carlo(w, p, sys_t)
+        flag = &quot;&quot; if r[&quot;fits_ctx&quot;] else &quot; ⚠ ctx&quot;
+        lines.append(
+            f&quot;| {m}{flag} | {r[&#x27;cost&#x27;]:,.0f} | {r[&#x27;per_query&#x27;]:.5f} | {r[&#x27;per_user&#x27;]:.2f} | &quot;
+            f&quot;{p50:,.0f} | {p90:,.0f} | {r[&#x27;peak_tpm&#x27;]:,.0f} |&quot;
+        )
+
+    # Sensitivity: which lever moves cost most? (on the first model)
+    base_p = prices[MODELS[0]]
+    base = monthly(w, base_p, sys_t)[&quot;cost&quot;]
+    lines += [&quot;&quot;, f&quot;## Sensitivity on {MODELS[0]} (each lever -25%)&quot;, &quot;| Lever | Δ cost |&quot;, &quot;|---|---:|&quot;]
+    for field in [&quot;k_chunks&quot;, &quot;chunk_tokens&quot;, &quot;output_tokens&quot;, &quot;history_tokens&quot;, &quot;queries_per_user&quot;]:
+        v = getattr(w, field)
+        nv = type(v)(v * 0.75) if isinstance(v, float) else max(1, int(v * 0.75))
+        c = monthly(replace(w, **{field: nv}), base_p, sys_t)[&quot;cost&quot;]
+        lines.append(f&quot;| {field} {v}→{nv} | {(c - base) / base:+.1%} |&quot;)
+
+    report = &quot;\n&quot;.join(lines)
+    print(report)
+    pathlib.Path(&quot;cost_report.md&quot;).write_text(report, encoding=&quot;utf-8&quot;)
+    print(&quot;\nWrote cost_report.md&quot;)
+
+
+if __name__ == &quot;__main__&quot;:
+    main()
+</code></pre></div>
+
+  <h3>Expected output (base case, price map of 7 Nov 2026)</h3>
+  <div class="code"><div class="bar"><span>output</span><button class="copy" type="button">Copy</button></div><pre><code># Token-cost model
+Users 50,000 | adoption 35% | 6.0 q/user/day | semantic-cache hit 15%
+System prompt = 73 tokens (o200k_base or heuristic). Per query: 3,113 in / 320 out
+
+| Model | $/month | $/query | $/active user | P50 | P90 | peak TPM |
+|---|---:|---:|---:|---:|---:|---:|
+| gpt-5-mini | 2,785 | 0.00121 | 0.16 | 2,690 | 5,136 | 2,269,594 |
+| azure/gpt-4.1-mini | 3,450 | 0.00149 | 0.20 | 3,338 | 6,309 | 2,269,594 |
+| claude-haiku-4-5 | 9,254 | 0.00401 | 0.53 | 8,935 | 16,914 | 2,269,594 |
+| claude-sonnet-4-5 | 27,762 | 0.01202 | 1.59 | 26,804 | 50,743 | 2,269,594 |
+| gemini/gemini-2.5-flash | 3,405 | 0.00147 | 0.19 | 3,293 | 6,286 | 2,269,594 |
+| watsonx/ibm/granite-4-h-small | 555 | 0.00024 | 0.03 | 536 | 1,014 | 2,269,594 |
+
+## Sensitivity on gpt-5-mini (each lever -25%)
+| Lever | Δ cost |
+|---|---:|
+| k_chunks 6→4 | -12.3% |
+| chunk_tokens 350→262 | -9.3% |
+| output_tokens 280→210 | -9.9% |
+| history_tokens 600→450 | -2.6% |
+| queries_per_user 6.0→4.5 | -25.0% |
+
+Wrote cost_report.md</code></pre></div>
+  <p>Your system-prompt token count will differ slightly with real tiktoken. Notice three things: the Granite row is about 5× cheaper than gpt-5-mini; P90 is close to 2× the base case, driven by adoption and queries per user; and the 15% semantic-cache hit rate barely moves peak TPM. Read your quota needs from peak TPM, not from the monthly bill.</p>
+
+  <h3>Steps</h3>
+  <ol class="steps">
+    <li><div><b>Run and read (15 min).</b> Run the base case. Then answer from the sensitivity table: which single lever would you pull first to cut cost 20% without hurting quality? (Hint: cutting k from 6 to 4 is worth ~12%, and reranking from Day 9 usually keeps the quality.)</div></li>
+    <li><div><b>Calibrate (15 min).</b> Replace the defaults with real numbers from your compliance-bot traces in Langfuse or watsonx.governance: mean input and output tokens, aux calls per query. Note the ratio of modelled to measured tokens.</div></li>
+    <li><div><b>Write the NFR sheet (15 min).</b> Copy the NFR table from section 2 into <code>docs/nfr.md</code> and set targets you could defend. Put the peak TPM figure under Throughput.</div></li>
+    <li><div><b>Write ADR-0007 (20 min).</b> Use the MADR template below for "Primary LLM and fallback chain for the knowledge assistant". Cite the cost table and your eval scores as evidence, and add a <i>Revisit when</i> trigger.</div></li>
+    <li><div><b>Exec summary (10 min).</b> Five sentences for a CFO: cost per employee per month (P50 and P90), what drives the range, and what you will measure in the pilot to narrow it.</div></li>
+  </ol>
+
+  <div class="code"><div class="bar"><span>docs/decisions/0007-primary-llm.md · MADR 4 style</span><button class="copy" type="button">Copy</button></div><pre><code>---
+status: proposed            # proposed | accepted | superseded by ADR-00xx
+date: 2026-11-07
+decision-makers: GenAI architect, platform lead, CISO delegate
+---
+# Primary LLM and fallback chain for the knowledge assistant
+
+## Context and Problem Statement
+50k employees, ~35% daily adoption, India + EU data residency, faithfulness &gt;= 0.90.
+Which model serves the default path, and what do we fail over to?
+
+## Decision Drivers
+* Cost per answered query &lt;= $0.005 at P90 load
+* Faithfulness / abstention scores on the 300-question golden set
+* In-region processing; contractual SLA; model retirement horizon
+
+## Considered Options
+* Option A: ...   * Option B: ...   * Option C: ...
+
+## Decision Outcome
+Chosen option: "...", because ... (link cost_report.md + eval run ID)
+
+### Consequences
+* Good, because ...
+* Bad, because ...
+
+### Confirmation
+CI eval gate on every prompt/model change; monthly cost review vs model.
+
+## Revisit when
+* Price change &gt; 30% on any shortlisted model
+* Provider announces retirement of the pinned version
+* Golden-set faithfulness drops &gt; 3 points for two consecutive weeks</code></pre></div>
+
+  <h3>Stretch goals</h3>
+  <ul>
+    <li><b>Self-hosted break-even column.</b> Run <code>ollama run llama3.2:3b --verbose</code> on your RTX 3050, read the <i>eval rate</i> (tokens/s), and add a row: GPU $/hr ÷ (tokens/s × 3600 × utilisation). Find the utilisation at which a cloud A10G or L4 beats gpt-5-mini. That number belongs in an ADR.</li>
+    <li><b>DR rebuild-time calculator.</b> Add a function: corpus chunks ÷ measured embedding throughput (time <code>ollama</code> with <code>nomic-embed-text</code> on 1,000 chunks) = re-embed RTO. Compare 2M vs 20M chunks and decide whether you need a hot standby index.</li>
+  </ul>
+</section>
+
+<section id="repos">
+  <h2><span class="n">05</span>GitHub repos to study</h2>
+  <div class="repo"><a href="https://github.com/adr/madr" target="_blank" rel="noopener">adr/madr</a><span>The MADR template set (full, minimal, bare). Read <code>template/adr-template.md</code> and the "Confirmation" section, which most teams skip.</span></div>
+  <div class="repo"><a href="https://github.com/architecture-decision-record/architecture-decision-record" target="_blank" rel="noopener">architecture-decision-record/architecture-decision-record</a><span>Joel Parker Henderson's ADR collection, now under its own org. Browse the examples folder and the comparison of Nygard, Tyree-Akerman and MADR formats.</span></div>
+  <div class="repo"><a href="https://github.com/thomvaill/log4brains" target="_blank" rel="noopener">thomvaill/log4brains</a><span>Docs-as-code ADR tooling that publishes your <code>docs/decisions</code> folder as a searchable static site. Look at how it links superseded decisions.</span></div>
+  <div class="repo"><a href="https://github.com/BerriAI/litellm" target="_blank" rel="noopener">BerriAI/litellm</a><span>Read <code>model_prices_and_context_window.json</code> (today's price source) and the budget / spend-tracking proxy docs, which is how you enforce the cost NFR at runtime.</span></div>
+</section>
+
+<section id="read">
+  <h2><span class="n">06</span>Read / watch</h2>
+  <ul>
+    <li><a href="https://docs.aws.amazon.com/wellarchitected/latest/generative-ai-lens/generative-ai-lens.html" target="_blank" rel="noopener">AWS Well-Architected Generative AI Lens</a> (updated Nov 2025). Read the reliability and cost-optimisation pillars; they make a ready-made review checklist.</li>
+    <li><a href="https://learn.microsoft.com/en-us/azure/well-architected/ai/design-principles" target="_blank" rel="noopener">Azure Well-Architected: design principles for AI workloads</a>. Useful for the non-determinism and "design for change" framing that review boards respond to.</li>
+    <li><a href="https://learn.microsoft.com/en-us/azure/foundry/openai/how-to/provisioned-throughput-sizing" target="_blank" rel="noopener">Azure OpenAI provisioned throughput sizing</a>. Shows how a vendor turns peak TPM and prompt/response shape into capacity units, which is exactly the input your model produces.</li>
+  </ul>
+</section>
+
+<section id="interview">
+  <h2><span class="n">07</span>Interview questions</h2>
+  <details class="qa"><summary><span class="q">Q1</span><span>Estimate the monthly LLM cost of a RAG assistant for 50,000 employees. Walk me through it.</span></summary><div class="a">
+    <p>Start from usage, not price: 50k × ~35% daily active × ~6 queries × 22 days ≈ 2.3M queries a month. Tokens per query: a ~100-token system prompt, 6 chunks × 350, ~600 of history, the question, plus one rewrite/guard call, so ~3.1k in and ~300 out. Multiply by list prices and subtract the semantic-cache hit rate. With a mini-class model that is a few thousand dollars a month; with a frontier model it is roughly 10× more.</p>
+    <p>Then give a range. P90 is about 2× because adoption is uncertain. Name the levers: k and chunk size (input is ~80% of tokens), output length, routing simple queries to a smaller model, prompt caching of the static prefix. Finally, say that the pilot replaces assumptions with measured token counts from traces.</p></div></details>
+  <details class="qa"><summary><span class="q">Q2</span><span>Which NFRs are specific to GenAI, and how do you make "quality" testable?</span></summary><div class="a">
+    <p>Quality, safety, cost per query, freshness and abstention are GenAI-specific. Latency splits into TTFT and total time, and throughput is measured in tokens per minute. Quality becomes testable by fixing a versioned golden set with expected sources, choosing metrics (faithfulness, context recall, answer relevance, abstention on unanswerable questions), calibrating the LLM judge against human labels, and setting thresholds that act as CI gates. A requirement like "accurate answers" is rejected. A requirement like "faithfulness ≥ 0.90 on golden set v3, judged by model X with agreement κ ≥ 0.7 against humans" is accepted.</p></div></details>
+  <details class="qa"><summary><span class="q">Q3</span><span>The LLM provider has a regional outage. What does your design do?</span></summary><div class="a">
+    <p>The gateway's circuit breaker trips on error rate or latency and routes to the next entry in the fallback chain: the same model in a paired region inside the same data zone, then a different model whose prompt variant has passed the golden set. If all generation paths fail, the UI drops to search-results-only mode with source links, which has its own higher availability target. Users see a banner. Afterwards, the incident review checks whether answers from the fallback model met the quality threshold. The ADR records why we accept, for example, 15 minutes of degraded mode rather than paying for active-active.</p></div></details>
+  <details class="qa"><summary><span class="q">Q4</span><span>What goes in an ADR for a GenAI system that wouldn't appear in a traditional one?</span></summary><div class="a">
+    <p>Evidence and expiry. Evidence means the eval run IDs and cost model behind the choice, because model choices are empirical. Expiry means explicit revisit triggers: price changes, model retirement dates, eval drift, new regulation. GenAI decisions go stale faster than database choices. I also record the prompt and embedding versions the decision was tested with, since changing either can invalidate it. Superseded ADRs stay in the log so the reasoning history survives.</p></div></details>
+  <details class="qa"><summary><span class="q">Q5</span><span>When does provisioned throughput or self-hosting beat pay-as-you-go?</span></summary><div class="a">
+    <p>When steady utilisation is high and predictable, or when a latency SLO or residency rule forces it. Compute break-even as committed monthly cost divided by the PAYG cost at expected tokens. If the load sits above that line for most hours, commit. Otherwise use PAYG with provisioned capacity only for the base load and PAYG spillover for peaks. Self-hosting adds the GPU operating cost and an eval burden, so it usually wins only for air-gapped environments, very high volume on a small fine-tuned model, or strict sovereignty. On watsonx, a dedicated Granite deployment on-prem is the typical example.</p></div></details>
+</section>
+
+<section id="adr">
+  <h2><span class="n">08</span>Architect's lens</h2>
+  <div class="adr">
+    <h3>ADR-0012 · Resilience posture for the enterprise knowledge assistant <span class="status">Accepted</span></h3>
+    <dl>
+      <dt>Context</dt><dd>Internal assistant for 50k employees across India and the EU. The business owner has accepted a 99.9% availability target. Data must stay in-region. The primary model is served pay-as-you-go from one provider region. Budget does not allow doubling index and GPU capacity.</dd>
+      <dt>Options</dt><dd>(A) Degraded mode only. (B) Multi-region within the same provider and data zone, plus degraded mode. (C) Multi-provider fallback. (D) Active-active multi-region with a replicated index.</dd>
+      <dt>Decision</dt><dd><b>B.</b> The gateway fails over to the paired region within the same data zone. If both fail, the UI falls back to search-only mode. The vector index is snapshotted every 6 hours and can be rebuilt from source in under 8 hours (measured). Embedding model version is pinned, and its retirement date is tracked.</dd>
+      <dt>Consequences</dt><dd>Covers regional outages and quota exhaustion at roughly 10–15% extra cost (reserved quota in the second region). It does not cover a provider-wide outage, which we accept and mitigate with search-only mode. C becomes the decision if the assistant moves into a customer-facing workflow.</dd>
+      <dt>Revisit when</dt><dd>Provider-wide incident longer than 1 h · assistant used in a regulated workflow · second-region quota unavailable.</dd>
+    </dl>
+  </div>
+</section>
+
+<section id="tomorrow">
+  <h2><span class="n">09</span>Tomorrow</h2>
+  <p class="tomorrow"><b>Day 30, capstone:</b> full system-design walkthrough, "design an enterprise knowledge assistant for 50k employees", plus a 20-question mock interview. Keep today's cost report and ADRs; you will reuse them.</p>
+</section>
+</main>
+</div>
+
+<script>
+document.querySelectorAll('.copy').forEach(function(btn){
+  btn.addEventListener('click',function(){
+    var pre=btn.closest('.code').querySelector('pre');
+    var txt=pre.innerText;
+    function done(){btn.textContent='Copied';setTimeout(function(){btn.textContent='Copy'},1600)}
+    function fallback(){var r=document.createRange();r.selectNodeContents(pre);var s=getSelection();s.removeAllRanges();s.addRange(r);btn.textContent='Selected, press Ctrl+C'}
+    try{navigator.clipboard.writeText(txt).then(done,fallback)}catch(e){fallback()}
+  });
+});
+</script>
+
+</body></html>

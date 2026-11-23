@@ -1,0 +1,34 @@
+<svg font-family="IBM Plex Sans, Segoe UI, Arial, sans-serif" aria-label="Reference pipeline: apps emit OTLP to an OpenTelemetry Collector which redacts and samples, then fans out to an LLM observability backend, APM, and cold storage; evaluations feed back into datasets and CI." role="img" style="background:#ffffff" viewbox="0 0 720 250" xmlns="http://www.w3.org/2000/svg">
+<g font-size="12">
+<rect fill="#555" height="150" rx="8" stroke="#555" width="150" x="10" y="30"></rect>
+<text font-weight="600" x="24" y="54">Services</text>
+<text class="mut" font-size="11" x="24" y="78">RAG API (FastAPI)</text>
+<text class="mut" font-size="11" x="24" y="96">LangGraph agents</text>
+<text class="mut" font-size="11" x="24" y="114">MCP servers</text>
+<text class="mut" font-size="11" x="24" y="132">LiteLLM gateway</text>
+<text class="mono" font-size="10.5" x="24" y="160">OTel SDK + instrumentors</text>
+<path d="M160 105H220" fill="none" marker-end="url(#ar)" stroke="#555" stroke-width="2"></path>
+<text class="mono mut" font-size="10" x="168" y="98">OTLP</text>
+<rect fill="#555" height="110" rx="8" stroke="#555" width="170" x="222" y="50"></rect>
+<text font-weight="600" x="236" y="74">OTel Collector</text>
+<text font-size="11" x="236" y="96">• PII redaction processor</text>
+<text font-size="11" x="236" y="114">• tail sampling</text>
+<text font-size="11" x="236" y="132">• cost enrich / routing</text>
+<text font-size="11" x="236" y="150">• tenant tagging</text>
+<path d="M392 80L462 46" fill="none" marker-end="url(#ar)" stroke="#555" stroke-width="2"></path>
+<path d="M392 105H462" fill="none" marker-end="url(#ar)" stroke="#555" stroke-width="2"></path>
+<path d="M392 130L462 166" fill="none" marker-end="url(#ar)" stroke="#555" stroke-width="2"></path>
+<rect fill="#555" height="46" rx="6" stroke="#555" width="246" x="464" y="22"></rect>
+<text font-weight="600" x="476" y="42">LLM observability</text><text class="mut" font-size="11" x="476" y="58">Langfuse / LangSmith / Phoenix</text>
+<rect fill="#555" height="46" rx="6" stroke="#555" width="246" x="464" y="82"></rect>
+<text font-weight="600" x="476" y="102">APM &amp; SLOs</text><text class="mut" font-size="11" x="476" y="118">Instana / Datadog / Grafana / App Insights</text>
+<rect fill="#555" height="46" rx="6" stroke="#555" width="246" x="464" y="142"></rect>
+<text font-weight="600" x="476" y="162">Audit archive</text><text class="mut" font-size="11" x="476" y="178">S3 / ADLS / IBM COS (retention policy)</text>
+<path d="M710 45 H716 V208 H85 V188" fill="none" marker-end="url(#ar2)" stroke="#555" stroke-dasharray="5 4" stroke-width="1.6"></path>
+<text class="mut" font-size="11" x="250" y="230">online evals → bad traces → datasets → CI eval gate → new prompt version</text>
+</g>
+<defs>
+<marker id="ar" markerheight="7" markerwidth="7" orient="auto" refx="9" refy="5" viewbox="0 0 10 10"><path d="M0 0L10 5L0 10z" fill="#555"></path></marker>
+<marker id="ar2" markerheight="7" markerwidth="7" orient="auto" refx="9" refy="5" viewbox="0 0 10 10"><path d="M0 0L10 5L0 10z" fill="#555"></path></marker>
+</defs>
+</svg>

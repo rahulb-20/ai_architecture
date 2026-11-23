@@ -1,0 +1,24 @@
+<svg font-family="IBM Plex Sans, Segoe UI, Arial, sans-serif" aria-label="Clients call an AI gateway which applies auth, limits, cache and routing, then sends traffic to a self-hosted vLLM pool, managed cloud endpoints, or a fallback" role="img" style="background:#ffffff" viewbox="0 0 820 380" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="ar" markerheight="7" markerwidth="7" orient="auto-start-reverse" refx="9" refy="5" viewbox="0 0 10 10"><path d="M0,0 L10,5 L0,10 z" style="fill:#555"></path></marker>
+<marker id="arA" markerheight="7" markerwidth="7" orient="auto-start-reverse" refx="9" refy="5" viewbox="0 0 10 10"><path d="M0,0 L10,5 L0,10 z" style="fill:#555"></path></marker></defs>
+<g style="font-family:#555;font-size:13px">
+<!-- clients -->
+<g style="fill:#555;stroke:#555"><rect height="44" rx="4" width="130" x="10" y="60"></rect><rect height="44" rx="4" width="130" x="10" y="168"></rect><rect height="44" rx="4" width="130" x="10" y="276"></rect></g>
+<g style="fill:#555"><text text-anchor="middle" x="75" y="87">RAG assistant</text><text text-anchor="middle" x="75" y="195">Agent (LangGraph)</text><text text-anchor="middle" x="75" y="303">Batch summariser</text></g>
+<g marker-end="url(#ar)" style="stroke:#555;stroke-width:1.4;fill:none"><path d="M140,82 L218,170"></path><path d="M140,190 L218,190"></path><path d="M140,298 L218,210"></path></g>
+<!-- gateway -->
+<rect height="300" rx="6" style="fill:#555;stroke:#555;stroke-width:1.5" width="250" x="222" y="40"></rect>
+<text style="fill:#555;font-family:#555;font-size:12px;letter-spacing:.1em" text-anchor="middle" x="347" y="66">AI GATEWAY</text>
+<g style="fill:#555;stroke:#555"><rect height="40" rx="3" width="214" x="240" y="80"></rect><rect height="40" rx="3" width="214" x="240" y="130"></rect><rect height="40" rx="3" width="214" x="240" y="180"></rect><rect height="40" rx="3" width="214" x="240" y="230"></rect><rect height="40" rx="3" width="214" x="240" y="280"></rect></g>
+<g style="fill:#555"><text x="252" y="105">1 · AuthN, virtual key, RBAC</text><text x="252" y="155">2 · RPM / TPM limit, budget</text><text x="252" y="205">3 · Cache (exact → semantic)</text><text x="252" y="255">4 · Router + retry + cooldown</text><text x="252" y="305">5 · Trace, cost, guardrail hook</text></g>
+<!-- backends -->
+<g style="fill:#555;stroke:#555;stroke-width:1.3"><rect height="78" rx="4" width="250" x="560" y="40"></rect><rect height="78" rx="4" width="250" x="560" y="146"></rect></g>
+<rect height="78" rx="4" style="fill:#555;stroke:#555;stroke-dasharray:5 4" width="250" x="560" y="252"></rect>
+<g style="fill:#555"><text style="font-weight:600" x="574" y="66">Primary · self-hosted</text><text x="574" y="86">vLLM replicas on K8s (prefix-cache</text><text x="574" y="104">aware routing via llm-d / GIE)</text>
+<text style="font-weight:600" x="574" y="172">Secondary · managed</text><text x="574" y="192">Azure OpenAI PTU · Bedrock ·</text><text x="574" y="210">Vertex · watsonx.ai deployment</text>
+<text style="font-weight:600" x="574" y="278">Last resort</text><text x="574" y="298">Smaller model / other region /</text><text x="574" y="316">graceful "try later" response</text></g>
+<g marker-end="url(#ar)" style="stroke:#555;stroke-width:1.4;fill:none"><path d="M472,250 C520,250 520,79 556,79"></path></g>
+<g marker-end="url(#arA)" style="stroke:#555;stroke-width:1.6;fill:none;stroke-dasharray:6 4"><path d="M472,256 C525,256 525,185 556,185"></path><path d="M472,262 C530,262 530,291 556,291"></path></g>
+<text style="fill:#555;font-family:#555;font-size:11px" x="482" y="356">dashed = fallback on 429 / 5xx / timeout / context overflow</text>
+</g>
+</svg>

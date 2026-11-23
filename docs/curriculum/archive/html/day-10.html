@@ -1,0 +1,538 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>GenAI Prep · Day 10 — Advanced RAG</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: single reading column (~72ch) with wide-bleed tables/code; sticky slim section nav. Same system as Days 1–9. */
+:root{
+  --bg:#f6f8fa; --surface:#ffffff; --sunk:#eef2f6; --fg:#16202b; --muted:#566476; --line:#d6dde6;
+  --accent:#0b62c4; --accent-soft:#e3eefb; --xf:#b35c00; --xf-soft:#fbeedd; --ag:#5a3fc0; --ag-soft:#ece8fb;
+  --good:#1d7a46; --good-soft:#e2f3e9; --warn:#9a6400; --bad:#b4232c; --bad-soft:#fbe5e6;
+  --code-bg:#0f1720; --code-fg:#dbe4ee;
+  --f-display:"IBM Plex Sans Condensed","Arial Narrow",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0d131a; --surface:#141c25; --sunk:#1a2430; --fg:#e2e9f1; --muted:#97a6b8; --line:#2a3644;
+  --accent:#6aa9f5; --accent-soft:#16283d; --xf:#f0a050; --xf-soft:#2e2112; --ag:#ab98ff; --ag-soft:#231d3d;
+  --good:#5fcf8e; --good-soft:#12291c; --warn:#e8b04f; --bad:#ff7b84; --bad-soft:#331619; --code-bg:#070b10; --code-fg:#d6e0ea; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0d131a; --surface:#141c25; --sunk:#1a2430; --fg:#e2e9f1; --muted:#97a6b8; --line:#2a3644;
+  --accent:#6aa9f5; --accent-soft:#16283d; --xf:#f0a050; --xf-soft:#2e2112; --ag:#ab98ff; --ag-soft:#231d3d;
+  --good:#5fcf8e; --good-soft:#12291c; --warn:#e8b04f; --bad:#ff7b84; --bad-soft:#331619; --code-bg:#070b10; --code-fg:#d6e0ea; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:16px;line-height:1.6}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.wrap{max-width:860px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 64px}
+header.top{padding-block:40px 24px;border-bottom:1px solid var(--line)}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.eyebrow b{color:var(--accent);font-weight:500}
+h1{font-family:var(--f-display);font-weight:700;font-size:clamp(30px,6vw,46px);line-height:1.08;margin:12px 0 10px;text-wrap:balance;letter-spacing:-.01em}
+h1 .xf{color:var(--xf)} h1 .ag{color:var(--ag)}
+.lede{color:var(--muted);max-width:64ch;margin:0}
+nav.toc{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);border-bottom:1px solid var(--line);overflow-x:auto;white-space:nowrap;margin-inline:calc(-1*max(16px,env(safe-area-inset-left,0px)));padding:8px max(16px,env(safe-area-inset-left,0px))}
+nav.toc a{font-family:var(--f-mono);font-size:12.5px;color:var(--muted);text-decoration:none;padding:4px 8px;border-radius:4px;display:inline-block}
+nav.toc a:hover,nav.toc a:focus-visible{color:var(--accent);background:var(--accent-soft);outline:none}
+.toolbar{display:flex;justify-content:flex-end;padding-top:12px}
+button{font:inherit;cursor:pointer}
+.theme-btn{font-family:var(--f-mono);font-size:12px;background:var(--surface);color:var(--muted);border:1px solid var(--line);border-radius:4px;padding:4px 10px}
+.theme-btn:focus-visible,.copy:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+section{padding-top:36px;scroll-margin-top:52px}
+h2{font-family:var(--f-display);font-weight:600;font-size:26px;line-height:1.2;margin:0 0 14px;display:flex;gap:12px;align-items:baseline;text-wrap:balance}
+h2 .n{font-family:var(--f-mono);font-size:13px;color:var(--accent);font-weight:500;min-width:2ch}
+h3{font-family:var(--f-display);font-weight:600;font-size:19px;margin:26px 0 8px}
+p,li{max-width:70ch}
+a{color:var(--accent)}
+code{font-family:var(--f-mono);font-size:.88em;background:var(--sunk);padding:1px 5px;border-radius:3px}
+.why{border-left:3px solid var(--accent);background:var(--surface);padding:14px 18px;margin:0}
+.why p{margin:0}
+.tag{font-family:var(--f-mono);font-size:11.5px;padding:1px 6px;border-radius:3px;background:var(--accent-soft);color:var(--accent);white-space:nowrap}
+.tag.xf{background:var(--xf-soft);color:var(--xf)} .tag.ag{background:var(--ag-soft);color:var(--ag)}
+figure{margin:20px 0;background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:16px}
+figure .scroll{overflow-x:auto}
+figcaption{font-size:13px;color:var(--muted);margin-top:8px}
+svg text{font-family:var(--f-mono)}
+.tbl{overflow-x:auto;margin:14px 0;border:1px solid var(--line);border-radius:6px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:14px;min-width:680px}
+th,td{text-align:left;vertical-align:top;padding:9px 12px;border-bottom:1px solid var(--line)}
+th{font-family:var(--f-mono);font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:var(--sunk);font-weight:500}
+tr:last-child td{border-bottom:0}
+td strong{font-weight:600}
+.small{font-size:13.5px;color:var(--muted)}
+.callout{background:var(--sunk);border-radius:6px;padding:12px 16px;margin:16px 0;font-size:15px}
+.callout.warn{border-left:3px solid var(--warn)}
+.callout b{font-weight:600}
+.code{position:relative;margin:12px 0 18px;background:var(--code-bg);border-radius:6px}
+.code .bar{display:flex;justify-content:space-between;align-items:center;padding:6px 10px 6px 14px;border-bottom:1px solid #ffffff14}
+.code .lang{font-family:var(--f-mono);font-size:11.5px;color:#8fa1b5;letter-spacing:.06em;text-transform:uppercase}
+.copy{font-family:var(--f-mono);font-size:12px;background:#ffffff12;color:#dbe4ee;border:1px solid #ffffff26;border-radius:4px;padding:3px 10px}
+.copy:hover{background:#ffffff22}
+pre{margin:0;padding:14px;overflow-x:auto;color:var(--code-fg);font-family:var(--f-mono);font-size:13px;line-height:1.55;tab-size:4}
+pre code{background:none;padding:0;font-size:inherit;color:inherit}
+ol.steps{padding-left:22px} ol.steps li{margin-bottom:6px}
+.repos{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(min(100%,380px),1fr))}
+.repo{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:14px 16px;min-width:0}
+.repo a{font-family:var(--f-mono);font-size:14px;font-weight:500;text-decoration:none;word-break:break-word}
+.repo p{margin:6px 0 0;font-size:14.5px}
+.repo .meta{font-family:var(--f-mono);font-size:11.5px;color:var(--muted);margin-top:6px}
+.reads{list-style:none;padding:0;display:grid;gap:12px}
+.reads li{border-bottom:1px solid var(--line);padding-bottom:12px}
+.reads .kind{font-family:var(--f-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+details.q{background:var(--surface);border:1px solid var(--line);border-radius:6px;margin:10px 0}
+details.q summary{cursor:pointer;padding:12px 16px;font-weight:600;list-style:none;display:flex;gap:10px}
+details.q summary::-webkit-details-marker{display:none}
+details.q summary::before{content:"+";font-family:var(--f-mono);color:var(--accent);width:1ch;flex:none}
+details.q[open] summary::before{content:"−"}
+details.q summary:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+details.q .a{padding:0 16px 14px 40px}
+details.q .a p{margin:0 0 8px}
+.adr{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:4px 20px 14px}
+.adr dl{display:grid;grid-template-columns:130px 1fr;gap:10px 18px;margin:14px 0}
+.adr dt{font-family:var(--f-mono);font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);padding-top:3px}
+.adr dd{margin:0;min-width:0}
+.adr .status{font-family:var(--f-mono);font-size:12px;color:var(--good)}
+@media (max-width:560px){.adr dl{grid-template-columns:1fr;gap:2px}.adr dd{margin-bottom:10px}}
+.tomorrow{margin-top:36px;padding:16px 18px;border:1px dashed var(--line);border-radius:6px;font-size:15px}
+.tomorrow b{font-family:var(--f-mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--accent);font-weight:500;margin-right:8px}
+footer{margin-top:28px;font-size:12.5px;color:var(--muted)}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
+html{scroll-behavior:smooth}
+</style>
+
+<div class="wrap">
+<div class="toolbar"><button class="theme-btn" id="themeBtn" type="button" aria-label="Toggle colour theme">theme: system</button></div>
+<header class="top">
+  <div class="eyebrow"><b>Day 10 / 30</b><span>Week 2 · Production retrieval</span><span>Mon 19 Oct 2026</span></div>
+  <h1>Advanced RAG: <span class="xf">transform the query</span>, <span class="ag">let the system check itself</span></h1>
+  <p class="lede">Query rewriting, HyDE, multi-query, self-query, GraphRAG and agentic / corrective RAG. Each one fixes a specific retrieval failure and each one costs LLM calls. The architect's job is to know which failure you actually have, and to put the expensive path behind a gate.</p>
+</header>
+
+<nav class="toc" aria-label="Sections">
+  <a href="#why">why</a><a href="#concept">concept</a><a href="#tradeoffs">trade-offs</a><a href="#lab">hands-on</a><a href="#repos">repos</a><a href="#read">read</a><a href="#qa">interview</a><a href="#adr">ADR</a>
+</nav>
+
+<section id="why">
+  <h2><span class="n">1</span>Why this matters for the JD</h2>
+  <div class="why"><p>"RAG optimization (chunking, reranking, hybrid, <strong>feedback loops</strong>)" is a Preferred line, and "agentic frameworks (LangChain, LangGraph … planning, guardrails)" is a Must-have. Advanced RAG is where the two meet: the retrieval pipeline stops being a fixed function and becomes a small agent that rewrites, routes, grades and retries. In a review you will be asked to justify every extra LLM hop against <strong>latency/cost</strong> and <strong>hallucination control</strong>.</p></div>
+</section>
+
+<section id="concept">
+  <h2><span class="n">2</span>Concept brief</h2>
+  <p>Day 9 fixed the <em>index side</em> (hybrid + rerank). Today fixes the <em>query side</em> and the <em>control flow</em>. Group the techniques by the failure they address, not by name:</p>
+  <div class="tbl"><table style="min-width:600px">
+    <thead><tr><th>Failure you observe</th><th>Technique</th><th>What it does</th></tr></thead>
+    <tbody>
+      <tr><td>User words ≠ document words ("home wifi" vs "residential broadband")</td><td><span class="tag xf">rewrite</span> <span class="tag xf">multi-query</span> <span class="tag xf">HyDE</span></td><td>Generate better or more queries; HyDE embeds a fake answer so the search is answer-to-answer, not question-to-answer</td></tr>
+      <tr><td>Question carries a constraint ("2023 rules", "only HR")</td><td><span class="tag xf">self-query</span></td><td>LLM extracts a structured metadata filter + semantic text</td></tr>
+      <tr><td>Question needs several facts (multi-hop, comparisons)</td><td><span class="tag xf">decomposition</span> <span class="tag xf">step-back</span></td><td>Split into sub-questions, or ask a more general question first, then merge</td></tr>
+      <tr><td>Question is about the whole corpus ("main themes in 3,000 incident reports")</td><td><span class="tag ag">GraphRAG</span></td><td>Pre-built entity graph + community summaries answer "global" questions that top-k chunks cannot</td></tr>
+      <tr><td>Retrieval sometimes returns junk and the LLM answers anyway</td><td><span class="tag ag">corrective / self-RAG</span></td><td>Grade retrieved chunks; rewrite and retry, fall back to another source, or abstain</td></tr>
+      <tr><td>Mixed traffic: trivial lookups and hard research questions</td><td><span class="tag ag">adaptive / agentic</span></td><td>A router picks no-retrieval, single-shot, or iterative paths per query</td></tr>
+    </tbody>
+  </table></div>
+
+  <figure>
+    <div class="scroll">
+    <svg viewBox="0 0 840 340" width="840" height="340" role="img" aria-labelledby="dT dD">
+      <title id="dT">Gated advanced-RAG control flow</title>
+      <desc id="dD">A query enters a router. Simple queries go straight to hybrid retrieval. Constrained or vague queries pass through a transform step (rewrite, multi-query, HyDE, self-query) first. Global questions go to a GraphRAG index. Retrieved chunks are graded: relevant goes to generation, irrelevant loops back to rewrite at most once, and after the retry budget the system abstains.</desc>
+      <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--muted)"/></marker></defs>
+      <g style="stroke:var(--muted);stroke-width:1.4;fill:none" marker-end="url(#ar)">
+        <path d="M100,150 L128,150"/>
+        <path d="M238,150 L398,150"/>
+        <path d="M238,140 C270,140 270,70 296,70"/>
+        <path d="M376,70 C430,70 456,90 456,120"/>
+        <path d="M238,160 C270,160 270,262 296,262"/>
+        <path d="M512,150 L548,150"/>
+        <path d="M638,130 C660,100 690,90 712,90"/>
+        <path d="M638,170 C660,200 690,214 712,214"/>
+        <path d="M594,120 C594,30 340,24 340,48" style="stroke:var(--bad);stroke-dasharray:4 3"/>
+        <path d="M402,262 C560,262 594,232 594,182"/>
+      </g>
+      <rect x="8" y="124" width="92" height="52" rx="5" style="fill:var(--sunk);stroke:var(--line)"/>
+      <text x="54" y="147" text-anchor="middle" style="fill:var(--fg);font-size:13px">query</text>
+      <text x="54" y="164" text-anchor="middle" style="fill:var(--muted);font-size:10.5px">+ user ACL</text>
+      <rect x="130" y="118" width="108" height="64" rx="5" style="fill:var(--ag-soft);stroke:var(--ag)"/>
+      <text x="184" y="143" text-anchor="middle" style="fill:var(--ag);font-size:13px;font-weight:500">router</text>
+      <text x="184" y="162" text-anchor="middle" style="fill:var(--muted);font-size:10.5px">rules / small LLM</text>
+      <rect x="298" y="48" width="78" height="44" rx="5" style="fill:var(--xf-soft);stroke:var(--xf)"/>
+      <text x="337" y="68" text-anchor="middle" style="fill:var(--xf);font-size:12.5px;font-weight:500">transform</text>
+      <text x="337" y="84" text-anchor="middle" style="fill:var(--muted);font-size:9.5px">MQ·HyDE·SQ</text>
+      <text x="268" y="40" text-anchor="middle" style="fill:var(--muted);font-size:10px">vague / constrained</text>
+      <text x="318" y="142" text-anchor="middle" style="fill:var(--muted);font-size:10px">simple lookup</text>
+      <rect x="400" y="122" width="112" height="56" rx="5" style="fill:var(--accent-soft);stroke:var(--accent)"/>
+      <text x="456" y="146" text-anchor="middle" style="fill:var(--accent);font-size:13px;font-weight:500">hybrid + rerank</text>
+      <text x="456" y="164" text-anchor="middle" style="fill:var(--muted);font-size:10.5px">Day 9 pipeline</text>
+      <rect x="550" y="120" width="88" height="60" rx="5" style="fill:var(--surface);stroke:var(--fg)"/>
+      <text x="594" y="146" text-anchor="middle" style="fill:var(--fg);font-size:13px;font-weight:500">grade</text>
+      <text x="594" y="164" text-anchor="middle" style="fill:var(--muted);font-size:10.5px">relevant?</text>
+      <text x="470" y="20" text-anchor="middle" style="fill:var(--bad);font-size:10.5px">no → rewrite, max 1 retry</text>
+      <rect x="714" y="66" width="118" height="44" rx="5" style="fill:var(--good-soft);stroke:var(--good)"/>
+      <text x="773" y="86" text-anchor="middle" style="fill:var(--good);font-size:13px;font-weight:500">generate</text>
+      <text x="773" y="102" text-anchor="middle" style="fill:var(--muted);font-size:10px">with citations</text>
+      <rect x="714" y="192" width="118" height="44" rx="5" style="fill:var(--bad-soft);stroke:var(--bad)"/>
+      <text x="773" y="212" text-anchor="middle" style="fill:var(--bad);font-size:13px;font-weight:500">abstain</text>
+      <text x="773" y="228" text-anchor="middle" style="fill:var(--muted);font-size:10px">budget exhausted</text>
+      <rect x="298" y="240" width="104" height="44" rx="5" style="fill:var(--ag-soft);stroke:var(--ag)"/>
+      <text x="350" y="260" text-anchor="middle" style="fill:var(--ag);font-size:12.5px;font-weight:500">GraphRAG</text>
+      <text x="350" y="276" text-anchor="middle" style="fill:var(--muted);font-size:9.5px">community summaries</text>
+      <text x="236" y="300" text-anchor="middle" style="fill:var(--muted);font-size:10px">global / thematic</text>
+      <text x="420" y="326" text-anchor="middle" style="fill:var(--muted);font-size:10.5px">default path = 0 extra LLM calls · each orange/purple hop = +1 LLM call (~0.3–1.5 s on a hosted small model)</text>
+    </svg>
+    </div>
+    <figcaption>The expensive boxes sit behind a router and a grader. The cheap path stays cheap; escalation is paid for only by the queries that need it. Apply the ACL filter inside the retriever on every path, including retries.</figcaption>
+  </figure>
+
+  <h3>Query transformations</h3>
+  <p><strong>Rewrite</strong> (a.k.a. query expansion / condensation) is the one you should always have in a chat product: turn "and what about for contractors?" into a standalone question using conversation history. Without it, follow-up turns retrieve garbage. It is one cheap LLM call and often merges with the router call.</p>
+  <p><strong>Multi-query / RAG-Fusion</strong> generates N paraphrases, retrieves for each in parallel, and fuses with RRF (Day 9). It raises recall on vocabulary-mismatch queries at the cost of one generation plus N retrievals. Always keep the original query in the fan-out, or a bad paraphrase set can do worse than baseline. In LangChain 1.x, <code>MultiQueryRetriever</code> and <code>SelfQueryRetriever</code> now live in the <code>langchain-classic</code> package (1.0.8), a signal that the framework expects you to build these patterns in LangGraph instead.</p>
+  <p><strong>HyDE</strong> (Gao et al., 2022) asks the LLM to write a hypothetical answer, then embeds that and searches. Questions and answers live in different regions of embedding space; a fake answer lands nearer the real one. It shines zero-shot on prose. It hurts when the LLM's prior is wrong or specific: it invents a number, a product name or an error code, and the search locks onto the invented detail. Treat it as one more list to fuse, not a replacement for the original query.</p>
+  <p><strong>Self-query</strong> turns natural language into <code>{search_text, filter}</code>. Constrain the output with a JSON schema whose fields are enums of real metadata values, validate it, and fail <em>open</em> (drop the filter) if it matches nothing. That is fine for relevance filters. Permission filters are different: they come from the identity token, never from the LLM, and they fail <em>closed</em>.</p>
+  <p><strong>Decomposition and step-back</strong> (Zheng et al., 2023) handle multi-hop questions: "Compare the 2023 and 2025 business-class rules" becomes two retrievals plus a merge. This is where pipelines turn into plan-and-execute agents (Day 18).</p>
+
+  <h3>GraphRAG and its cheaper descendants</h3>
+  <p>Vector RAG answers <em>local</em> questions: the answer sits in a few chunks. It fails on <em>global</em> questions ("what are the recurring root causes across all P1 incidents this year?") because no top-k slice contains the answer. Microsoft's GraphRAG (Edge et al., 2024) uses an LLM at index time to extract entities and relationships, clusters the graph with Leiden community detection, and pre-writes summaries per community. Global search map-reduces over those summaries; local search walks out from matched entities.</p>
+  <p>The catch is index cost: every chunk goes through LLM extraction, and updates re-trigger it. <strong>LazyGraphRAG</strong> (Microsoft Research, Nov 2024) defers LLM work to query time, with indexing cost Microsoft reports as equal to vector RAG and about 0.1% of full GraphRAG. <strong>LightRAG</strong> (HKUDS) keeps a graph plus vectors with dual-level (entity / theme) retrieval and incremental inserts, and runs with Ollama. Current versions on PyPI: <code>graphrag</code> 3.3.0 (8 Oct 2026, Python 3.11–3.13) and <code>lightrag-hku</code> 1.5.7.</p>
+
+  <h3>Corrective, self-reflective and agentic RAG</h3>
+  <p><strong>CRAG</strong> (Yan et al., 2024) adds a lightweight retrieval evaluator that labels results Correct / Ambiguous / Incorrect; Incorrect triggers web search (or another index), Correct triggers a "decompose-then-recompose" filter that strips irrelevant sentences. <strong>Self-RAG</strong> (Asai et al., 2023) trains the generator to emit reflection tokens that decide whether to retrieve and whether its output is supported. <strong>Adaptive-RAG</strong> (Jeong et al., 2024) routes by predicted query complexity. In production, these collapse into one LangGraph pattern: nodes for retrieve / grade / rewrite / generate, a conditional edge on the grade, and a hard iteration budget. LangGraph (1.2.16 today) ships this as its "agentic RAG" tutorial.</p>
+  <div class="callout warn"><b>Review trap:</b> every loop needs a budget (max iterations, max tokens, wall-clock deadline) and a defined terminal state when the budget runs out: abstain with a reason, never "answer anyway". An unbounded grader loop is a latency outage waiting for one bad query.</div>
+
+  <h3>Where the managed platforms are</h3>
+  <div class="tbl"><table style="min-width:600px">
+    <thead><tr><th>Platform</th><th>Built-in query-side / agentic retrieval</th></tr></thead>
+    <tbody>
+      <tr><td><strong>watsonx</strong></td><td>No turnkey "advanced RAG" switch: build the graph in LangGraph or watsonx Orchestrate agent flows on Granite models; AutoAI for RAG searches over chunking / retrieval configurations; Milvus in watsonx.data for hybrid + metadata filters</td></tr>
+      <tr><td><strong>Azure</strong></td><td>AI Search agentic retrieval: an LLM plans sub-queries, runs them in parallel with semantic ranking, and merges; GraphRAG accelerator is a Microsoft open-source project</td></tr>
+      <tr><td><strong>AWS</strong></td><td>Bedrock Knowledge Bases query modification (decomposition), metadata filters, and GraphRAG backed by Neptune Analytics</td></tr>
+      <tr><td><strong>GCP</strong></td><td>Vertex AI RAG Engine and Vertex AI Search with query expansion and filters; Agent Builder for agentic flows</td></tr>
+    </tbody>
+  </table></div>
+  <p class="small">Managed features change quickly; confirm GA status and region availability before you put one in an HLD.</p>
+</section>
+
+<section id="tradeoffs">
+  <h2><span class="n">3</span>Trade-offs &amp; decision table</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>Technique</th><th>Pick when</th><th>Failure modes</th><th>Cost / latency</th></tr></thead>
+    <tbody>
+      <tr><td><span class="tag xf">Conversational rewrite</span></td><td>Any multi-turn chat product</td><td>Drops a constraint from history; over-specifies; leaks one user's context into a shared cache key</td><td class="small">+1 short call; merge with router call</td></tr>
+      <tr><td><span class="tag xf">Multi-query + RRF</span></td><td>Vocabulary mismatch, short or vague queries; recall is the bottleneck</td><td>Paraphrases drift off-topic; dilutes precision for already-good queries; N× retrieval load on the vector DB</td><td class="small">+1 call + N parallel retrievals; ~+0.3–1 s</td></tr>
+      <tr><td><span class="tag xf">HyDE</span></td><td>Zero-shot domains, prose corpora, no labelled data to tune embeddings</td><td>Hallucinated specifics steer search; bad for IDs, numbers, recent facts; adds generation latency before retrieval can start</td><td class="small">+1 generation (~100–200 tokens) on the critical path</td></tr>
+      <tr><td><span class="tag xf">Self-query</span></td><td>Rich, reliable metadata (dates, versions, departments, product lines)</td><td>Wrong filter silently excludes the answer; invented field values; confusing with ACL filters</td><td class="small">+1 structured call; filtered ANN is often faster</td></tr>
+      <tr><td><span class="tag xf">Decomposition / step-back</span></td><td>Comparisons, multi-hop, "why" questions</td><td>Over-decomposes simple questions; sub-answers contradict; merge step hallucinates</td><td class="small">+1 plan call + k retrievals + merge</td></tr>
+      <tr><td><span class="tag ag">GraphRAG (full)</span></td><td>Global, thematic questions over a stable, bounded corpus where the summaries are the product</td><td>Index cost and time; stale graph on frequent updates; extraction errors become "facts"; ACLs hard to apply to community summaries that mix documents</td><td class="small">LLM call per chunk at index time; global queries map-reduce many summaries</td></tr>
+      <tr><td><span class="tag ag">LazyGraphRAG / LightRAG</span></td><td>Want graph-style answers without full index cost; corpus changes</td><td>Younger code; quality depends heavily on the extraction model; fewer production references</td><td class="small">Index ≈ vector RAG (Lazy) or light extraction (LightRAG); more work at query time</td></tr>
+      <tr><td><span class="tag ag">Corrective (grade → retry → abstain)</span></td><td>High cost of a wrong answer (policy, compliance, finance)</td><td>Grader is itself an LLM that can be wrong or biased to "relevant"; loops; p95 explodes without a budget</td><td class="small">+1 grading call (batch all k chunks in one call) + optional retry</td></tr>
+      <tr><td><span class="tag ag">Full agentic RAG</span></td><td>Research-style tasks, multiple tools and sources, users tolerate seconds</td><td>Non-deterministic paths, hard to evaluate and debug, tool-use injection surface</td><td class="small">Unbounded unless budgeted; 3–20 calls per query</td></tr>
+    </tbody>
+  </table></div>
+  <div class="callout"><b>Cost math to have ready:</b> at 100k queries/day, adding one 400-token-in / 80-token-out call to every query adds 48M tokens/day. Gate it so only the ~20–30% of queries with low top-1 rerank score take the transform path, and you pay about a quarter of that. The router and the rerank score threshold from Day 9 are the gates.</div>
+</section>
+
+<section id="lab">
+  <h2><span class="n">4</span>Hands-on: a query-side bake-off on your laptop (60–90 min)</h2>
+  <p>You will run five strategies over a small policy KB with planted traps (vocabulary mismatch, two versions of the travel policy, colloquial phrasing, one out-of-scope question) and compare hit@3, MRR, latency and LLM calls. Everything is local on Ollama: <code>qwen3:4b</code> (Q4, ~2.5 GB, fits your RTX 3050 6 GB) and <code>nomic-embed-text</code>. No WSL or Docker needed. The code uses plain Python so you can see every LLM hop; stretch goal 1 ports the corrective loop to LangGraph.</p>
+  <h3>Setup (PowerShell)</h3>
+  <div class="code"><div class="bar"><span class="lang">powershell</span><button class="copy" type="button">Copy</button></div><pre><code>winget install Ollama.Ollama          # skip if installed; update if think=False errors (old server)
+ollama pull qwen3:4b
+ollama pull nomic-embed-text
+mkdir genai-day10; cd genai-day10
+py -3.13 -m venv .venv
+.\.venv\Scripts\Activate.ps1          # if blocked: Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
+python -m pip install --upgrade pip
+python -m pip install "ollama&gt;=0.6.3" "numpy&gt;=2.3" "pydantic&gt;=2.11"
+# Save the script below as advanced_rag.py, then:
+python advanced_rag.py -v
+python advanced_rag.py --only baseline hyde -v     # iterate on one strategy at a time</code></pre></div>
+  <p class="small">Checked on PyPI today: ollama 0.6.3 (29 Sep 2026), numpy 2.5.4, pydantic 2.13. The script was smoke-tested against a stubbed Ollama client for control flow; retrieval numbers come from your run.</p>
+  <h3>advanced_rag.py</h3>
+  <div class="code"><div class="bar"><span class="lang">python</span><button class="copy" type="button">Copy</button></div><pre><code>"""
+Day 10 lab: which query-side RAG technique fixes which failure?
+Baseline dense vs multi-query+RRF vs HyDE vs self-query (metadata filter) vs corrective (grade -&gt; rewrite -&gt; abstain).
+Runs fully local on Ollama: qwen3:4b (~2.5 GB, fits a 6 GB GPU) + nomic-embed-text.
+"""
+import argparse, statistics, time
+from typing import Literal, Optional
+
+import numpy as np
+import ollama
+from pydantic import BaseModel
+
+LLM, EMB, K = "qwen3:4b", "nomic-embed-text", 3
+
+# --- 1. A small policy KB with metadata and deliberate traps -----------------------
+# Traps: vocabulary mismatch (wifi vs broadband), versioned policies (2023 vs 2025),
+# colloquial phrasing (left my laptop in a cab), and one out-of-scope question.
+DOCS = [
+ {"id": "D01", "dept": "travel",     "year": 2023, "text": "Travel policy 2023: economy class for flights under 6 hours; business class above 6 hours with VP approval. Domestic per diem in India is INR 3,500 per day."},
+ {"id": "D02", "dept": "travel",     "year": 2025, "text": "Travel policy 2025 revision: business class only for flights longer than 8 hours. Domestic per diem in India is INR 4,500 per day. Hotels must be booked through Concur."},
+ {"id": "D03", "dept": "hr",         "year": 2024, "text": "Remote-work connectivity allowance: employees on hybrid contracts may claim up to INR 1,500 per month towards residential broadband by uploading the ISP invoice."},
+ {"id": "D04", "dept": "hr",         "year": 2025, "text": "Parental leave: primary caregivers receive 26 weeks of paid leave; secondary caregivers receive 4 weeks within the first year."},
+ {"id": "D05", "dept": "security",   "year": 2025, "text": "Lost or stolen endpoint devices must be reported to the Security Operations Centre within 4 hours through ServiceNow so the device can be remotely wiped."},
+ {"id": "D06", "dept": "security",   "year": 2024, "text": "Credential standard: passphrases of at least 14 characters, MFA is mandatory, and periodic rotation is not forced unless a compromise is suspected."},
+ {"id": "D07", "dept": "it",         "year": 2025, "text": "Generative AI acceptable use: only approved tools (watsonx.ai, the internal Copilot) may process client material. Client data must never be entered into public chatbots. Prompts are logged for 90 days."},
+ {"id": "D08", "dept": "finance",    "year": 2025, "text": "Expense claims must be filed within 30 days of the transaction. Receipts are required above INR 500. Late claims need CFO approval."},
+ {"id": "D09", "dept": "hr",         "year": 2025, "text": "Notice period: 60 days for band L5 and above, 30 days below L5. Garden leave is at the manager's discretion."},
+ {"id": "D10", "dept": "it",         "year": 2024, "text": "Remote access: the Zscaler client is required when off the corporate network; split tunnelling is disabled for client projects."},
+ {"id": "D11", "dept": "facilities", "year": 2025, "text": "Hot-desking: book a desk in the workplace app at least 24 hours ahead; lockers are released every day at 8 pm."},
+ {"id": "D12", "dept": "security",   "year": 2025, "text": "Data classification has four levels: Public, Internal, Confidential and Restricted. Restricted data may not leave the India region, in line with the DPDP Act."},
+ {"id": "D13", "dept": "hr",         "year": 2023, "text": "Learning budget: up to INR 50,000 per year for professional certifications, subject to a 12-month retention clause."},
+ {"id": "D14", "dept": "finance",    "year": 2024, "text": "Corporate cards: personal use is prohibited and statements must be reconciled by the 5th of each month."},
+]
+TEXT = {d["id"]: d["text"] for d in DOCS}
+GOLD = [  # (question, expected doc id or None for out-of-scope)
+ ("Can I get reimbursed for my home wifi?", "D03"),
+ ("What was the India per diem under the 2023 travel rules?", "D01"),
+ ("Under the 2025 travel policy, when can I fly business class?", "D02"),
+ ("I left my laptop in a cab, what should I do?", "D05"),
+ ("Can I paste a client's contract into ChatGPT?", "D07"),
+ ("How long do I have to submit a taxi receipt?", "D08"),
+ ("Will the company pay for my AWS certification?", "D13"),
+ ("What is on the cafeteria menu on Fridays?", None),
+]
+
+# --- 2. Model helpers ----------------------------------------------------------------
+CALLS = {"llm": 0}
+
+def embed(texts, kind):
+    # nomic-embed-text is asymmetric: it expects task prefixes. Forgetting them costs recall.
+    prefix = "search_document: " if kind == "doc" else "search_query: "
+    r = ollama.embed(model=EMB, input=[prefix + t for t in texts])
+    v = np.asarray(r.embeddings, dtype=np.float32)
+    return v / np.linalg.norm(v, axis=1, keepdims=True)
+
+def llm(prompt, schema=None, temperature=0.0):
+    """One chat call. With a pydantic schema, Ollama constrains decoding to that JSON schema."""
+    CALLS["llm"] += 1
+    r = ollama.chat(
+        model=LLM,
+        messages=[{"role": "user", "content": prompt}],
+        format=schema.model_json_schema() if schema else None,
+        think=False,                       # qwen3 is a thinking model; we want short, cheap outputs
+        options={"temperature": temperature, "num_ctx": 4096},
+    )
+    out = r.message.content
+    return schema.model_validate_json(out) if schema else out.strip()
+
+DOC_VECS = None
+
+def dense(qvec, k=K, allowed=None):
+    scores = DOC_VECS @ qvec
+    hits = [(DOCS[i]["id"], float(scores[i])) for i in np.argsort(-scores)
+            if allowed is None or DOCS[i]["id"] in allowed]
+    return hits[:k]
+
+def rrf(lists, k=60):
+    fused = {}
+    for lst in lists:
+        for rank, (doc, _) in enumerate(lst, start=1):
+            fused[doc] = fused.get(doc, 0.0) + 1.0 / (k + rank)
+    return sorted(fused.items(), key=lambda x: x[1], reverse=True)
+
+# --- 3. Strategies -------------------------------------------------------------------
+def baseline(q):
+    return dense(embed([q], "query")[0])
+
+class Rewrites(BaseModel):
+    queries: list[str]
+
+def multi_query(q, n=3):
+    rw = llm(f"Rewrite this employee question as {n} different search queries for a corporate "
+             f"policy knowledge base. Use formal policy vocabulary and synonyms.\nQuestion: {q}",
+             Rewrites).queries[:n]
+    vecs = embed([q] + rw, "query")            # keep the original query in the fan-out
+    return rrf([dense(v, k=10) for v in vecs])[:K]
+
+def hyde(q):
+    fake = llm(f"Write two sentences from a corporate policy document that would answer: {q}\n"
+               f"Invent plausible details. Output only the excerpt.")
+    v = embed([fake], "doc")[0]               # it is document-shaped text, so embed it as a document
+    return dense(v)
+
+class Filter(BaseModel):
+    search_text: str
+    dept: Optional[Literal["travel", "hr", "security", "it", "finance", "facilities"]] = None
+    year: Optional[int] = None
+
+def self_query(q):
+    f = llm("Turn the question into a search query plus an optional metadata filter. "
+            "Set 'year' ONLY if the question names a year explicitly. Set 'dept' only if obvious. "
+            f"Departments: travel, hr, security, it, finance, facilities.\nQuestion: {q}", Filter)
+    allowed = {d["id"] for d in DOCS
+               if (f.dept is None or d["dept"] == f.dept) and (f.year is None or d["year"] == f.year)}
+    # Relevance filter, not a security filter: fail OPEN if it matches nothing.
+    # (An ACL filter must fail CLOSED. Never let an LLM write your ACL filter.)
+    return dense(embed([f.search_text], "query")[0], allowed=allowed or None)
+
+class Grade(BaseModel):
+    relevant: bool
+
+def corrective(q, retries=1):
+    """CRAG-style: retrieve -&gt; grade each chunk -&gt; rewrite and retry -&gt; abstain (empty list)."""
+    query = q
+    for _ in range(retries + 1):
+        hits = baseline(query)
+        kept = [(d, s) for d, s in hits
+                if llm(f"Does the passage contain information that answers the question? "
+                       f"Answer strictly.\nQuestion: {q}\nPassage: {TEXT[d]}", Grade).relevant]
+        if kept:
+            return kept
+        query = llm("A search for this question found nothing relevant. Rewrite it as one keyword-rich "
+                    f"search query for a corporate policy knowledge base. Output only the query.\nQuestion: {q}")
+    return []
+
+STRATEGIES = {"baseline": baseline, "multi_query": multi_query, "hyde": hyde,
+              "self_query": self_query, "corrective": corrective}
+
+# --- 4. Evaluate ---------------------------------------------------------------------
+def main():
+    global DOC_VECS
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--only", nargs="*", default=list(STRATEGIES))
+    ap.add_argument("-v", "--verbose", action="store_true")
+    args = ap.parse_args()
+
+    DOC_VECS = embed([d["text"] for d in DOCS], "doc")
+    llm("Say OK.")                                 # warm up: load the model into VRAM
+    CALLS["llm"] = 0
+    answerable = [g for g in GOLD if g[1]]
+    print(f"docs={len(DOCS)} questions={len(GOLD)} (answerable={len(answerable)}) llm={LLM} emb={EMB}\n")
+    print(f"{'strategy':&lt;12}{'hit@3':&gt;7}{'MRR':&gt;7}{'p50 s':&gt;8}{'LLM calls':&gt;11}  abstained on OOS?")
+    for name in args.only:
+        fn = STRATEGIES[name]
+        c0, hits, rr, lat, oos = CALLS["llm"], 0, 0.0, [], None
+        for q, exp in GOLD:
+            t0 = time.perf_counter(); res = fn(q); lat.append(time.perf_counter() - t0)
+            ids = [d for d, _ in res]
+            if exp is None:
+                oos = len(ids) == 0
+                continue
+            if exp in ids:
+                hits += 1; rr += 1 / (ids.index(exp) + 1)
+            elif args.verbose:
+                print(f"   miss [{name}] {q!r} -&gt; {ids}")
+        n = len(answerable)
+        print(f"{name:&lt;12}{hits:&gt;4}/{n}{rr / n:&gt;7.2f}{statistics.median(lat):&gt;8.2f}"
+              f"{CALLS['llm'] - c0:&gt;11}  {'yes' if oos else 'no'}")
+
+if __name__ == "__main__":
+    main()</code></pre></div>
+  <h3>Expected output</h3>
+  <p>Illustrative shape, not a recorded run. Numbers move with model versions and temperature, and the latency column depends on whether qwen3 is fully on the GPU (check with <code>ollama ps</code>).</p>
+  <div class="code"><div class="bar"><span class="lang">text</span><button class="copy" type="button">Copy</button></div><pre><code>docs=14 questions=8 (answerable=7) llm=qwen3:4b emb=nomic-embed-text
+
+strategy      hit@3    MRR   p50 s  LLM calls  abstained on OOS?
+   miss [baseline] 'What was the India per diem under the 2023 travel rules?' -&gt; ['D02', 'D08', 'D13']
+baseline       ~6/7  ~0.75    0.03          0  no
+multi_query    ~7/7  ~0.85    ~1.2          8  no
+hyde           ~6/7  ~0.80    ~1.5          8  no
+self_query     ~7/7  ~0.90    ~0.9          8  no
+corrective     ~6/7  ~0.80    ~2.5        ~26  yes</code></pre></div>
+  <ol class="steps">
+    <li>Look at which question each strategy rescues. Self-query should fix the 2023-vs-2025 trap; multi-query and HyDE should help "home wifi" and "laptop in a cab".</li>
+    <li>Only <code>corrective</code> abstains on the cafeteria question. Every other strategy confidently returns three chunks, and the generator would answer from them. That is the hallucination path from Day 4.</li>
+    <li>Compare LLM calls. Corrective spends ~3 calls per query on grading. Change it to grade all k chunks in one call (return <code>list[bool]</code>) and re-measure.</li>
+    <li>Set <code>temperature=0.7</code> in <code>multi_query</code> and run three times. Note the variance: this is why you need golden-set evals (Day 11) before claiming a gain.</li>
+  </ol>
+  <h3>Stretch goals</h3>
+  <ol class="steps">
+    <li><strong>Port corrective RAG to LangGraph</strong> (<code>python -m pip install langgraph</code>, 1.2.16 today). Make a <code>StateGraph</code> with nodes <code>retrieve</code>, <code>grade</code>, <code>rewrite</code>, <code>abstain</code>, a conditional edge on the grade, and an <code>attempts</code> counter in state. Add an <code>InMemorySaver</code> checkpointer and print the state history for the cafeteria question. This previews Day 17.</li>
+    <li><strong>Router gate.</strong> Run <code>baseline</code> first and escalate to <code>multi_query</code> or <code>self_query</code> only when the top-1 cosine is below a threshold (or the question contains a year). Report hit@3 and total LLM calls versus "always multi-query". This is the ADR below in code.</li>
+    <li><strong>Optional, slower: LightRAG on the same 14 docs</strong> (<code>python -m pip install lightrag-hku</code>, 1.5.7) with its Ollama bindings, then ask a global question ("Which policies impose time limits, and what are they?"). Time the indexing step and count LLM calls. Expect weak entity extraction from a 4B model; a free-tier hosted model gives a fairer picture.</li>
+  </ol>
+</section>
+
+<section id="repos">
+  <h2><span class="n">5</span>GitHub repos to study</h2>
+  <div class="repos">
+    <div class="repo"><a href="https://github.com/microsoft/graphrag" target="_blank" rel="noopener">microsoft/graphrag</a><p>Read the indexing pipeline config (entity extraction, community reports) and the query side's local vs global search. Note what each indexing step costs in LLM calls before you propose it.</p><div class="meta">graphrag 3.3.0 on PyPI · 8 Oct 2026</div></div>
+    <div class="repo"><a href="https://github.com/HKUDS/LightRAG" target="_blank" rel="noopener">HKUDS/LightRAG</a><p>Study the query modes (local, global, hybrid, mix) and the incremental insert path. Compare its storage abstraction (KV, vector, graph backends) with GraphRAG's batch model.</p><div class="meta">lightrag-hku 1.5.7 on PyPI · Sep 2026</div></div>
+    <div class="repo"><a href="https://github.com/langchain-ai/langgraph" target="_blank" rel="noopener">langchain-ai/langgraph</a><p>Find the agentic and corrective RAG examples and trace how the grade decision becomes a conditional edge. This is the production-shaped version of today's <code>corrective()</code>.</p><div class="meta">langgraph 1.2.16 on PyPI · 16 Oct 2026</div></div>
+    <div class="repo"><a href="https://github.com/NirDiamant/RAG_Techniques" target="_blank" rel="noopener">NirDiamant/RAG_Techniques</a><p>A notebook per technique (HyDE, query transformations, CRAG, Self-RAG, adaptive retrieval, GraphRAG). Use it as a catalogue; skim the CRAG and adaptive-retrieval notebooks against today's table.</p><div class="meta">Notebook collection, actively updated</div></div>
+  </div>
+</section>
+
+<section id="read">
+  <h2><span class="n">6</span>Read / watch</h2>
+  <ul class="reads">
+    <li><span class="kind">Paper · 30 min</span><br><a href="https://arxiv.org/abs/2401.15884" target="_blank" rel="noopener">Yan et al., Corrective Retrieval Augmented Generation (CRAG)</a><br><span class="small">Read the evaluator design and the three-way Correct / Ambiguous / Incorrect action. Then skim <a href="https://arxiv.org/abs/2212.10496" target="_blank" rel="noopener">HyDE (Gao et al.)</a> for the zero-shot argument.</span></li>
+    <li><span class="kind">Engineering blog · 15 min</span><br><a href="https://www.microsoft.com/en-us/research/blog/lazygraphrag-setting-a-new-standard-for-quality-and-cost/" target="_blank" rel="noopener">Microsoft Research: LazyGraphRAG, setting a new standard for quality and cost</a><br><span class="small">The cost argument against full GraphRAG, from its own authors, and how deferring LLM work to query time changes the trade-off. Background: the <a href="https://arxiv.org/abs/2404.16130" target="_blank" rel="noopener">GraphRAG paper</a>.</span></li>
+    <li><span class="kind">Official docs · 30 min</span><br><a href="https://docs.langchain.com/oss/python/langgraph/agentic-rag" target="_blank" rel="noopener">LangGraph: Build a custom RAG agent</a><br><span class="small">Retrieve, grade, rewrite and generate as a graph. Use it as the reference for stretch goal 1.</span></li>
+  </ul>
+</section>
+
+<section id="qa">
+  <h2><span class="n">7</span>Interview questions</h2>
+  <details class="q"><summary>When does HyDE help, and when would you refuse to use it?</summary><div class="a">
+    <p>It helps on prose corpora where queries are short and phrased very differently from documents, especially zero-shot with a general embedding model: the hypothetical answer moves the query vector into "answer space". It is the cheapest fix when you cannot fine-tune embeddings.</p>
+    <p>I would not use it as the only query for identifier- or number-heavy corpora, for questions about recent events the LLM has no prior on, or on a tight latency budget, since the generation sits on the critical path before retrieval starts. If used, fuse the HyDE list with the original-query list via RRF and keep BM25 in the mix, so an invented detail cannot dominate.</p></div></details>
+  <details class="q"><summary>Self-query generates metadata filters with an LLM. What could go wrong, and how do you design it safely?</summary><div class="a">
+    <p>Three failures: it invents field values that do not exist, it applies a constraint the user did not state (for example assuming the current year), and it excludes the answer silently. Mitigate with a JSON schema whose fields are enums of real values, constrained decoding, validation, an explicit rule to set a field only when stated, and fail-open on zero results with that event logged.</p>
+    <p>The design point that matters most: relevance filters and permission filters are different things. ACL and tenant filters come from the authenticated identity and are applied by the retrieval service, fail closed, and are never generated or modified by the model. Otherwise a prompt injection turns into a data-access bypass.</p></div></details>
+  <details class="q"><summary>A stakeholder wants GraphRAG because "graphs are more accurate". How do you respond?</summary><div class="a">
+    <p>Ask what questions users actually ask. GraphRAG's advantage is on global, sensemaking questions across a corpus; for local fact lookups, hybrid + rerank is usually as good and much cheaper. Sample production or pilot queries and label them local vs global. If global questions are a small share, serve them with a separate, scoped path.</p>
+    <p>Then put cost and operations on the table: LLM extraction for every chunk at index time, re-indexing on updates, extraction errors that become graph "facts", and ACL problems because community summaries blend documents with different permissions. Offer LazyGraphRAG or LightRAG as a pilot on one bounded corpus with a golden set, and decide on measured answer quality per query type.</p></div></details>
+  <details class="q"><summary>How do you keep a corrective / agentic RAG loop inside a p95 latency SLO?</summary><div class="a">
+    <p>Put the cheap path first and gate escalation on a signal (reranker score, grader verdict, router class), so most queries never loop. Give every loop a budget: max one retry, a token cap and a wall-clock deadline, and define what happens when it is exhausted: abstain with a reason or hand off. Batch grading of all k chunks into one call, run independent retrievals in parallel, and use a small, fast model for routing and grading while the large model only generates.</p>
+    <p>Stream a status to the user while the loop runs and trace each node (Day 27) so you can see which step eats the budget. Report p95 per path, not one blended number.</p></div></details>
+  <details class="q"><summary>Multi-query raised recall@10 by 8 points offline but answer faithfulness dropped. Explain and fix.</summary><div class="a">
+    <p>More paraphrases pull in more loosely related chunks. Recall goes up, but precision of the final context drops, and the generator mixes distractors into the answer. Paraphrase drift can also shift the topic (a "2023 travel" question paraphrased without the year retrieves 2025 rules).</p>
+    <p>Fix: rerank the fused list with a cross-encoder against the <em>original</em> question, keep final k small, include the original query in the fan-out, constrain paraphrases to keep entities and constraints, and gate multi-query to low-confidence queries only. Re-measure end-to-end faithfulness and context precision, not just retrieval recall.</p></div></details>
+</section>
+
+<section id="adr">
+  <h2><span class="n">8</span>Architect's lens: ADR</h2>
+  <div class="adr">
+    <p><strong>ADR-010 · Query transformation and corrective-retrieval policy for the enterprise knowledge assistant</strong> <span class="status">· Accepted</span></p>
+    <dl>
+      <dt>Context</dt><dd>Builds on ADR-009 (hybrid + self-hosted rerank). Pilot logs show ~25% of failed answers come from vocabulary mismatch or versioned documents, and ~5% of questions are out of scope but still get answered. Budget: p95 end-to-end ≤ 4 s, median cost per query must not double. A small set of leadership users asks thematic questions over incident reports.</dd>
+      <dt>Options</dt><dd>(A) Keep single-shot hybrid + rerank. (B) Always run multi-query + HyDE + grading. (C) Gated: conversational rewrite always; self-query when the question names a version, date or department; multi-query only when top-1 rerank score is below threshold; one batched grading call; max one retry, then abstain. (D) Full agentic RAG with tool choice. (E) GraphRAG over the whole corpus.</dd>
+      <dt>Decision</dt><dd><strong>C</strong> for the main assistant, built as a LangGraph graph with a hard budget. A separate, opt-in "insights" path uses LazyGraphRAG/LightRAG over the incident-report corpus only, which has a single permission level.</dd>
+      <dt>Rationale</dt><dd>On the golden set, C recovers most of B's gain on mismatch and version questions while about 70% of queries take the zero-extra-call path, so median latency and cost barely move. Abstention on out-of-scope questions comes from the grader + budget. B doubles cost for every query; D failed p95 and is hard to evaluate; E has unacceptable index cost and ACL blending across the whole corpus.</dd>
+      <dt>Consequences</dt><dd>Router threshold and grader prompt become versioned artefacts under the eval gate (Day 26). We must monitor escalation rate and abstention rate as SLIs; a jump in either signals drift or an index problem. Self-query field enums must be regenerated when metadata taxonomies change. Revisit if escalation rate exceeds 40% or abstention exceeds 10% for two weeks.</dd>
+    </dl>
+  </div>
+</section>
+
+<div class="tomorrow"><b>Tomorrow · Day 11</b>RAG evaluation: RAGAS / DeepEval / TruLens, faithfulness, context precision and recall, golden sets, and LLM-as-judge pitfalls.</div>
+
+<footer>Prepared for Rahul Bhave · GenAI Architect 30-day plan · library versions checked on PyPI on 19 Oct 2026.</footer>
+</div>
+
+<script>
+(function(){
+  document.querySelectorAll('.copy').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var code = btn.closest('.code').querySelector('pre code');
+      var text = code.innerText;
+      function done(msg){ btn.textContent = msg; setTimeout(function(){ btn.textContent = 'Copy'; }, 1600); }
+      function fallback(){
+        var r = document.createRange(); r.selectNodeContents(code);
+        var s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+        done('Selected · Ctrl+C');
+      }
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(function(){ done('Copied'); }, fallback);
+        } else { fallback(); }
+      } catch(e){ fallback(); }
+    });
+  });
+  var root = document.documentElement, btn = document.getElementById('themeBtn');
+  var modes = ['system','light','dark'], i = 0;
+  try { var saved = localStorage.getItem('day-theme'); if (saved && modes.indexOf(saved) > -1) i = modes.indexOf(saved); } catch(e){}
+  function apply(){
+    var m = modes[i];
+    if (m === 'system') root.removeAttribute('data-theme'); else root.setAttribute('data-theme', m);
+    btn.textContent = 'theme: ' + m;
+    try { localStorage.setItem('day-theme', m); } catch(e){}
+  }
+  apply();
+  btn.addEventListener('click', function(){ i = (i + 1) % modes.length; apply(); });
+})();
+</script>
+
+</body></html>

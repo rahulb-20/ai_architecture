@@ -1,0 +1,38 @@
+<svg font-family="Source Sans 3, system-ui, sans-serif" font-size="13" style="background:#ffffff" viewbox="0 0 700 340" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="ar" markerheight="7" markerwidth="7" orient="auto" refx="9" refy="5" viewbox="0 0 10 10"><path d="M0,0 L10,5 L0,10 z" fill="#555"></path></marker></defs>
+<rect fill="#555" height="56" rx="6" stroke="#555" width="80" x="10" y="40"></rect>
+<text fill="#555" font-weight="700" text-anchor="middle" x="50" y="64">RMs</text><text fill="#555" text-anchor="middle" x="50" y="81">ExpressRoute</text>
+<rect fill="none" height="270" rx="10" stroke="#555" stroke-dasharray="5 4" stroke-width="1.5" width="440" x="110" y="10"></rect>
+<text fill="#555" font-size="12" font-weight="700" letter-spacing="1" x="122" y="30">AZURE CENTRAL INDIA · SPOKE VNET · NO PUBLIC ACCESS</text>
+<rect fill="#555" height="52" rx="6" stroke="#555" width="110" x="125" y="42"></rect>
+<text fill="#555" font-weight="700" text-anchor="middle" x="180" y="64">APIM</text><text fill="#555" text-anchor="middle" x="180" y="81">AI gateway · quotas</text>
+<rect fill="#555" height="52" rx="6" stroke="#555" width="150" x="255" y="42"></rect>
+<text fill="#555" font-weight="700" text-anchor="middle" x="330" y="64">Agent runtime</text><text fill="#555" text-anchor="middle" x="330" y="81">Container Apps · MI</text>
+<rect fill="#555" height="52" rx="6" stroke="#555" width="112" x="425" y="42"></rect>
+<text fill="#555" font-weight="700" text-anchor="middle" x="481" y="64">Azure OpenAI</text><text fill="#555" text-anchor="middle" x="481" y="81">regional · PE</text>
+<text fill="#555" font-size="12" font-weight="700" letter-spacing="1" x="125" y="128">DATA SUBNET (PRIVATE ENDPOINTS, CMK)</text>
+<rect fill="#555" height="60" rx="6" stroke="#555" width="150" x="125" y="138"></rect>
+<text fill="#555" font-weight="700" text-anchor="middle" x="200" y="161">Postgres + pgvector</text><text fill="#555" text-anchor="middle" x="200" y="179">memory · checkpoints · RLS</text>
+<rect fill="#555" height="60" rx="6" stroke="#555" width="120" x="290" y="138"></rect>
+<text fill="#555" font-weight="700" text-anchor="middle" x="350" y="161">AI Search</text><text fill="#555" text-anchor="middle" x="350" y="179">policy docs</text>
+<rect fill="#555" height="60" rx="6" stroke="#555" width="112" x="425" y="138"></rect>
+<text fill="#555" font-weight="700" text-anchor="middle" x="481" y="161">Key Vault</text><text fill="#555" text-anchor="middle" x="481" y="179">CMK per tenant</text>
+<rect fill="#555" height="50" rx="6" stroke="#555" width="200" x="125" y="216"></rect>
+<text fill="#555" font-weight="700" text-anchor="middle" x="225" y="237">Azure Firewall (egress)</text><text fill="#555" text-anchor="middle" x="225" y="254">allow-list: CRM, core banking</text>
+<rect fill="#555" height="50" rx="6" stroke="#555" width="197" x="340" y="216"></rect>
+<text fill="#555" font-weight="700" text-anchor="middle" x="438" y="237">Log Analytics (India)</text><text fill="#555" text-anchor="middle" x="438" y="254">memory read audit · traces</text>
+<rect fill="#555" height="60" rx="6" stroke="#555" width="115" x="575" y="138"></rect>
+<text fill="#555" font-weight="700" text-anchor="middle" x="632" y="161">South India</text><text fill="#555" text-anchor="middle" x="632" y="179">warm standby</text>
+<g fill="none" stroke="#555">
+<line marker-end="url(#ar)" x1="90" x2="123" y1="68" y2="68"></line>
+<line marker-end="url(#ar)" x1="235" x2="253" y1="68" y2="68"></line>
+<line marker-end="url(#ar)" x1="405" x2="423" y1="68" y2="68"></line>
+<line marker-end="url(#ar)" x1="300" x2="210" y1="94" y2="136"></line>
+<line marker-end="url(#ar)" x1="335" x2="345" y1="94" y2="136"></line>
+<line marker-end="url(#ar)" x1="275" x2="225" y1="94" y2="214"></line>
+<line marker-end="url(#ar)" stroke-dasharray="4 3" x1="537" x2="573" y1="168" y2="168"></line>
+</g>
+<text fill="#555" font-size="12" x="555" y="214">async replica</text>
+<text fill="#555" font-size="12" x="555" y="228">RPO ≤ 15 min</text>
+<text fill="#555" font-size="12" x="10" y="310">PE = private endpoint · MI = managed identity · RLS = row-level security · CMK = customer-managed key</text>
+</svg>

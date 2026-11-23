@@ -1,0 +1,41 @@
+<svg font-family="IBM Plex Sans, Segoe UI, Arial, sans-serif" aria-labelledby="dgt" role="img" style="background:#ffffff" viewbox="0 0 920 330" xmlns="http://www.w3.org/2000/svg">
+
+<defs><marker id="ar" markerheight="7" markerwidth="7" orient="auto" refx="9" refy="5" viewbox="0 0 10 10"><path d="M0,0L10,5L0,10z" fill="#555"></path></marker></defs>
+<rect fill="#555" height="70" rx="8" stroke="#555" width="110" x="10" y="120"></rect>
+<text fill="#555" font-family="#555" font-size="14" font-weight="600" text-anchor="middle" x="65" y="150">Client</text>
+<text fill="#555" font-family="#555" font-size="11" text-anchor="middle" x="65" y="170">EventSource / httpx</text>
+<rect fill="#555" height="70" rx="8" stroke="#555" width="120" x="150" y="120"></rect>
+<text fill="#555" font-family="#555" font-size="14" font-weight="600" text-anchor="middle" x="210" y="148">Ingress / LB</text>
+<text fill="#555" font-family="#555" font-size="11" text-anchor="middle" x="210" y="166">idle timeout ≥ 120s</text>
+<text fill="#555" font-family="#555" font-size="11" text-anchor="middle" x="210" y="180">buffering off</text>
+<rect fill="#555" height="240" rx="10" stroke="#555" stroke-dasharray="5 4" width="430" x="300" y="40"></rect>
+<text fill="#555" font-family="#555" font-size="11" x="316" y="62">CONTAINER · non-root · read-only FS · uvicorn PID 1</text>
+<g font-family="#555" font-size="12">
+<rect fill="#555" height="70" rx="6" stroke="#555" width="90" x="318" y="120"></rect>
+<text fill="#555" text-anchor="middle" x="363" y="150">auth</text><text fill="#555" font-size="11" text-anchor="middle" x="363" y="168">401</text>
+<rect fill="#555" height="70" rx="6" stroke="#555" width="90" x="420" y="120"></rect>
+<text fill="#555" text-anchor="middle" x="465" y="150">admit</text><text fill="#555" font-size="11" text-anchor="middle" x="465" y="168">429 Retry-After</text>
+<rect fill="#555" height="70" rx="6" stroke="#555" width="96" x="522" y="120"></rect>
+<text fill="#555" text-anchor="middle" x="570" y="150">semaphore</text><text fill="#555" font-size="11" text-anchor="middle" x="570" y="168">N GPU slots</text>
+<rect fill="#555" height="70" rx="6" stroke="#555" width="88" x="630" y="120"></rect>
+<text fill="#555" text-anchor="middle" x="674" y="146">SSE gen</text><text fill="#555" font-size="10" text-anchor="middle" x="674" y="163">timeouts</text><text fill="#555" font-size="10" text-anchor="middle" x="674" y="177">aclose()</text>
+<rect fill="#555" height="42" rx="6" stroke="#555" width="190" x="318" y="220"></rect>
+<text fill="#555" text-anchor="middle" x="413" y="246">/healthz  /readyz</text>
+<rect fill="#555" height="42" rx="6" stroke="#555" width="196" x="522" y="220"></rect>
+<text fill="#555" text-anchor="middle" x="620" y="246">JSON logs → stdout</text>
+</g>
+<rect fill="#555" height="90" rx="8" stroke="#555" width="140" x="770" y="110"></rect>
+<text fill="#555" font-family="#555" font-size="14" font-weight="600" text-anchor="middle" x="840" y="140">Model backend</text>
+<text fill="#555" font-family="#555" font-size="11" text-anchor="middle" x="840" y="160">Ollama · vLLM</text>
+<text fill="#555" font-family="#555" font-size="11" text-anchor="middle" x="840" y="176">watsonx.ai · Bedrock</text>
+<text fill="#555" font-family="#555" font-size="11" text-anchor="middle" x="840" y="192">Azure OpenAI</text>
+<rect fill="#555" height="28" rx="6" stroke="#555" width="430" x="300" y="295"></rect>
+<text fill="#555" font-family="#555" font-size="11" text-anchor="middle" x="515" y="314">orchestrator: liveness → /healthz · readiness → /readyz · SIGTERM → drain</text>
+<g fill="none" marker-end="url(#ar)" stroke="#555" stroke-width="1.5">
+<path d="M120 155H148"></path><path d="M270 155H316"></path><path d="M408 155H418"></path><path d="M510 155H520"></path><path d="M618 155H628"></path><path d="M718 155H768"></path>
+<path d="M413 293V264"></path>
+</g>
+<path d="M768 175 H735 V210 H140 V192" fill="none" marker-end="url(#ar)" stroke="#555" stroke-dasharray="4 3" stroke-width="1.5"></path>
+<text fill="#555" font-family="#555" font-size="11" x="745" y="96">prompt →</text>
+<text fill="#555" font-family="#555" font-size="11" x="150" y="226">← tokens as SSE events (meta · token… · done | error)</text>
+</svg>

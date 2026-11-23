@@ -1,0 +1,36 @@
+<svg font-family="IBM Plex Sans, Segoe UI, Arial, sans-serif" aria-label="Memory architecture: request flows through recall, LLM call, and a background writer, backed by a checkpointer and a long-term store" role="img" style="background:#ffffff" viewbox="0 0 760 330" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="ar" markerheight="7" markerwidth="7" orient="auto" refx="9" refy="5" viewbox="0 0 10 10"><path d="M0,0 L10,5 L0,10 z" fill="#555"></path></marker></defs>
+<rect fill="#555" height="56" rx="6" stroke="#555" width="110" x="10" y="120"></rect>
+<text fill="#555" font-size="13" font-weight="600" text-anchor="middle" x="65" y="144">User turn</text>
+<text fill="#555" font-size="11" text-anchor="middle" x="65" y="162">user_id, thread_id</text>
+<rect fill="#555" height="56" rx="6" stroke="#555" width="120" x="160" y="120"></rect>
+<text fill="#555" font-size="13" font-weight="600" text-anchor="middle" x="220" y="144">Recall</text>
+<text fill="#555" font-size="11" text-anchor="middle" x="220" y="162">search(ns, query, k)</text>
+<rect fill="#555" height="76" rx="6" stroke="#555" width="150" x="320" y="110"></rect>
+<text fill="#555" font-size="13" font-weight="600" text-anchor="middle" x="395" y="134">Context window</text>
+<text fill="#555" font-size="11" text-anchor="middle" x="395" y="152">system + memories</text>
+<text fill="#555" font-size="11" text-anchor="middle" x="395" y="167">+ summary + last N msgs</text>
+<rect fill="#555" height="56" rx="6" stroke="#555" width="110" x="510" y="120"></rect>
+<text fill="#555" font-size="13" font-weight="600" text-anchor="middle" x="565" y="144">LLM reply</text>
+<text fill="#555" font-size="11" text-anchor="middle" x="565" y="162">streamed to user</text>
+<rect fill="#555" height="56" rx="6" stroke="#555" width="110" x="640" y="120"></rect>
+<text fill="#555" font-size="13" font-weight="600" text-anchor="middle" x="695" y="140">Writer</text>
+<text fill="#555" font-size="11" text-anchor="middle" x="695" y="156">extract → dedup</text>
+<text fill="#555" font-size="11" text-anchor="middle" x="695" y="170">→ ADD/UPDATE/DEL</text>
+<line marker-end="url(#ar)" stroke="#555" x1="120" x2="158" y1="148" y2="148"></line>
+<line marker-end="url(#ar)" stroke="#555" x1="280" x2="318" y1="148" y2="148"></line>
+<line marker-end="url(#ar)" stroke="#555" x1="470" x2="508" y1="148" y2="148"></line>
+<line marker-end="url(#ar)" stroke="#555" x1="620" x2="638" y1="148" y2="148"></line>
+<rect fill="#555" height="70" rx="6" stroke="#555" stroke-dasharray="4 3" width="590" x="160" y="240"></rect>
+<text fill="#555" font-size="13" font-weight="600" x="180" y="264">Long-term store  (namespace = tenant / user / kind)</text>
+<text fill="#555" font-size="11" x="180" y="284">semantic facts · episodic examples · procedural prompt versions · TTL · vector index on "text" only</text>
+<text fill="#555" font-size="11" x="180" y="300">PostgresStore + pgvector in prod; SqliteStore + sqlite-vec on a laptop</text>
+<line marker-end="url(#ar)" stroke="#555" x1="220" x2="220" y1="238" y2="178"></line>
+<text fill="#555" font-size="11" x="228" y="214">read</text>
+<line marker-end="url(#ar)" stroke="#555" x1="695" x2="695" y1="178" y2="238"></line>
+<text fill="#555" font-size="11" x="640" y="214">write (async)</text>
+<rect fill="#555" height="56" rx="6" stroke="#555" width="460" x="160" y="20"></rect>
+<text fill="#555" font-size="13" font-weight="600" x="180" y="44">Checkpointer  (per thread_id)</text>
+<text fill="#555" font-size="11" x="180" y="62">full graph state after every super-step · resume · HITL · rolling summary lives here</text>
+<line marker-end="url(#ar)" stroke="#555" x1="395" x2="395" y1="78" y2="108"></line>
+</svg>

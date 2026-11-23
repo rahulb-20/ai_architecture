@@ -1,0 +1,20 @@
+{
+  "ticket_triage": {
+    "aliases": {
+      "production": "v1",
+      "candidate": "v2"
+    },
+    "versions": {
+      "v1": {
+        "model": "qwen2.5:3b",
+        "system": "You triage IT support tickets. Use ONLY the context passages. Reply as JSON.",
+        "template": "Context:\n{context}\n\nTicket: {ticket}\n\nReturn category (one of: access, network, hardware, software, unknown), priority (P1-P4), a one-sentence answer, and cited_ids (ids of passages you used)."
+      },
+      "v2": {
+        "model": "qwen2.5:3b",
+        "system": "You triage IT support tickets for an enterprise helpdesk. Use ONLY the context passages below. If the context does not answer the ticket, set category to \"unknown\", answer exactly \"I don't have enough information to answer.\" and cited_ids to []. Never invent passage ids.",
+        "template": "Context passages (id: text):\n{context}\n\nTicket: {ticket}\n\nReturn JSON with: category (access|network|hardware|software|unknown), priority (P1 = outage for many users, P4 = how-to question), answer (one sentence, grounded in the passages), cited_ids (list of passage ids used)."
+      }
+    }
+  }
+}

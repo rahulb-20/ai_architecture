@@ -1,0 +1,18 @@
+<svg font-family="IBM Plex Sans, Segoe UI, Arial, sans-serif" aria-label="RAG pipeline with metrics attached to each edge" role="img" style="background:#ffffff" viewbox="0 0 760 330" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="arr" markerheight="7" markerwidth="7" orient="auto-start-reverse" refx="9" refy="5" viewbox="0 0 10 10"><path class="ah" d="M0,0 L10,5 L0,10 z"></path></marker></defs>
+<!-- pipeline -->
+<rect class="box" height="56" rx="8" width="120" x="20" y="130"></rect><text class="t" text-anchor="middle" x="80" y="155">Query</text><text class="s" text-anchor="middle" x="80" y="173">user_input</text>
+<rect class="box k" height="56" rx="8" width="130" x="200" y="130"></rect><text class="t" text-anchor="middle" x="265" y="155">Retriever</text><text class="s" text-anchor="middle" x="265" y="173">top-k chunks</text>
+<rect class="box" height="56" rx="8" width="130" x="390" y="130"></rect><text class="t" text-anchor="middle" x="455" y="155">Contexts</text><text class="s" text-anchor="middle" x="455" y="173">retrieved_contexts</text>
+<rect class="box k" height="56" rx="8" width="160" x="580" y="130"></rect><text class="t" text-anchor="middle" x="660" y="155">Generator → Answer</text><text class="s" text-anchor="middle" x="660" y="173">response</text>
+<path class="ln" d="M140 158 H196" marker-end="url(#arr)"></path><path class="ln" d="M330 158 H386" marker-end="url(#arr)"></path><path class="ln" d="M520 158 H576" marker-end="url(#arr)"></path>
+<!-- reference -->
+<rect class="box" height="50" rx="8" width="160" x="300" y="262"></rect><text class="t" text-anchor="middle" x="380" y="284">Golden reference</text><text class="s" text-anchor="middle" x="380" y="301">answer + relevant doc spans</text>
+<!-- reference-free (top, accent) -->
+<path class="ma" d="M80 130 V70 H425 V126"></path><text class="m" text-anchor="middle" x="252" y="62">context relevance (query ↔ contexts)</text>
+<path class="ma" d="M485 130 V100 H640 V126"></path><text class="m" text-anchor="middle" x="562" y="92">faithfulness / groundedness</text>
+<path class="ma" d="M60 130 V30 H690 V126"></path><text class="m" text-anchor="middle" x="375" y="22">answer relevance (query ↔ answer)</text>
+<!-- reference-based (bottom, warn) -->
+<path class="mwl" d="M300 287 H265 V190"></path><text class="mw" text-anchor="start" x="150" y="232">hit@k · MRR · context</text><text class="mw" text-anchor="start" x="150" y="248">precision &amp; recall</text>
+<path class="mwl" d="M460 287 H660 V190"></path><text class="mw" text-anchor="start" x="560" y="232">answer correctness</text>
+</svg>

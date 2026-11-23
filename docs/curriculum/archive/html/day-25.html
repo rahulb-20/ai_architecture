@@ -1,0 +1,600 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>GenAI Prep · Day 25 — Kubernetes for GenAI</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Sans+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: single reading column (~72ch) with a sticky section index on wide screens; tables & code scroll in their own boxes */
+:root{
+  --bg:#f6f8fb; --surface:#ffffff; --fg:#17202e; --muted:#566377; --line:#d9e0ea;
+  --accent:#2457c5; --accent-soft:#e6edfb; --code-bg:#eef2f8; --good:#1f7a4d; --warn:#a35a00; --bad:#b4232c;
+  --display:"IBM Plex Sans Condensed","Arial Narrow",system-ui,sans-serif;
+  --body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"Cascadia Code",Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f1520; --surface:#161e2c; --fg:#e4e9f2; --muted:#9aa7bb; --line:#2a3548;
+  --accent:#7ea6ff; --accent-soft:#1d2a45; --code-bg:#111a28; --good:#5fd39a; --warn:#f0b357; --bad:#ff7b84; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f1520; --surface:#161e2c; --fg:#e4e9f2; --muted:#9aa7bb; --line:#2a3548;
+  --accent:#7ea6ff; --accent-soft:#1d2a45; --code-bg:#111a28; --good:#5fd39a; --warn:#f0b357; --bad:#ff7b84; color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:16px;line-height:1.62}
+.wrap{max-width:1120px;margin:0 auto;padding-block:32px 64px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;grid-template-columns:200px minmax(0,1fr);gap:48px}
+@media (max-width:860px){.wrap{grid-template-columns:minmax(0,1fr);gap:0}nav.toc{display:none}}
+nav.toc{position:sticky;top:calc(env(safe-area-inset-top,0px) + 24px);align-self:start;font-size:13.5px}
+nav.toc ol{list-style:none;margin:0;padding:0;display:grid;gap:6px;counter-reset:s}
+nav.toc a{color:var(--muted);text-decoration:none}
+nav.toc a:hover,nav.toc a:focus-visible{color:var(--accent)}
+main{min-width:0;max-width:76ch}
+header.hero{border-bottom:1px solid var(--line);padding-bottom:20px;margin-bottom:8px}
+.eyebrow{font-family:var(--mono);font-size:12.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+h1{font-family:var(--display);font-weight:700;font-size:clamp(30px,5vw,44px);line-height:1.08;margin:8px 0 10px;text-wrap:balance}
+h2{font-family:var(--display);font-weight:600;font-size:26px;line-height:1.2;margin:48px 0 12px;text-wrap:balance;scroll-margin-top:20px}
+h3{font-size:17px;font-weight:600;margin:28px 0 8px}
+p,li{max-width:70ch}
+.lede{color:var(--muted);font-size:17px;margin:0}
+.meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.chip{font-family:var(--mono);font-size:12px;padding:3px 9px;border-radius:999px;background:var(--accent-soft);color:var(--accent)}
+a{color:var(--accent)}
+code{font-family:var(--mono);font-size:.88em;background:var(--code-bg);padding:1px 5px;border-radius:4px}
+.code{position:relative;margin:14px 0 18px;border:1px solid var(--line);border-radius:8px;background:var(--code-bg)}
+.code .lbl{font-family:var(--mono);font-size:12px;color:var(--muted);padding:8px 14px 0}
+.code pre{margin:0;padding:10px 14px 14px;overflow-x:auto;font-family:var(--mono);font-size:13px;line-height:1.55;tab-size:4}
+.code pre code{background:none;padding:0;font-size:inherit}
+.copy{position:absolute;top:6px;right:6px;font:500 12px var(--body);color:var(--fg);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:3px 10px;cursor:pointer}
+.copy:hover,.copy:focus-visible{border-color:var(--accent);color:var(--accent);outline:none}
+.tbl{overflow-x:auto;margin:14px 0 20px;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;min-width:720px;font-size:14px;line-height:1.45}
+th,td{text-align:left;vertical-align:top;padding:9px 12px;border-bottom:1px solid var(--line)}
+th{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:600;background:var(--code-bg)}
+tr:last-child td{border-bottom:0}
+td:first-child{font-weight:600}
+.note{border-left:3px solid var(--warn);background:var(--surface);padding:10px 14px;margin:16px 0;font-size:15px;border-radius:0 6px 6px 0}
+.note strong{color:var(--warn)}
+figure{margin:18px 0 22px;border:1px solid var(--line);border-radius:8px;background:var(--surface);padding:12px;overflow-x:auto}
+figure svg{display:block;min-width:640px;width:100%;height:auto}
+figcaption{font-size:13px;color:var(--muted);margin-top:6px}
+.svg-box{fill:var(--surface);stroke:var(--line);stroke-width:1.5}
+.svg-hot{fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5}
+.svg-t{fill:var(--fg);font:600 13px var(--body)}
+.svg-s{fill:var(--muted);font:12px var(--mono)}
+.svg-l{stroke:var(--muted);stroke-width:1.5;fill:none}
+.svg-c{stroke:var(--accent);stroke-width:1.5;fill:none;stroke-dasharray:5 4}
+.svg-ah{fill:var(--muted)} .svg-ahc{fill:var(--accent)}
+details.qa{border-top:1px solid var(--line);padding:12px 0}
+details.qa:last-of-type{border-bottom:1px solid var(--line)}
+details.qa summary{cursor:pointer;font-weight:600}
+details.qa summary:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+details.qa div{margin-top:8px;color:var(--fg)}
+.adr{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:6px 20px 14px}
+.adr dt{font-family:var(--mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--accent);margin-top:14px}
+.adr dd{margin:4px 0 0}
+.repo{display:grid;gap:2px;padding:10px 0;border-bottom:1px solid var(--line)}
+.repo b{font-family:var(--mono);font-size:14px}
+.tomorrow{margin-top:40px;padding:14px 18px;border-radius:8px;background:var(--accent-soft)}
+ul.tight li{margin:4px 0}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+</style>
+
+<div class="wrap">
+<nav class="toc" aria-label="Sections">
+  <ol>
+    <li><a href="#why">Why it matters</a></li>
+    <li><a href="#concept">Concept brief</a></li>
+    <li><a href="#tradeoffs">Trade-offs</a></li>
+    <li><a href="#lab">Hands-on lab</a></li>
+    <li><a href="#repos">Repos to study</a></li>
+    <li><a href="#read">Read / watch</a></li>
+    <li><a href="#interview">Interview Qs</a></li>
+    <li><a href="#adr">Architect's lens</a></li>
+    <li><a href="#tomorrow">Tomorrow</a></li>
+  </ol>
+</nav>
+
+<main>
+<header class="hero">
+  <div class="eyebrow">Week 4 · Cloud, production &amp; architecture · Day 25 of 30</div>
+  <h1>Kubernetes for GenAI: autoscaling, GPU scheduling, KServe, Helm, canary</h1>
+  <p class="lede">LLM pods are heavy, slow to start and bound by GPU memory. Most of what you know about scaling stateless web services gives the wrong answer here. Today is about the right scaling signal, where the GPU actually gets allocated, and how to ship a new model without breaking quality.</p>
+  <div class="meta"><span class="chip">Tue 3 Nov 2026</span><span class="chip">K8s 1.37 current</span><span class="chip">KServe v0.20</span><span class="chip">KEDA 2.20</span><span class="chip">lab ≈ 75 min</span></div>
+</header>
+
+<section id="why">
+<h2>Why this matters for the JD</h2>
+<p>The JD's CI/CD &amp; productionization line names <strong>Kubernetes, model endpoints, scaling, rollback and cost controls</strong>, and the good-to-haves add <strong>scalability, resilience and microservices</strong>. In an architect interview this shows up as "your RAG assistant hits 10× traffic at 9 AM: what scales, on what signal, and how fast?" A good answer names queue depth, cold-start time, GPU node lead time and a quality-gated canary.</p>
+</section>
+
+<section id="concept">
+<h2>Concept brief</h2>
+
+<h3>1. Why LLM serving breaks normal Kubernetes habits</h3>
+<ul class="tight">
+  <li><strong>Pods are heavy.</strong> A 7–70B model means 5–150 GB of weights. A cold start (node provisioning, image pull, weight load, CUDA graph capture) can take 1–10 minutes. Scaling reacts slowly, so you need headroom.</li>
+  <li><strong>CPU% tells you nothing.</strong> The work is GPU-bound. GPU utilisation (DCGM) is also misleading, because it reads near 100% at modest batch sizes. Use <em>saturation</em> signals instead: requests waiting, KV-cache usage (<code>vllm:kv_cache_usage_perc</code>), and TTFT/ITL against your SLO.</li>
+  <li><strong>Requests have very different costs.</strong> A 200-token chat and a 30k-token RAG prompt cost very different amounts. Round-robin <code>Service</code> load balancing and sticky keep-alive connections cause hot spots. Inference-aware routing looks at queue length, KV-cache use and prefix-cache hits.</li>
+  <li><strong>The GPU is the unit of cost.</strong> An idle H100 replica costs about the same as a busy one. Autoscaling is mostly cost control. Scale-to-zero only makes sense where minute-long cold starts are acceptable.</li>
+</ul>
+
+<h3>2. The control loops, layer by layer</h3>
+<figure>
+<svg viewBox="0 0 760 330" role="img" aria-label="Request path from client through AI gateway and inference-aware router to vLLM pods on GPU nodes, with KEDA, HPA and node autoscaler control loops">
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="svg-ah"/></marker>
+    <marker id="ac" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="svg-ahc"/></marker>
+  </defs>
+  <!-- data path -->
+  <rect x="12" y="40" width="110" height="56" rx="6" class="svg-box"/><text x="67" y="64" text-anchor="middle" class="svg-t">Client / app</text><text x="67" y="82" text-anchor="middle" class="svg-s">RAG, agent</text>
+  <rect x="160" y="40" width="150" height="56" rx="6" class="svg-box"/><text x="235" y="64" text-anchor="middle" class="svg-t">AI gateway</text><text x="235" y="82" text-anchor="middle" class="svg-s">authN, quota, queue</text>
+  <rect x="348" y="40" width="170" height="56" rx="6" class="svg-hot"/><text x="433" y="64" text-anchor="middle" class="svg-t">InferencePool + EPP</text><text x="433" y="82" text-anchor="middle" class="svg-s">KV/queue/prefix-aware</text>
+  <rect x="556" y="20" width="190" height="96" rx="6" class="svg-box"/><text x="651" y="44" text-anchor="middle" class="svg-t">vLLM replicas</text>
+  <rect x="572" y="56" width="48" height="44" rx="4" class="svg-hot"/><text x="596" y="83" text-anchor="middle" class="svg-s">GPU</text>
+  <rect x="628" y="56" width="48" height="44" rx="4" class="svg-hot"/><text x="652" y="83" text-anchor="middle" class="svg-s">GPU</text>
+  <rect x="684" y="56" width="48" height="44" rx="4" class="svg-box" stroke-dasharray="4 3"/><text x="708" y="83" text-anchor="middle" class="svg-s">new</text>
+  <path d="M122 68 H156" class="svg-l" marker-end="url(#a)"/>
+  <path d="M310 68 H344" class="svg-l" marker-end="url(#a)"/>
+  <path d="M518 68 H552" class="svg-l" marker-end="url(#a)"/>
+  <!-- control plane -->
+  <rect x="160" y="170" width="150" height="56" rx="6" class="svg-box"/><text x="235" y="194" text-anchor="middle" class="svg-t">Prometheus</text><text x="235" y="212" text-anchor="middle" class="svg-s">num_requests_waiting</text>
+  <rect x="348" y="170" width="170" height="56" rx="6" class="svg-box"/><text x="433" y="194" text-anchor="middle" class="svg-t">KEDA → HPA</text><text x="433" y="212" text-anchor="middle" class="svg-s">pods = ⌈queue / target⌉</text>
+  <rect x="556" y="170" width="190" height="56" rx="6" class="svg-box"/><text x="651" y="194" text-anchor="middle" class="svg-t">Karpenter / CA</text><text x="651" y="212" text-anchor="middle" class="svg-s">add GPU node (min.)</text>
+  <rect x="556" y="262" width="190" height="56" rx="6" class="svg-box"/><text x="651" y="286" text-anchor="middle" class="svg-t">GPU Operator / DRA</text><text x="651" y="304" text-anchor="middle" class="svg-s">driver, device plugin</text>
+  <path d="M651 116 C 651 140, 235 130, 235 166" class="svg-c" marker-end="url(#ac)"/>
+  <text x="300" y="140" class="svg-s">scrape /metrics</text>
+  <path d="M310 198 H344" class="svg-c" marker-end="url(#ac)"/>
+  <path d="M518 198 H552" class="svg-c" marker-end="url(#ac)"/>
+  <text x="520" y="160" class="svg-s">Pending pod</text>
+  <path d="M708 166 V120" class="svg-c" marker-end="url(#ac)"/>
+  <path d="M651 226 V258" class="svg-c" marker-end="url(#ac)"/>
+  <text x="12" y="200" class="svg-s">solid: request path</text>
+  <text x="12" y="220" class="svg-s">dashed: control loops</text>
+</svg>
+<figcaption>Three loops with very different speeds: routing (milliseconds), pod scaling (tens of seconds plus the model-load time) and node scaling (minutes). Design headroom for the slowest one.</figcaption>
+</figure>
+
+<ul class="tight">
+  <li><strong>HPA</strong> handles resource, custom and external metrics. Its <code>behavior</code> block (stabilisation windows, scale-up/down policies) is where you stop flapping on expensive pods.</li>
+  <li><strong>KEDA</strong> creates and owns the HPA for you from a <code>ScaledObject</code>. It adds 70+ event sources (Prometheus, Kafka, SQS, Service Bus, HTTP), scale-to-zero and activation thresholds. Use it for queue-driven LLM and batch-embedding workers.</li>
+  <li><strong>Node autoscaling</strong>: Cluster Autoscaler or Karpenter (EKS, and AKS via node auto-provisioning). GPU node lead time sets your real burst capacity. Low-priority "balloon" placeholder pods buy warm headroom.</li>
+  <li><strong>KServe</strong> provides the <code>InferenceService</code> abstraction plus <code>LLMInferenceService</code>, which integrates llm-d for disaggregated prefill/decode and multi-node serving with LeaderWorkerSet. Recent releases added OpenAI <code>/v1/responses</code> routing, a model cache and multi-node without Ray (0.18). Red Hat OpenShift AI's single-model serving is KServe-based, so this is the substrate under watsonx-on-OpenShift deployments.</li>
+  <li><strong>Gateway API Inference Extension</strong> (v1.6.x): an <code>InferencePool</code> is a set of model-server endpoints behind a Gateway. The Endpoint Picker (EPP) picks the best replica per request. The production EPP now lives in llm-d (<code>llm-d-router</code>). GKE Inference Gateway is built on it.</li>
+</ul>
+
+<h3>3. GPU scheduling</h3>
+<ul class="tight">
+  <li><strong>Device plugin model</strong>: pods request <code>nvidia.com/gpu: 1</code>, an integer-only extended resource. The NVIDIA GPU Operator installs the driver, container toolkit, device plugin, DCGM exporter and MIG manager.</li>
+  <li><strong>Isolation</strong>: taint GPU nodes (<code>nvidia.com/gpu=present:NoSchedule</code>), tolerate only in inference pods, and pin GPU model with node affinity on product labels. Without this, a stray CPU pod can block a ₹-expensive node from scale-down.</li>
+  <li><strong>Sharing</strong>: MIG gives hard isolation (A100/H100 slices). Time-slicing and MPS are soft sharing, fine for dev and embeddings, risky for latency SLOs.</li>
+  <li><strong>DRA</strong> (Dynamic Resource Allocation) is <strong>stable since Kubernetes 1.35</strong>. <code>ResourceClaim</code>s select devices by attributes (memory, model, topology) instead of an opaque count. The NVIDIA DRA driver is the path to fine-grained, topology-aware GPU allocation, and the GPU Operator roadmap plans to manage it.</li>
+</ul>
+<div class="code"><div class="lbl">GPU pod essentials (illustrative)</div><button class="copy" type="button">Copy</button><pre><code>spec:
+  tolerations: [{key: nvidia.com/gpu, operator: Exists, effect: NoSchedule}]
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms: [{matchExpressions: [{key: nvidia.com/gpu.product, operator: In, values: ["NVIDIA-L4"]}]}]
+  terminationGracePeriodSeconds: 120        # let in-flight streams finish
+  containers:
+  - name: vllm
+    resources: {limits: {nvidia.com/gpu: 1}}
+    startupProbe:  {httpGet: {path: /health, port: 8000}, failureThreshold: 60, periodSeconds: 10}  # 10 min for weight load
+    readinessProbe: {httpGet: {path: /health, port: 8000}, periodSeconds: 5}
+    lifecycle: {preStop: {sleep: {seconds: 30}}}  # drain before SIGTERM</code></pre></div>
+
+<h3>4. Helm and canary for models</h3>
+<p>Package each model deployment as a chart (vLLM production-stack, llm-d and KServe all ship Helm charts) and keep the <em>model id, revision hash, quantisation and serving args</em> in versioned values files. A model change should be a reviewable diff, not a <code>kubectl edit</code>.</p>
+<p>Canary for LLMs needs two gates. <strong>Offline</strong>: the eval suite runs in CI before rollout (Day 26). <strong>Online</strong>: send 5–10% of traffic using KServe <code>canaryTrafficPercent</code>, HTTPRoute weights, or Argo Rollouts/Flagger analysis. Judge on TTFT/ITL p95, error rate, refusal rate, and a sampled groundedness or LLM-judge score, not only HTTP 5xx. A model can return 200 OK with every answer wrong.</p>
+</section>
+
+<section id="tradeoffs">
+<h2>Trade-offs &amp; decision tables</h2>
+<h3>Scaling signal</h3>
+<div class="tbl"><table>
+<thead><tr><th>Signal</th><th>Pick when</th><th>Failure mode</th><th>Cost / latency</th></tr></thead>
+<tbody>
+<tr><td>CPU / memory (plain HPA)</td><td>CPU-bound sidecars: API, embedding on CPU, rerankers</td><td>GPU pods sit at low CPU while the queue explodes, so nothing scales</td><td>Cheap to run; useless for GPU serving</td></tr>
+<tr><td>GPU util (DCGM)</td><td>Batch/offline jobs</td><td>Reads saturated at small batch, so it over-scales; doesn't reflect queueing</td><td>Over-provisions GPUs</td></tr>
+<tr><td>Queue depth (waiting requests)</td><td>Default for online LLM serving</td><td>Needs a stable target per replica; noisy at low traffic</td><td>Tracks user-visible latency well</td></tr>
+<tr><td>KV-cache usage</td><td>Long-context RAG, where memory not compute saturates</td><td>Prefix caching makes it read high when idle-ish</td><td>Prevents preemption and recompute storms</td></tr>
+<tr><td>TTFT / ITL SLO</td><td>Mature setups with good observability</td><td>Lagging indicator; feedback-loop oscillation</td><td>Directly ties spend to SLO</td></tr>
+<tr><td>Scale-to-zero (KEDA/Knative)</td><td>Dev, internal tools, per-tenant fine-tunes, nightly batch</td><td>1–10 min cold start; first user times out</td><td>Biggest saving; worst p99</td></tr>
+</tbody></table></div>
+
+<h3>Serving platform on Kubernetes</h3>
+<div class="tbl"><table>
+<thead><tr><th>Option</th><th>Pick when</th><th>Failure modes</th><th>Cost / ops</th></tr></thead>
+<tbody>
+<tr><td>Deployment + HPA/KEDA + Helm</td><td>1–3 models, small team, single-GPU replicas</td><td>Naive LB, no model cache, DIY canary</td><td>Lowest complexity</td></tr>
+<tr><td>vLLM production-stack</td><td>vLLM-only fleet; want a router with prefix-aware routing and KV offload quickly</td><td>Tied to vLLM; smaller community than KServe</td><td>One chart; moderate</td></tr>
+<tr><td>KServe (RawDeployment or Knative)</td><td>Many models and teams; need one CRD, canary, model cache; OpenShift AI / watsonx estates</td><td>CRD and webhook sprawl; Knative mode adds Istio/Kourier complexity</td><td>Platform team required</td></tr>
+<tr><td>llm-d (via KServe LLMInferenceService or directly)</td><td>Large models, high QPS, P/D disaggregation, multi-node, prefix-cache-heavy RAG</td><td>Newest stack; needs fast interconnect for P/D</td><td>Best GPU efficiency at scale; highest expertise</td></tr>
+<tr><td>Managed endpoint (Bedrock, Azure AI Foundry, Vertex, watsonx.ai SaaS)</td><td>Closed models, spiky low volume, no GPU ops team</td><td>Quota limits, regional capacity, less control of versions</td><td>Pay per token; zero GPU ops</td></tr>
+</tbody></table></div>
+<p>Cloud mapping: <strong>EKS</strong> + Karpenter + GPU AMIs · <strong>AKS</strong> + GPU node pools + KAITO (AI toolchain operator) · <strong>GKE</strong> + Inference Gateway + GPU/TPU node pools · <strong>OpenShift AI</strong> (watsonx on-prem) + KServe + vLLM ServingRuntime.</p>
+</section>
+
+<section id="lab">
+<h2>Hands-on lab: queue-depth autoscaling with KEDA on kind</h2>
+<p><strong>Goal (≈75 min):</strong> run a two-tier "LLM" service on a local cluster, autoscale the backend on <em>in-flight requests</em> instead of CPU, and watch the cold-start lag and load imbalance yourself. The backend simulates a GPU server: a fixed number of concurrent slots (like KV-cache capacity), a prefill delay, per-token decode time, and a 20-second warm-up that stands in for weight loading. It needs no GPU, so it runs comfortably in 16 GB RAM.</p>
+<div class="note"><strong>Needs Docker Desktop with the WSL2 backend.</strong> kind runs Kubernetes inside Docker containers. Give Docker Desktop at least 4 GB RAM (Settings → Resources). GPU passthrough into kind on Windows isn't practical, so GPU scheduling stays conceptual today.</div>
+
+<h3>Setup (PowerShell)</h3>
+<div class="code"><div class="lbl">PowerShell</div><button class="copy" type="button">Copy</button><pre><code># Tools (kind v0.33.0 is current)
+winget install -e --id Kubernetes.kind
+winget install -e --id Kubernetes.kubectl
+winget install -e --id Helm.Helm
+# open a NEW terminal so PATH refreshes
+
+mkdir day25-k8s; cd day25-k8s; mkdir k8s
+py -3.13 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install httpx==0.28.1
+
+kind create cluster --name genai
+kubectl get nodes</code></pre></div>
+
+<h3>app.py: one image, two roles (gateway and backend)</h3>
+<div class="code"><div class="lbl">app.py</div><button class="copy" type="button">Copy</button><pre><code>"""Mock LLM serving tier. ROLE=backend simulates a GPU model server
+(fixed concurrency slots, prefill + per-token decode, warm-up on start).
+ROLE=gateway is a thin AI gateway that relays streams and exposes the
+global in-flight count that KEDA scales on."""
+import asyncio
+import os
+import time
+from contextlib import asynccontextmanager
+
+import httpx
+from fastapi import FastAPI, HTTPException
+from fastapi.responses import StreamingResponse
+from pydantic import BaseModel
+
+ROLE = os.getenv("ROLE", "backend")
+MAX_CONCURRENCY = int(os.getenv("MAX_CONCURRENCY", "2"))  # ~ KV-cache slots
+PREFILL_MS = float(os.getenv("PREFILL_MS", "150"))
+TPOT_MS = float(os.getenv("TPOT_MS", "40"))               # time per output token
+WARMUP_S = float(os.getenv("WARMUP_SECONDS", "20"))       # ~ weight load
+BACKEND_URL = os.getenv("BACKEND_URL", "http://mockllm-backend:8000")
+KEEPALIVE = int(os.getenv("KEEPALIVE", "0"))              # 0 = new conn per request
+POD = os.getenv("HOSTNAME", "local")
+
+state = {"running": 0, "waiting": 0, "inflight": 0, "served": 0}
+started = time.monotonic()
+slots = asyncio.Semaphore(MAX_CONCURRENCY)
+client: httpx.AsyncClient | None = None
+
+
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    global client
+    if ROLE == "gateway":
+        client = httpx.AsyncClient(
+            base_url=BACKEND_URL,
+            timeout=httpx.Timeout(180.0, connect=5.0),
+            limits=httpx.Limits(max_keepalive_connections=KEEPALIVE),
+        )
+    yield
+    if client:
+        await client.aclose()
+
+
+app = FastAPI(lifespan=lifespan)
+
+
+class GenRequest(BaseModel):
+    prompt: str
+    max_tokens: int = 64
+
+
+@app.get("/healthz")
+async def healthz():
+    return {"ok": True}
+
+
+@app.get("/readyz")
+async def readyz():
+    if ROLE == "backend" and time.monotonic() - started &lt; WARMUP_S:
+        raise HTTPException(status_code=503, detail="loading model weights")
+    return {"ready": True}
+
+
+@app.get("/stats")
+async def stats():
+    return {"role": ROLE, "pod": POD, "max_concurrency": MAX_CONCURRENCY, **state}
+
+
+async def _generate(req: GenRequest):
+    state["waiting"] += 1
+    acquired = False
+    try:
+        await slots.acquire()
+        acquired = True
+        state["waiting"] -= 1
+        state["running"] += 1
+        # prefill cost grows with prompt length
+        await asyncio.sleep(PREFILL_MS / 1000 * (1 + len(req.prompt) / 2000))
+        yield f"[{POD}] "
+        for i in range(req.max_tokens):
+            await asyncio.sleep(TPOT_MS / 1000)
+            yield f"t{i} "
+    finally:
+        if acquired:
+            slots.release()
+            state["running"] -= 1
+            state["served"] += 1
+        else:
+            state["waiting"] -= 1
+
+
+async def _relay(req: GenRequest):
+    state["inflight"] += 1
+    try:
+        async with client.stream("POST", "/v1/generate", json=req.model_dump()) as r:
+            r.raise_for_status()
+            async for chunk in r.aiter_text():
+                yield chunk
+    finally:
+        state["inflight"] -= 1
+        state["served"] += 1
+
+
+@app.post("/v1/generate")
+async def generate(req: GenRequest):
+    gen = _generate(req) if ROLE == "backend" else _relay(req)
+    return StreamingResponse(gen, media_type="text/plain")</code></pre></div>
+
+<div class="code"><div class="lbl">Dockerfile</div><button class="copy" type="button">Copy</button><pre><code>FROM python:3.13-slim
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
+WORKDIR /app
+RUN python -m pip install --no-cache-dir "fastapi==0.162.0" "uvicorn[standard]==0.54.0" "httpx==0.28.1"
+COPY app.py .
+RUN useradd -u 10001 app
+USER 10001
+EXPOSE 8000
+CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]</code></pre></div>
+
+<h3>Kubernetes manifests</h3>
+<div class="code"><div class="lbl">k8s/deploy.yaml</div><button class="copy" type="button">Copy</button><pre><code>apiVersion: apps/v1
+kind: Deployment
+metadata: {name: mockllm-backend}
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: mockllm-backend}}
+  template:
+    metadata: {labels: {app: mockllm-backend}}
+    spec:
+      terminationGracePeriodSeconds: 30
+      containers:
+      - name: server
+        image: mockllm:0.1
+        imagePullPolicy: IfNotPresent
+        env:
+        - {name: ROLE, value: backend}
+        - {name: MAX_CONCURRENCY, value: "2"}
+        - {name: WARMUP_SECONDS, value: "20"}
+        ports: [{containerPort: 8000}]
+        readinessProbe: {httpGet: {path: /readyz, port: 8000}, periodSeconds: 2}
+        livenessProbe:  {httpGet: {path: /healthz, port: 8000}, periodSeconds: 10}
+        lifecycle: {preStop: {sleep: {seconds: 5}}}
+        resources:
+          requests: {cpu: 50m, memory: 96Mi}
+          limits:   {memory: 256Mi}
+---
+apiVersion: v1
+kind: Service
+metadata: {name: mockllm-backend}
+spec:
+  selector: {app: mockllm-backend}
+  ports: [{port: 8000, targetPort: 8000}]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: mockllm-gateway}
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: mockllm-gateway}}
+  template:
+    metadata: {labels: {app: mockllm-gateway}}
+    spec:
+      containers:
+      - name: server
+        image: mockllm:0.1
+        imagePullPolicy: IfNotPresent
+        env:
+        - {name: ROLE, value: gateway}
+        - {name: BACKEND_URL, value: "http://mockllm-backend:8000"}
+        - {name: KEEPALIVE, value: "0"}
+        ports: [{containerPort: 8000}]
+        readinessProbe: {httpGet: {path: /readyz, port: 8000}, periodSeconds: 2}
+        resources:
+          requests: {cpu: 50m, memory: 96Mi}
+          limits:   {memory: 256Mi}
+---
+apiVersion: v1
+kind: Service
+metadata: {name: mockllm-gateway}
+spec:
+  selector: {app: mockllm-gateway}
+  ports: [{port: 8000, targetPort: 8000}]</code></pre></div>
+
+<div class="code"><div class="lbl">k8s/scaledobject.yaml (KEDA metrics-api scaler)</div><button class="copy" type="button">Copy</button><pre><code>apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata: {name: mockllm-backend}
+spec:
+  scaleTargetRef: {name: mockllm-backend}
+  minReplicaCount: 1
+  maxReplicaCount: 6
+  pollingInterval: 5
+  cooldownPeriod: 60
+  advanced:
+    horizontalPodAutoscalerConfig:
+      behavior:
+        scaleUp:   {stabilizationWindowSeconds: 0}
+        scaleDown: {stabilizationWindowSeconds: 60}
+  triggers:
+  - type: metrics-api
+    metricType: AverageValue          # desired = ceil(inflight / 2)
+    metadata:
+      url: "http://mockllm-gateway.default.svc.cluster.local:8000/stats"
+      valueLocation: "inflight"
+      targetValue: "2"                # = backend MAX_CONCURRENCY</code></pre></div>
+
+<h3>loadtest.py: ramp, measure TTFT, see which pod served</h3>
+<div class="code"><div class="lbl">loadtest.py</div><button class="copy" type="button">Copy</button><pre><code>import asyncio
+import statistics
+import time
+from collections import Counter
+
+import httpx
+
+URL = "http://localhost:8000"
+PHASES = [("warm", 2, 30), ("burst", 12, 150), ("cool", 2, 45)]  # name, concurrency, seconds
+
+
+async def worker(client, stop_at, results, pods):
+    while time.monotonic() &lt; stop_at:
+        t0 = time.monotonic()
+        ttft = None
+        try:
+            async with client.stream("POST", "/v1/generate",
+                                     json={"prompt": "Summarise the leave policy " * 20,
+                                           "max_tokens": 64}) as r:
+                async for chunk in r.aiter_text():
+                    if ttft is None:
+                        ttft = time.monotonic() - t0
+                        if chunk.startswith("["):
+                            pods[chunk[1:chunk.index("]")]] += 1
+            results.append((ttft or 0.0, time.monotonic() - t0))
+        except httpx.HTTPError as e:
+            results.append((float("nan"), float("nan")))
+            print("error:", type(e).__name__)
+
+
+async def sampler(client, stop_at):
+    while time.monotonic() &lt; stop_at:
+        s = (await client.get("/stats")).json()
+        print(f"  {time.strftime('%H:%M:%S')}  gateway inflight={s['inflight']}")
+        await asyncio.sleep(10)
+
+
+def p(values, q):
+    vals = sorted(v for v in values if v == v)
+    return vals[min(len(vals) - 1, int(q * len(vals)))] if vals else float("nan")
+
+
+async def main():
+    timeout = httpx.Timeout(180.0, connect=5.0)
+    async with httpx.AsyncClient(base_url=URL, timeout=timeout) as client:
+        for name, conc, secs in PHASES:
+            print(f"\n== phase {name}: concurrency={conc} for {secs}s")
+            stop_at = time.monotonic() + secs
+            results, pods = [], Counter()
+            await asyncio.gather(sampler(client, stop_at),
+                                 *(worker(client, stop_at, results, pods) for _ in range(conc)))
+            ttfts = [r[0] for r in results]
+            totals = [r[1] for r in results]
+            print(f"   requests={len(results)}  TTFT p50={p(ttfts, .5):.2f}s p95={p(ttfts, .95):.2f}s"
+                  f"  e2e p50={statistics.median(totals):.2f}s")
+            print(f"   served by: {dict(pods)}")
+
+
+if __name__ == "__main__":
+    asyncio.run(main())</code></pre></div>
+
+<h3>Run it</h3>
+<div class="code"><div class="lbl">PowerShell: build, deploy, install KEDA</div><button class="copy" type="button">Copy</button><pre><code>docker build -t mockllm:0.1 .
+kind load docker-image mockllm:0.1 --name genai
+kubectl apply -f k8s/deploy.yaml
+kubectl rollout status deploy/mockllm-backend   # ~20s: watch readiness gate the warm-up
+
+helm repo add kedacore https://kedacore.github.io/charts
+helm repo update
+helm install keda kedacore/keda --namespace keda --create-namespace
+kubectl -n keda rollout status deploy/keda-operator
+kubectl apply -f k8s/scaledobject.yaml
+kubectl get scaledobject,hpa                     # KEDA created keda-hpa-mockllm-backend
+
+# Terminal 2
+kubectl port-forward svc/mockllm-gateway 8000:8000
+# Terminal 3
+kubectl get deploy mockllm-backend -w
+# Terminal 1 (venv active)
+python loadtest.py</code></pre></div>
+
+<h3>Expected output (shape, your numbers will differ)</h3>
+<div class="code"><div class="lbl">console</div><button class="copy" type="button">Copy</button><pre><code>== phase warm: concurrency=2 for 30s
+   requests=22  TTFT p50=0.33s p95=0.36s  e2e p50=2.93s
+   served by: {'mockllm-backend-7c9d...-x2kq': 22}
+
+== phase burst: concurrency=12 for 150s
+  gateway inflight=12
+   requests=420  TTFT p50=0.4s p95=13.5s  e2e p50=3.1s
+   served by: {'...x2kq': 98, '...b7mf': 71, '...r4tz': 66, '...9hcp': 64, '...q8dn': 62, '...zl2w': 59}
+
+== phase cool: concurrency=2 for 45s
+   requests=31  TTFT p50=0.33s p95=0.35s  e2e p50=2.92s</code></pre></div>
+<p>What to notice: replicas go 1 → 6 within about 10 seconds of the burst, but pods only take traffic after the 20 s warm-up, so burst p95 TTFT stays high for the first 30–40 s and then drops. That gap is your cold-start budget. In production it's minutes, which is why minReplicas, warm pools and model caches matter. Scale-down to 1 happens about 60 s after the burst (stabilisation window plus cooldown).</p>
+
+<h3>Stretch goals</h3>
+<ol>
+  <li><strong>Break the load balancer.</strong> Set <code>KEEPALIVE=50</code> on the gateway and <code>kubectl rollout restart deploy/mockllm-gateway</code>. Re-run the test. Pooled connections stick to the pods that existed first, so new replicas sit idle while TTFT stays high. Write two sentences on why this is the problem the Inference Extension's EPP solves. Then try KEDA's <code>aggregateFromKubeServiceEndpoints</code> option to scale on the backends' own <code>waiting</code> sum instead of the gateway.</li>
+  <li><strong>Swap in a real model.</strong> Replace the backend with <code>ollama/ollama</code> serving <code>qwen2.5:0.5b</code> (398 MB) with <code>OLLAMA_NUM_PARALLEL=2</code>, pull the model in an init container onto an <code>emptyDir</code>, and replace the readiness probe with a <code>startupProbe</code>. Measure real cold-start time, then add a hostPath/PVC model cache and measure again. Keep <code>maxReplicaCount: 3</code> on 16 GB.</li>
+</ol>
+<p>Cleanup: <code>kind delete cluster --name genai</code></p>
+</section>
+
+<section id="repos">
+<h2>GitHub repos to study</h2>
+<div class="repo"><b><a href="https://github.com/kserve/kserve">kserve/kserve</a></b><span>Latest v0.20.0, with v0.21 in RC. Read the <code>LLMInferenceService</code> CRD and its controller to see how llm-d, LeaderWorkerSet and HTTPRoutes are composed from one spec.</span></div>
+<div class="repo"><b><a href="https://github.com/kedacore/keda">kedacore/keda</a></b><span>Latest v2.20.2. Read <code>pkg/scalers/</code> (metrics-api and prometheus scalers) to see how a metric becomes an external HPA metric, and how activation differs from scaling thresholds.</span></div>
+<div class="repo"><b><a href="https://github.com/llm-d/llm-d">llm-d/llm-d</a></b><span>CNCF sandbox; llm-d.ai now announces 1.0. Work through the guides on intelligent inference scheduling and prefill/decode disaggregation. That's the state of the art you'll be asked about.</span></div>
+<div class="repo"><b><a href="https://github.com/kubernetes-sigs/gateway-api-inference-extension">kubernetes-sigs/gateway-api-inference-extension</a></b><span>Latest v1.6.2. Study the <code>InferencePool</code> API and the request-flow docs. The production Endpoint Picker has moved to llm-d, so note which pieces are being archived here.</span></div>
+</div>
+</section>
+
+<section id="read">
+<h2>Read / watch</h2>
+<ul>
+  <li><a href="https://kserve.github.io/website/blog/kserve-0.18-release">KServe 0.18 release blog</a> (Apr 2026): multi-node without Ray, <code>/v1/responses</code> routing, llm-d integration and LWS autoscaling. A quick way to learn where KServe is going.</li>
+  <li><a href="https://kubernetes.io/docs/concepts/scheduling-eviction/dynamic-resource-allocation/">Kubernetes docs: Dynamic Resource Allocation</a>, stable since 1.35. Read ResourceClaim and DeviceClass and how CEL selectors replace opaque GPU counts.</li>
+  <li><a href="https://docs.vllm.ai/en/latest/design/metrics/">vLLM metrics design</a>: the gauges you'd actually scale and alert on (running/waiting requests, <code>vllm:kv_cache_usage_perc</code>, TTFT/ITL histograms).</li>
+</ul>
+</section>
+
+<section id="interview">
+<h2>Interview questions</h2>
+<details class="qa"><summary>1. Why not autoscale an LLM Deployment on CPU or GPU utilisation?</summary><div>CPU barely moves on GPU-bound decode, so the HPA never fires. GPU utilisation saturates at small batch sizes, so it reads "full" while the server could absorb more concurrent requests through continuous batching. Both miss the thing users feel, which is queueing. I scale on requests waiting per replica (or KV-cache usage for long-context workloads), with the target set from a load test at the TTFT SLO. Utilisation stays a dashboard metric, not a control signal.</div></details>
+<details class="qa"><summary>2. Traffic jumps 10× at 9 AM. Walk through what happens and how you'd make it safe.</summary><div>Queue depth rises and KEDA/HPA asks for more pods within seconds. Pods go Pending if there's no GPU headroom, and Karpenter/CA takes several minutes to add a node. Then the image pulls and weights load (minutes more). Meanwhile the gateway must shed or queue load: per-tenant rate limits, a 429 with Retry-After, and fallback to a managed endpoint or a smaller model. To make it safe: scheduled pre-scaling (it's a known pattern), balloon pods or warm min-replicas, a node-local or PVC model cache, pre-pulled images, and a startupProbe so unready pods never get traffic.</div></details>
+<details class="qa"><summary>3. When would you choose KServe over a plain Deployment + KEDA + Helm?</summary><div>When there are many models and teams and I need one contract: a standard CRD, built-in canary traffic splitting, model caching, OpenAI-compatible routing, and multi-node or P/D serving via LLMInferenceService. That's a platform investment with its own CRDs, webhooks and upgrade cycle. For two or three models owned by one team, Deployment + KEDA + Helm is easier to run and to debug. On OpenShift AI / watsonx estates KServe is already the substrate, so the choice is mostly made for you.</div></details>
+<details class="qa"><summary>4. How do you share expensive GPUs across teams without wrecking latency SLOs?</summary><div>Separate by SLO tier. Latency-critical serving gets whole GPUs or MIG slices (hard isolation), on tainted node pools with quotas per namespace. Dev, embeddings and batch can use time-slicing or MPS, and preemptible priority classes so they yield. Use ResourceQuotas on <code>nvidia.com/gpu</code>, PriorityClasses, and (going forward) DRA for attribute-based allocation. Showback by namespace from DCGM metrics keeps teams honest about idle reservations.</div></details>
+<details class="qa"><summary>5. How do you canary a new model version, and what triggers rollback?</summary><div>The new version passes an offline eval gate first (golden set, faithfulness, safety). Then it runs as a separate revision with 5–10% traffic via KServe canaryTrafficPercent or weighted HTTPRoutes, ideally with sticky assignment per user. Automated analysis (Argo Rollouts/Flagger) compares TTFT/ITL p95, error and refusal rates, token-per-request inflation (cost), and a sampled LLM-judge groundedness score against the stable version. Any breach rolls back automatically. The previous revision stays warm until promotion, because rolling back to a cold model takes minutes.</div></details>
+</section>
+
+<section id="adr">
+<h2>Architect's lens: ADR-025</h2>
+<dl class="adr">
+  <dt>Title</dt><dd>Autoscaling signal and warm capacity for the self-hosted LLM tier of the enterprise knowledge assistant</dd>
+  <dt>Context</dt><dd>vLLM on L4/A10-class GPUs behind an AI gateway, 50k employees with a sharp 9–11 AM IST peak. SLO: TTFT p95 under 1.5 s. GPU node provisioning takes about 4 min and model load about 3 min. GPUs are roughly 70% of serving cost.</dd>
+  <dt>Options</dt><dd>(A) HPA on CPU/GPU utilisation. (B) KEDA on Prometheus <code>vllm:num_requests_waiting</code> per replica plus warm min-replicas. (C) Knative/KServe serverless with scale-to-zero. (D) Fixed peak-sized fleet.</dd>
+  <dt>Decision</dt><dd>(B). KEDA scales on waiting requests per replica (target set from a load test at the TTFT SLO), with KV-cache usage as a second trigger. A cron trigger pre-scales at 08:30 IST. Off-peak minimum is 2 replicas across 2 zones. One low-priority balloon pod holds a warm GPU node. Scale-down stabilisation is 10 min.</dd>
+  <dt>Consequences</dt><dd>(+) Scaling tracks user-felt latency and idle GPU hours drop about 40–50% versus D. (−) We pay for 2 replicas plus one balloon node overnight. The target needs re-tuning on every model or GPU change. Bursts faster than about 7 min still rely on gateway rate-limiting and fallback to a managed endpoint. Scale-to-zero (C) stays reserved for per-team fine-tunes and dev.</dd>
+</dl>
+</section>
+
+<section id="tomorrow" class="tomorrow">
+<strong>Tomorrow, Day 26:</strong> CI/CD for GenAI. GitHub Actions, eval gates in pipelines, prompt/model versioning, rollback and blue-green.
+</section>
+</main>
+</div>
+
+<script>
+document.querySelectorAll('.copy').forEach(function(btn){
+  btn.addEventListener('click',function(){
+    var code=btn.parentElement.querySelector('pre');
+    var text=code.innerText;
+    function done(msg){btn.textContent=msg;setTimeout(function(){btn.textContent='Copy'},1600)}
+    function fallback(){var r=document.createRange();r.selectNodeContents(code);var s=window.getSelection();s.removeAllRanges();s.addRange(r);done('Press Ctrl+C')}
+    try{navigator.clipboard.writeText(text).then(function(){done('Copied')},fallback)}catch(e){fallback()}
+  });
+});
+</script>
+
+</body></html>

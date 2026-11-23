@@ -1,0 +1,22 @@
+# docker compose up --build             -> API on :8000 using the offline fake LLM
+# docker compose --profile ollama up    -> also start Ollama; set AIARCH_LLM_ROUTES to use it (see .env.example)
+services:
+  api:
+    build: .
+    ports: ["8000:8000"]
+    env_file:
+      - path: .env
+        required: false
+    read_only: true
+    tmpfs: ["/tmp"]
+    security_opt: ["no-new-privileges:true"]
+    deploy:
+      resources:
+        limits: { cpus: "1.0", memory: 1g }
+  ollama:
+    image: ollama/ollama:latest
+    profiles: ["ollama"]
+    ports: ["11434:11434"]
+    volumes: ["ollama:/root/.ollama"]
+volumes:
+  ollama: {}

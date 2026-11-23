@@ -1,0 +1,24 @@
+<svg font-family="IBM Plex Sans, Segoe UI, Arial, sans-serif" aria-label="Pipeline: versioned prompt template, LLM with grammar mask over logits, JSON parse, Pydantic validation, with a re-ask loop on validation failure." role="img" style="background:#ffffff" viewbox="0 0 760 300" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="ah" markerheight="7" markerwidth="7" orient="auto" refx="9" refy="5" viewbox="0 0 10 10"><path d="M0,0 L10,5 L0,10 z" fill="#555"></path></marker>
+<marker id="ahw" markerheight="7" markerwidth="7" orient="auto" refx="9" refy="5" viewbox="0 0 10 10"><path d="M0,0 L10,5 L0,10 z" fill="#555"></path></marker></defs>
+<rect class="bx" height="70" rx="8" width="150" x="10" y="30"></rect>
+<text class="t" x="24" y="56">Prompt registry</text><text class="s" x="24" y="76">triage@v2#8787</text><text class="s" x="24" y="91">vars: {schema,ticket}</text>
+<rect class="bxa" height="70" rx="8" width="190" x="200" y="30"></rect>
+<text class="t" x="214" y="56">LLM + grammar mask</text><text class="s" x="214" y="76">logits ⊙ allowed(state)</text><text class="s" x="214" y="91">XGrammar / llguidance</text>
+<rect class="bx" height="70" rx="8" width="130" x="430" y="30"></rect>
+<text class="t" x="444" y="56">Parse JSON</text><text class="s" x="444" y="76">syntax: guaranteed</text><text class="s" x="444" y="91">unless truncated</text>
+<rect class="bx" height="70" rx="8" width="150" x="600" y="30"></rect>
+<text class="t" x="614" y="56">Pydantic validate</text><text class="s" x="614" y="76">semantics, x-field</text><text class="s" x="614" y="91">business rules</text>
+<path class="ar" d="M160 65 H196" marker-end="url(#ah)"></path><path class="ar" d="M390 65 H426" marker-end="url(#ah)"></path><path class="ar" d="M560 65 H596" marker-end="url(#ah)"></path>
+<path class="arw" d="M675 100 V128 H295 V104" marker-end="url(#ahw)"></path>
+<text class="tw" x="400" y="146">ValidationError → re-ask with error text (max 1–2)</text>
+<text class="s" x="200" y="186">Inside the mask at one decoding step, after  {"priority": "</text>
+<rect class="toka" height="26" rx="4" width="56" x="200" y="198"></rect><text class="tta" x="216" y="215">P1</text>
+<rect class="tok" height="26" rx="4" width="56" x="262" y="198"></rect><text class="tt" x="278" y="215">P2</text>
+<rect class="tok" height="26" rx="4" width="56" x="324" y="198"></rect><text class="tt" x="340" y="215">P3</text>
+<rect class="tokx" height="26" rx="4" width="76" x="386" y="198"></rect><text class="ttx" x="396" y="215">High</text>
+<rect class="tokx" height="26" rx="4" width="76" x="468" y="198"></rect><text class="ttx" x="478" y="215">urgent</text>
+<rect class="tokx" height="26" rx="4" width="76" x="550" y="198"></rect><text class="ttx" x="560" y="215">Sure!</text>
+<text class="s" x="200" y="252">Disallowed tokens get logit −∞. The model can only choose among valid continuations,</text>
+<text class="s" x="200" y="268">so the shape is guaranteed but correctness is not. A valid "P1" can still be the wrong answer.</text>
+</svg>

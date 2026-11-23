@@ -1,0 +1,31 @@
+<svg font-family="IBM Plex Sans, system-ui, sans-serif" style="background:#ffffff" viewbox="0 0 760 190" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="ar" markerheight="7" markerwidth="7" orient="auto" refx="9" refy="5" viewbox="0 0 10 10"><path d="M0,0 L10,5 L0,10 z" fill="#555"></path></marker></defs>
+<g fill="#555" font-size="12">
+<rect fill="#555" height="64" rx="6" stroke="#555" width="110" x="10" y="40"></rect>
+<text font-weight="600" text-anchor="middle" x="65" y="66">PR</text>
+<text fill="#555" font-size="11" text-anchor="middle" x="65" y="84">prompt / config diff</text>
+<rect fill="#555" height="64" rx="6" stroke="#555" width="130" x="150" y="40"></rect>
+<text font-weight="600" text-anchor="middle" x="215" y="66">Offline eval gate</text>
+<text fill="#555" font-size="11" text-anchor="middle" x="215" y="84">golden set vs baseline</text>
+<rect fill="#555" height="64" rx="6" stroke="#555" width="110" x="310" y="40"></rect>
+<text font-weight="600" text-anchor="middle" x="365" y="66">Build + sign</text>
+<text fill="#555" font-size="11" text-anchor="middle" x="365" y="84">image, bundle tag</text>
+<rect fill="#555" height="64" rx="6" stroke="#555" width="120" x="450" y="40"></rect>
+<text font-weight="600" text-anchor="middle" x="510" y="66">Staging</text>
+<text fill="#555" font-size="11" text-anchor="middle" x="510" y="84">full eval + red-team</text>
+<rect fill="#555" height="64" rx="6" stroke="#555" width="150" x="600" y="40"></rect>
+<text font-weight="600" text-anchor="middle" x="675" y="62">Canary 5→25→100%</text>
+<text fill="#555" font-size="11" text-anchor="middle" x="675" y="80">TTFT, cost/req, block rate,</text>
+<text fill="#555" font-size="11" text-anchor="middle" x="675" y="94">sampled groundedness</text>
+</g>
+<g fill="none" marker-end="url(#ar)" stroke="#555" stroke-width="1.5">
+<line x1="120" x2="148" y1="72" y2="72"></line><line x1="280" x2="308" y1="72" y2="72"></line><line x1="420" x2="448" y1="72" y2="72"></line><line x1="570" x2="598" y1="72" y2="72"></line>
+<path d="M675 104 L675 150 L520 150"></path>
+</g>
+<g font-size="12">
+<rect fill="#555" height="28" rx="14" stroke="#555" width="138" x="380" y="136"></rect>
+<text fill="#555" text-anchor="middle" x="449" y="154">auto-rollback on fail</text>
+<text fill="#555" font-size="11" text-anchor="middle" x="215" y="128">fail → block merge</text>
+<text fill="#555" font-size="11" x="690" y="134">analysis</text>
+</g>
+</svg>

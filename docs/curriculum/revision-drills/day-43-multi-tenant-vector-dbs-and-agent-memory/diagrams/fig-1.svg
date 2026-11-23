@@ -1,0 +1,41 @@
+<svg font-family="IBM Plex Sans, Segoe UI, Arial, sans-serif" aria-label="The tenant is resolved from the token at the gateway and enforced in two places: the retriever, which filters a shared vector collection where large tenants have dedicated shards, and the memory store, which namespaces memories by tenant and user." role="img" style="background:#ffffff" viewbox="0 0 780 300" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="ar" markerheight="8" markerwidth="8" orient="auto" refx="7" refy="4"><path d="M0,0 L8,4 L0,8 z" fill="#555"></path></marker></defs>
+<g fill="#555" font-family="IBM Plex Sans, system-ui, sans-serif" font-size="12">
+<rect fill="#555" height="56" rx="5" stroke="#555" width="110" x="10" y="120"></rect>
+<text font-weight="600" text-anchor="middle" x="65" y="143">User request</text><text fill="#555" text-anchor="middle" x="65" y="160">JWT: tenant, user</text>
+<rect fill="#555" height="96" rx="6" stroke="#555" width="150" x="160" y="100"></rect>
+<text fill="#555" font-weight="700" text-anchor="middle" x="235" y="122">Gateway / agent</text>
+<text font-size="11.5" x="172" y="145">tenant comes from the</text>
+<text font-size="11.5" x="172" y="161">token, never the prompt</text>
+<text fill="#555" font-size="11.5" x="172" y="181">LangGraph runtime.context</text>
+<rect fill="#555" height="80" rx="6" stroke="#555" width="190" x="350" y="20"></rect>
+<text font-weight="700" text-anchor="middle" x="445" y="42">Tenant-scoped retriever</text>
+<text font-size="11.5" x="362" y="64">mandatory tenant_id filter</text>
+<text font-size="11.5" x="362" y="82">+ doc ACL filter, k after filter</text>
+<rect fill="#555" height="130" rx="6" stroke="#555" width="190" x="580" y="12"></rect>
+<text font-weight="700" text-anchor="middle" x="675" y="34">Vector DB (knowledge)</text>
+<rect fill="#555" height="38" rx="4" stroke="#555" width="162" x="594" y="46"></rect>
+<text font-size="11" text-anchor="middle" x="675" y="62">shared shard</text><text fill="#555" font-size="11" text-anchor="middle" x="675" y="77">4,900 small tenants · is_tenant</text>
+<rect fill="#555" height="38" rx="4" stroke="#555" width="76" x="594" y="92"></rect>
+<text font-size="11" text-anchor="middle" x="632" y="108">bank-a</text><text fill="#555" font-size="10.5" text-anchor="middle" x="632" y="122">dedicated</text>
+<rect fill="#555" height="38" rx="4" stroke="#555" width="76" x="680" y="92"></rect>
+<text font-size="11" text-anchor="middle" x="718" y="108">telco-b</text><text fill="#555" font-size="10.5" text-anchor="middle" x="718" y="122">dedicated</text>
+<rect fill="#555" height="80" rx="6" stroke="#555" width="190" x="350" y="196"></rect>
+<text font-weight="700" text-anchor="middle" x="445" y="218">Memory manager</text>
+<text font-size="11.5" x="362" y="240">recall: search(ns, query)</text>
+<text font-size="11.5" x="362" y="258">write: slot upsert, in background</text>
+<rect fill="#555" height="122" rx="6" stroke="#555" width="190" x="580" y="166"></rect>
+<text font-weight="700" text-anchor="middle" x="675" y="188">Postgres (memory)</text>
+<text font-family="IBM Plex Mono, monospace" font-size="11" x="592" y="210">checkpoints: thread_id</text>
+<text fill="#555" font-size="11" x="592" y="228">short-term, per conversation</text>
+<text font-family="IBM Plex Mono, monospace" font-size="11" x="592" y="252">store: (mem, tenant, user)</text>
+<text fill="#555" font-size="11" x="592" y="270">long-term, pgvector index</text>
+</g>
+<g fill="none" stroke="#555" stroke-width="1.4">
+<path d="M120 148 H158" marker-end="url(#ar)"></path>
+<path d="M310 130 C330 110 330 70 348 62" marker-end="url(#ar)"></path>
+<path d="M310 170 C330 190 330 230 348 236" marker-end="url(#ar)"></path>
+<path d="M540 60 H578" marker-end="url(#ar)"></path>
+<path d="M540 236 H578" marker-end="url(#ar)"></path>
+</g>
+</svg>

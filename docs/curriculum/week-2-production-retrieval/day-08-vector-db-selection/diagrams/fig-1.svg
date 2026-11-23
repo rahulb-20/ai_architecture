@@ -1,0 +1,45 @@
+<svg font-family="IBM Plex Sans, Segoe UI, Arial, sans-serif" style="background:#ffffff" viewbox="0 0 900 300" xmlns="http://www.w3.org/2000/svg">
+<!-- Silo -->
+<rect class="box" height="280" rx="10" width="280" x="10" y="10"></rect>
+<text class="t" x="28" y="38">Silo · index per tenant</text>
+<text class="s" x="28" y="58">Pinecone index · Chroma collection</text>
+<text class="s" x="28" y="74">Azure AI Search index · Elastic index</text>
+<rect class="idx" height="84" rx="6" width="72" x="28" y="92"></rect><text class="m" x="40" y="112">T-A</text>
+<rect class="idx" height="84" rx="6" width="72" x="114" y="92"></rect><text class="m" x="126" y="112">T-B</text>
+<rect class="idx" height="84" rx="6" width="72" x="200" y="92"></rect><text class="m" x="212" y="112">T-C</text>
+<circle class="dot d1" cx="48" cy="140" r="5"></circle><circle class="dot d1" cx="66" cy="152" r="5"></circle><circle class="dot d1" cx="80" cy="136" r="5"></circle>
+<circle class="dot d2" cx="136" cy="146" r="5"></circle><circle class="dot d2" cx="160" cy="134" r="5"></circle>
+<circle class="dot d3" cx="234" cy="148" r="5"></circle>
+<text class="s" x="28" y="210">+ hard isolation, per-tenant delete/CMK</text>
+<text class="s" x="28" y="230">+ no filter recall risk</text>
+<text class="s" x="28" y="250">− index-count limits, per-index cost floor</text>
+<text class="s" x="28" y="270">− cold-start for 10k+ tiny tenants</text>
+<!-- Bridge -->
+<rect class="box" height="280" rx="10" width="280" x="310" y="10"></rect>
+<text class="t" x="328" y="38">Bridge · partition per tenant</text>
+<text class="s" x="328" y="58">Pinecone namespace · Weaviate tenant</text>
+<text class="s" x="328" y="74">Milvus partition key · Postgres RLS + partitions</text>
+<rect class="idx" height="84" rx="6" width="244" x="328" y="92"></rect><text class="m" x="340" y="112">one cluster · shards per tenant</text>
+<line stroke="#555" stroke-dasharray="3 3" x1="410" x2="410" y1="120" y2="170"></line>
+<line stroke="#555" stroke-dasharray="3 3" x1="490" x2="490" y1="120" y2="170"></line>
+<circle class="dot d1" cx="356" cy="146" r="5"></circle><circle class="dot d1" cx="380" cy="156" r="5"></circle>
+<circle class="dot d2" cx="440" cy="140" r="5"></circle><circle class="dot d2" cx="462" cy="156" r="5"></circle>
+<circle class="dot d3" cx="530" cy="148" r="5"></circle>
+<text class="s" x="328" y="210">+ logical isolation, scales to many tenants</text>
+<text class="s" x="328" y="230">+ offload idle tenants (Weaviate tenant states)</text>
+<text class="s" x="328" y="250">− cross-tenant search needs fan-out</text>
+<text class="s" x="328" y="270">− shared blast radius, quota per cluster</text>
+<!-- Pool -->
+<rect class="box" height="280" rx="10" width="280" x="610" y="10"></rect>
+<text class="t" x="628" y="38">Pool · shared index + filter</text>
+<text class="s" x="628" y="58">where tenant = :t on every query</text>
+<text class="s" x="628" y="74">any engine with metadata filtering</text>
+<rect class="idx" height="84" rx="6" width="244" x="628" y="92"></rect><text class="m" x="640" y="112">one index · tenant is a column</text>
+<circle class="dot d1" cx="660" cy="150" r="5"></circle><circle class="dot d3" cx="682" cy="136" r="5"></circle><circle class="dot d2" cx="704" cy="156" r="5"></circle>
+<circle class="dot d1" cx="730" cy="140" r="5"></circle><circle class="dot d2" cx="760" cy="150" r="5"></circle><circle class="dot d1" cx="790" cy="136" r="5"></circle>
+<circle class="dot d1" cx="820" cy="156" r="5"></circle><circle class="dot d2" cx="846" cy="142" r="5"></circle>
+<text class="s" x="628" y="210">+ cheapest, simplest, cross-tenant queries easy</text>
+<text class="s" x="628" y="230">− one missing filter = data leak</text>
+<text class="s" x="628" y="250">− recall depends on filter strategy</text>
+<text class="s" x="628" y="270">− noisy neighbours, hard per-tenant delete</text>
+</svg>

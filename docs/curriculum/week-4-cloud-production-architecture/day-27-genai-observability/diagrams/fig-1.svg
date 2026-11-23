@@ -1,0 +1,28 @@
+<svg font-family="IBM Plex Sans, Segoe UI, Arial, sans-serif" aria-label="Trace waterfall for one RAG request: a chain span containing a retriever span and an LLM span, with key attributes and a score attached." role="img" style="background:#ffffff" viewbox="0 0 720 330" xmlns="http://www.w3.org/2000/svg">
+<defs><pattern height="10" id="grid" patternunits="userSpaceOnUse" width="60"><path d="M60 0V10" fill="none" stroke="#555" stroke-width="1"></path></pattern></defs>
+<text font-size="13" font-weight="600" x="0" y="16">One request = one trace</text>
+<text class="mono mut" font-size="11" x="200" y="16">trace_id 4bf9…  session.id lab-session-1  user.id e1027</text>
+<rect fill="url(#grid)" height="150" width="480" x="200" y="28"></rect>
+<g class="mono mut" font-size="11"><text x="196" y="192">0 ms</text><text x="376" y="192">300</text><text x="556" y="192">600</text><text x="652" y="192">760</text></g>
+<text font-size="12.5" x="0" y="52">rag.answer</text><text class="mut" font-size="10.5" x="0" y="66">CHAIN</text>
+<rect fill="#555" height="22" rx="3" width="456" x="200" y="40"></rect>
+<text font-size="12.5" x="0" y="96">  retrieve</text><text class="mut" font-size="10.5" x="0" y="110">RETRIEVER</text>
+<rect fill="#555" height="22" rx="3" width="54" x="204" y="84"></rect>
+<text font-size="12.5" x="0" y="140">  chat qwen2.5:1.5b</text><text class="mut" font-size="10.5" x="0" y="154">LLM</text>
+<rect fill="#555" height="22" rx="3" width="390" x="262" y="128"></rect>
+<line stroke="#555" stroke-dasharray="2 2" x1="262" x2="262" y1="128" y2="156"></line>
+<text class="mut" font-size="10.5" x="268" y="168">TTFT measured from here</text>
+<g class="mono" font-size="11">
+<text font-weight="600" x="0" y="222">LLM span attributes (OTel GenAI semconv)</text>
+<text class="mut" x="0" y="242">gen_ai.operation.name = "chat"     gen_ai.provider.name = "ollama"</text>
+<text class="mut" x="0" y="258">gen_ai.request.model = "qwen2.5:1.5b"   gen_ai.request.temperature = 0</text>
+<text class="mut" x="0" y="274">gen_ai.usage.input_tokens = 412    gen_ai.usage.output_tokens = 38</text>
+<text class="mut" x="0" y="290">app.prompt.version = "v2"  (your own namespace, propagated from the request)</text>
+</g>
+<rect fill="#555" height="96" rx="6" stroke="#555" width="250" x="470" y="208"></rect>
+<text font-size="12" font-weight="600" x="482" y="228">Scores attached later</text>
+<text class="mono" font-size="11" x="482" y="248">groundedness = 0.83  (judge)</text>
+<text class="mono" font-size="11" x="482" y="264">user_feedback = 👍 → 1</text>
+<text class="mono" font-size="11" x="482" y="280">cost_usd = 0.000085</text>
+<text class="mut" font-size="11" x="482" y="296">joinable by trace_id</text>
+</svg>

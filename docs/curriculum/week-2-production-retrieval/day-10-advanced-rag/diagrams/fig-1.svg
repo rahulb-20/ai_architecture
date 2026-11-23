@@ -1,0 +1,46 @@
+<svg font-family="IBM Plex Sans, Segoe UI, Arial, sans-serif" aria-labelledby="dT dD" height="340" role="img" style="background:#ffffff" viewbox="0 0 840 340" width="840" xmlns="http://www.w3.org/2000/svg">
+
+<desc id="dD">A query enters a router. Simple queries go straight to hybrid retrieval. Constrained or vague queries pass through a transform step (rewrite, multi-query, HyDE, self-query) first. Global questions go to a GraphRAG index. Retrieved chunks are graded: relevant goes to generation, irrelevant loops back to rewrite at most once, and after the retry budget the system abstains.</desc>
+<defs><marker id="ar" markerheight="7" markerwidth="7" orient="auto-start-reverse" refx="9" refy="5" viewbox="0 0 10 10"><path d="M0,0 L10,5 L0,10 z" style="fill:#555"></path></marker></defs>
+<g marker-end="url(#ar)" style="stroke:#555;stroke-width:1.4;fill:none">
+<path d="M100,150 L128,150"></path>
+<path d="M238,150 L398,150"></path>
+<path d="M238,140 C270,140 270,70 296,70"></path>
+<path d="M376,70 C430,70 456,90 456,120"></path>
+<path d="M238,160 C270,160 270,262 296,262"></path>
+<path d="M512,150 L548,150"></path>
+<path d="M638,130 C660,100 690,90 712,90"></path>
+<path d="M638,170 C660,200 690,214 712,214"></path>
+<path d="M594,120 C594,30 340,24 340,48" style="stroke:#555;stroke-dasharray:4 3"></path>
+<path d="M402,262 C560,262 594,232 594,182"></path>
+</g>
+<rect height="52" rx="5" style="fill:#555;stroke:#555" width="92" x="8" y="124"></rect>
+<text style="fill:#555;font-size:13px" text-anchor="middle" x="54" y="147">query</text>
+<text style="fill:#555;font-size:10.5px" text-anchor="middle" x="54" y="164">+ user ACL</text>
+<rect height="64" rx="5" style="fill:#555;stroke:#555" width="108" x="130" y="118"></rect>
+<text style="fill:#555;font-size:13px;font-weight:500" text-anchor="middle" x="184" y="143">router</text>
+<text style="fill:#555;font-size:10.5px" text-anchor="middle" x="184" y="162">rules / small LLM</text>
+<rect height="44" rx="5" style="fill:#555;stroke:#555" width="78" x="298" y="48"></rect>
+<text style="fill:#555;font-size:12.5px;font-weight:500" text-anchor="middle" x="337" y="68">transform</text>
+<text style="fill:#555;font-size:9.5px" text-anchor="middle" x="337" y="84">MQ·HyDE·SQ</text>
+<text style="fill:#555;font-size:10px" text-anchor="middle" x="268" y="40">vague / constrained</text>
+<text style="fill:#555;font-size:10px" text-anchor="middle" x="318" y="142">simple lookup</text>
+<rect height="56" rx="5" style="fill:#555;stroke:#555" width="112" x="400" y="122"></rect>
+<text style="fill:#555;font-size:13px;font-weight:500" text-anchor="middle" x="456" y="146">hybrid + rerank</text>
+<text style="fill:#555;font-size:10.5px" text-anchor="middle" x="456" y="164">Day 9 pipeline</text>
+<rect height="60" rx="5" style="fill:#555;stroke:#555" width="88" x="550" y="120"></rect>
+<text style="fill:#555;font-size:13px;font-weight:500" text-anchor="middle" x="594" y="146">grade</text>
+<text style="fill:#555;font-size:10.5px" text-anchor="middle" x="594" y="164">relevant?</text>
+<text style="fill:#555;font-size:10.5px" text-anchor="middle" x="470" y="20">no → rewrite, max 1 retry</text>
+<rect height="44" rx="5" style="fill:#555;stroke:#555" width="118" x="714" y="66"></rect>
+<text style="fill:#555;font-size:13px;font-weight:500" text-anchor="middle" x="773" y="86">generate</text>
+<text style="fill:#555;font-size:10px" text-anchor="middle" x="773" y="102">with citations</text>
+<rect height="44" rx="5" style="fill:#555;stroke:#555" width="118" x="714" y="192"></rect>
+<text style="fill:#555;font-size:13px;font-weight:500" text-anchor="middle" x="773" y="212">abstain</text>
+<text style="fill:#555;font-size:10px" text-anchor="middle" x="773" y="228">budget exhausted</text>
+<rect height="44" rx="5" style="fill:#555;stroke:#555" width="104" x="298" y="240"></rect>
+<text style="fill:#555;font-size:12.5px;font-weight:500" text-anchor="middle" x="350" y="260">GraphRAG</text>
+<text style="fill:#555;font-size:9.5px" text-anchor="middle" x="350" y="276">community summaries</text>
+<text style="fill:#555;font-size:10px" text-anchor="middle" x="236" y="300">global / thematic</text>
+<text style="fill:#555;font-size:10.5px" text-anchor="middle" x="420" y="326">default path = 0 extra LLM calls · each orange/purple hop = +1 LLM call (~0.3–1.5 s on a hosted small model)</text>
+</svg>

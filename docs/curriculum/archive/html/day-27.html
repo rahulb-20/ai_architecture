@@ -1,0 +1,491 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>GenAI Prep · Day 27 — GenAI Observability</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: single reading column with a sticky section index on wide screens; a trace-span motif (thin coloured bars) marks section kinds. */
+:root{
+  --bg:#f6f7f9; --surface:#ffffff; --ink:#18202b; --muted:#5a6676; --line:#dde2e9;
+  --accent:#2f5bd3; --accent-soft:#e7edfc; --span-chain:#7a5af5; --span-ret:#0f8a7a; --span-llm:#d9822b;
+  --code-bg:#f0f2f6; --warn-bg:#fff6e6; --warn-ink:#7a4a00;
+  --f-display:"IBM Plex Sans Condensed","Arial Narrow",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Consolas,"Cascadia Mono",monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f141b; --surface:#161d27; --ink:#e3e8ef; --muted:#97a3b4; --line:#2a3443;
+  --accent:#86a6ff; --accent-soft:#1d2a4a; --span-chain:#a993ff; --span-ret:#3cc7b3; --span-llm:#f0a656;
+  --code-bg:#111821; --warn-bg:#2b2213; --warn-ink:#f3c97a; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f141b; --surface:#161d27; --ink:#e3e8ef; --muted:#97a3b4; --line:#2a3443;
+  --accent:#86a6ff; --accent-soft:#1d2a4a; --span-chain:#a993ff; --span-ret:#3cc7b3; --span-llm:#f0a656;
+  --code-bg:#111821; --warn-bg:#2b2213; --warn-ink:#f3c97a; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:16px/1.62 var(--f-body);margin:0}
+.wrap{max-width:1120px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:32px 64px;display:grid;grid-template-columns:200px minmax(0,1fr);gap:48px}
+nav.toc{position:sticky;top:calc(env(safe-area-inset-top,0px) + 24px);align-self:start;font-size:13.5px}
+nav.toc ol{list-style:none;padding:0;margin:0;display:grid;gap:4px;counter-reset:s}
+nav.toc a{color:var(--muted);text-decoration:none;display:block;padding:3px 0 3px 10px;border-left:2px solid var(--line)}
+nav.toc a:hover,nav.toc a:focus-visible{color:var(--accent);border-left-color:var(--accent)}
+nav.toc .lbl{font:600 11px/1 var(--f-display);letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
+main{min-width:0;max-width:760px}
+header.hero{display:grid;gap:10px;padding-bottom:24px;border-bottom:1px solid var(--line);margin-bottom:8px}
+.eyebrow{font:600 12px/1 var(--f-display);letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+h1{font:700 clamp(30px,5vw,44px)/1.08 var(--f-display);margin:0;text-wrap:balance;letter-spacing:-.01em}
+.sub{color:var(--muted);margin:0;max-width:62ch}
+.meta{display:flex;flex-wrap:wrap;gap:8px;font:500 12.5px/1 var(--f-mono);color:var(--muted)}
+.meta span{background:var(--surface);border:1px solid var(--line);padding:6px 9px;border-radius:4px}
+section{padding-top:36px;scroll-margin-top:16px}
+h2{font:600 24px/1.2 var(--f-display);margin:0 0 14px;text-wrap:balance;display:flex;align-items:baseline;gap:10px}
+h2 .n{font:500 13px/1 var(--f-mono);color:var(--muted)}
+h3{font:600 17.5px/1.3 var(--f-display);margin:22px 0 8px}
+p,li{max-width:68ch}
+a{color:var(--accent)}
+code{font:0.88em var(--f-mono);background:var(--code-bg);padding:1px 5px;border-radius:3px;overflow-wrap:anywhere}
+.why{border-left:3px solid var(--accent);background:var(--accent-soft);padding:12px 16px;border-radius:0 6px 6px 0}
+.why p{margin:4px 0}
+.note{background:var(--warn-bg);color:var(--warn-ink);padding:10px 14px;border-radius:6px;font-size:14.5px}
+.note code{background:transparent;padding:0}
+figure{margin:18px 0;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:14px;overflow-x:auto}
+figure svg{display:block;min-width:640px;width:100%;height:auto}
+figcaption{font-size:13px;color:var(--muted);margin-top:8px}
+svg text{font-family:var(--f-body);fill:var(--ink)}
+svg .mono{font-family:var(--f-mono)}
+svg .mut{fill:var(--muted)}
+.tbl{overflow-x:auto;margin:14px 0;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:14px;min-width:680px}
+th,td{text-align:left;vertical-align:top;padding:10px 12px;border-bottom:1px solid var(--line)}
+th{font:600 12px/1.2 var(--f-display);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);background:var(--code-bg)}
+tr:last-child td{border-bottom:0}
+td:first-child{font-weight:600;white-space:nowrap}
+.pre{position:relative;margin:12px 0}
+.pre pre{background:var(--code-bg);border:1px solid var(--line);border-radius:8px;padding:14px 14px 14px 16px;overflow-x:auto;font:13px/1.55 var(--f-mono);margin:0;tab-size:4}
+.pre .tag{position:absolute;top:0;left:12px;transform:translateY(-50%);font:500 11px/1 var(--f-mono);background:var(--surface);border:1px solid var(--line);color:var(--muted);padding:3px 6px;border-radius:3px}
+.copy{position:absolute;top:8px;right:8px;font:500 12px/1 var(--f-body);background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:5px;padding:6px 9px;cursor:pointer}
+.copy:hover{border-color:var(--accent);color:var(--accent)}
+.copy:focus-visible,a:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+ol.steps{padding-left:22px;display:grid;grid-template-columns:minmax(0,1fr);gap:6px}
+ol.steps>li{min-width:0}
+.repo{display:grid;gap:2px;padding:12px 0;border-bottom:1px solid var(--line)}
+.repo:last-child{border-bottom:0}
+.repo a{font:500 14.5px var(--f-mono);overflow-wrap:anywhere}
+details.qa{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:0 16px;margin:10px 0}
+details.qa summary{cursor:pointer;padding:13px 0;font-weight:600;list-style-position:outside}
+details.qa[open] summary{border-bottom:1px solid var(--line);margin-bottom:10px}
+details.qa div{padding-bottom:12px}
+.adr{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:6px 18px 14px}
+.adr dt{font:600 12px/1 var(--f-display);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-top:16px}
+.adr dd{margin:6px 0 0}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:13px;color:var(--muted);margin-top:6px}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+.tomorrow{margin-top:40px;padding:16px 18px;border:1px dashed var(--line);border-radius:8px}
+.out pre{font-size:12.5px}
+@media (max-width:860px){.wrap{grid-template-columns:minmax(0,1fr);gap:0}nav.toc{display:none}}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
+html{scroll-behavior:smooth}
+</style>
+
+<div class="wrap">
+<nav class="toc" aria-label="Sections">
+  <div class="lbl">Day 27</div>
+  <ol>
+    <li><a href="#why">Why it matters</a></li>
+    <li><a href="#concept">Concept brief</a></li>
+    <li><a href="#tradeoffs">Trade-offs</a></li>
+    <li><a href="#lab">Hands-on lab</a></li>
+    <li><a href="#repos">Repos to study</a></li>
+    <li><a href="#read">Read</a></li>
+    <li><a href="#interview">Interview Qs</a></li>
+    <li><a href="#adr">Architect's lens</a></li>
+    <li><a href="#tomorrow">Tomorrow</a></li>
+  </ol>
+</nav>
+
+<main>
+<header class="hero">
+  <div class="eyebrow">Week 4 · Cloud, production &amp; architecture</div>
+  <h1>Day 27 — GenAI observability</h1>
+  <p class="sub">Tracing, prompt versioning, eval dashboards and cost tracking: Langfuse, LangSmith, Arize Phoenix and the OpenTelemetry GenAI semantic conventions.</p>
+  <div class="meta"><span>Thu 5 Nov 2026</span><span>langfuse 5.1.0</span><span>arize-phoenix 21.0.0</span><span>langsmith 0.14.17</span><span>opentelemetry-sdk 1.45.2</span></div>
+</header>
+
+<section id="why">
+<h2><span class="n">1</span>Why this matters for the JD</h2>
+<div class="why">
+<p>The JD lists <b>observability</b> twice: under CI/CD &amp; productionization ("testing, observability, rollback, scaling, cost controls") and as a preferred skill ("GenAI observability: tracing, prompt versioning, eval dashboards").</p>
+<p>It is also where the <b>evaluation</b> must-have (groundedness, latency/cost) runs in production, and where <b>responsible AI</b> (PII masking) has to be enforced, because traces are full of prompts and retrieved documents.</p>
+</div>
+</section>
+
+<section id="concept">
+<h2><span class="n">2</span>Concept brief</h2>
+<p>Classic APM answers "is it up and fast?". GenAI observability also has to answer "was the answer right, what did it cost, and which prompt, model and retrieval produced it?". The unit of analysis is a <b>trace</b>: a tree of spans for one user request, where each span is typed (chain, retriever, LLM, tool, agent, guardrail, evaluator) and carries GenAI attributes such as model, token usage, prompt version and retrieved document IDs. Scores (user feedback, LLM-judge, heuristic) attach to traces or spans after the fact.</p>
+
+<figure>
+<svg viewBox="0 0 720 330" role="img" aria-label="Trace waterfall for one RAG request: a chain span containing a retriever span and an LLM span, with key attributes and a score attached.">
+  <defs><pattern id="grid" width="60" height="10" patternUnits="userSpaceOnUse"><path d="M60 0V10" stroke="var(--line)" stroke-width="1" fill="none"/></pattern></defs>
+  <text x="0" y="16" font-size="13" font-weight="600">One request = one trace</text>
+  <text x="200" y="16" font-size="11" class="mono mut">trace_id 4bf9…  session.id lab-session-1  user.id e1027</text>
+  <rect x="200" y="28" width="480" height="150" fill="url(#grid)"/>
+  <g font-size="11" class="mono mut"><text x="196" y="192">0 ms</text><text x="376" y="192">300</text><text x="556" y="192">600</text><text x="652" y="192">760</text></g>
+  <text x="0" y="52" font-size="12.5">rag.answer</text><text x="0" y="66" font-size="10.5" class="mut">CHAIN</text>
+  <rect x="200" y="40" width="456" height="22" rx="3" fill="var(--span-chain)"/>
+  <text x="0" y="96" font-size="12.5">  retrieve</text><text x="0" y="110" font-size="10.5" class="mut">RETRIEVER</text>
+  <rect x="204" y="84" width="54" height="22" rx="3" fill="var(--span-ret)"/>
+  <text x="0" y="140" font-size="12.5">  chat qwen2.5:1.5b</text><text x="0" y="154" font-size="10.5" class="mut">LLM</text>
+  <rect x="262" y="128" width="390" height="22" rx="3" fill="var(--span-llm)"/>
+  <line x1="262" y1="128" x2="262" y2="156" stroke="var(--ink)" stroke-dasharray="2 2"/>
+  <text x="268" y="168" font-size="10.5" class="mut">TTFT measured from here</text>
+  <g font-size="11" class="mono">
+    <text x="0" y="222" font-weight="600">LLM span attributes (OTel GenAI semconv)</text>
+    <text x="0" y="242" class="mut">gen_ai.operation.name = "chat"     gen_ai.provider.name = "ollama"</text>
+    <text x="0" y="258" class="mut">gen_ai.request.model = "qwen2.5:1.5b"   gen_ai.request.temperature = 0</text>
+    <text x="0" y="274" class="mut">gen_ai.usage.input_tokens = 412    gen_ai.usage.output_tokens = 38</text>
+    <text x="0" y="290" class="mut">app.prompt.version = "v2"  (your own namespace, propagated from the request)</text>
+  </g>
+  <rect x="470" y="208" width="250" height="96" rx="6" fill="var(--accent-soft)" stroke="var(--accent)"/>
+  <text x="482" y="228" font-size="12" font-weight="600">Scores attached later</text>
+  <text x="482" y="248" font-size="11" class="mono">groundedness = 0.83  (judge)</text>
+  <text x="482" y="264" font-size="11" class="mono">user_feedback = 👍 → 1</text>
+  <text x="482" y="280" font-size="11" class="mono">cost_usd = 0.000085</text>
+  <text x="482" y="296" font-size="11" class="mut">joinable by trace_id</text>
+</svg>
+<div class="legend"><span><i style="background:var(--span-chain)"></i>chain</span><span><i style="background:var(--span-ret)"></i>retriever</span><span><i style="background:var(--span-llm)"></i>LLM call</span></div>
+<figcaption>The waterfall shows where latency goes (here the LLM dominates), and the attributes make it queryable: cost per prompt version, p95 per model, and groundedness per retriever config.</figcaption>
+</figure>
+
+<h3>The four layers you design</h3>
+<ol class="steps">
+<li><b>Instrumentation.</b> Auto-instrumentors patch SDKs (OpenAI, Anthropic, Bedrock, LangChain/LangGraph, LlamaIndex). There are two attribute dialects: <b>OpenInference</b> (Arize; <code>llm.token_count.prompt</code>, <code>openinference.span.kind</code>) and <b>OTel GenAI semconv</b> (<code>gen_ai.*</code>, span name <code>"{operation} {model}"</code>). OpenLLMetry (Traceloop) and the OTel contrib <code>instrumentation-genai</code> packages emit <code>gen_ai.*</code>. Langfuse v4+/v5 and Phoenix ingest both.</li>
+<li><b>Transport and policy.</b> Use OTLP into an <b>OpenTelemetry Collector</b>. This is where you redact PII from <code>gen_ai.input.messages</code>, apply tail sampling (keep 100% of errors, thumbs-down and high-cost traces, and around 5–10% of the rest), and fan out to several backends.</li>
+<li><b>Backends.</b> An LLM-native store (Langfuse, LangSmith, Phoenix, Opik) for trace drill-down, prompts, datasets and evals. Your existing APM (Datadog, Grafana/Tempo, Instana, App Insights) for SLOs and on-call. Cold storage (S3/ADLS/COS) for audit retention.</li>
+<li><b>Feedback loop.</b> Online evaluators score sampled production traces. Bad traces get promoted into datasets, and those datasets become the CI eval gates from Day 26. Prompt versions are linked to traces, so a regression points to a specific version.</li>
+</ol>
+
+<figure>
+<svg viewBox="0 0 720 250" role="img" aria-label="Reference pipeline: apps emit OTLP to an OpenTelemetry Collector which redacts and samples, then fans out to an LLM observability backend, APM, and cold storage; evaluations feed back into datasets and CI.">
+  <g font-size="12">
+    <rect x="10" y="30" width="150" height="150" rx="8" fill="var(--surface)" stroke="var(--line)"/>
+    <text x="24" y="54" font-weight="600">Services</text>
+    <text x="24" y="78" class="mut" font-size="11">RAG API (FastAPI)</text>
+    <text x="24" y="96" class="mut" font-size="11">LangGraph agents</text>
+    <text x="24" y="114" class="mut" font-size="11">MCP servers</text>
+    <text x="24" y="132" class="mut" font-size="11">LiteLLM gateway</text>
+    <text x="24" y="160" class="mono" font-size="10.5">OTel SDK + instrumentors</text>
+    <path d="M160 105H220" stroke="var(--accent)" stroke-width="2" marker-end="url(#ar)" fill="none"/>
+    <text x="168" y="98" class="mono mut" font-size="10">OTLP</text>
+    <rect x="222" y="50" width="170" height="110" rx="8" fill="var(--accent-soft)" stroke="var(--accent)"/>
+    <text x="236" y="74" font-weight="600">OTel Collector</text>
+    <text x="236" y="96" font-size="11">• PII redaction processor</text>
+    <text x="236" y="114" font-size="11">• tail sampling</text>
+    <text x="236" y="132" font-size="11">• cost enrich / routing</text>
+    <text x="236" y="150" font-size="11">• tenant tagging</text>
+    <path d="M392 80L462 46" stroke="var(--accent)" stroke-width="2" marker-end="url(#ar)" fill="none"/>
+    <path d="M392 105H462" stroke="var(--accent)" stroke-width="2" marker-end="url(#ar)" fill="none"/>
+    <path d="M392 130L462 166" stroke="var(--accent)" stroke-width="2" marker-end="url(#ar)" fill="none"/>
+    <rect x="464" y="22" width="246" height="46" rx="6" fill="var(--surface)" stroke="var(--line)"/>
+    <text x="476" y="42" font-weight="600">LLM observability</text><text x="476" y="58" class="mut" font-size="11">Langfuse / LangSmith / Phoenix</text>
+    <rect x="464" y="82" width="246" height="46" rx="6" fill="var(--surface)" stroke="var(--line)"/>
+    <text x="476" y="102" font-weight="600">APM &amp; SLOs</text><text x="476" y="118" class="mut" font-size="11">Instana / Datadog / Grafana / App Insights</text>
+    <rect x="464" y="142" width="246" height="46" rx="6" fill="var(--surface)" stroke="var(--line)"/>
+    <text x="476" y="162" font-weight="600">Audit archive</text><text x="476" y="178" class="mut" font-size="11">S3 / ADLS / IBM COS (retention policy)</text>
+    <path d="M710 45 H716 V208 H85 V188" stroke="var(--span-ret)" stroke-width="1.6" stroke-dasharray="5 4" fill="none" marker-end="url(#ar2)"/>
+    <text x="250" y="230" font-size="11" class="mut">online evals → bad traces → datasets → CI eval gate → new prompt version</text>
+  </g>
+  <defs>
+    <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--accent)"/></marker>
+    <marker id="ar2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--span-ret)"/></marker>
+  </defs>
+</svg>
+<figcaption>Keep instrumentation vendor-neutral and put policy in the Collector. Swapping Langfuse for LangSmith then means changing an exporter, with no code changes.</figcaption>
+</figure>
+
+<h3>Where the standard actually stands (Nov 2026)</h3>
+<p>All <code>gen_ai.*</code> attributes are still at <b>Development</b> stability. In June 2026 (semconv v1.42.0) the GenAI conventions moved into their own repo, <code>open-telemetry/semantic-conventions-genai</code>, which had no tagged release as of Dash0's September explainer. The required attributes are <code>gen_ai.operation.name</code> and <code>gen_ai.provider.name</code>, which replaced the older <code>gen_ai.system</code>. Prompt and completion content goes in an <b>event</b> (<code>gen_ai.client.inference.operation.details</code> carrying <code>gen_ai.input.messages</code> / <code>output.messages</code>), not in span attributes, and capturing it is opt-in per instrumentation. In a design review: build on the semconv, pin instrumentor versions, and expect attribute renames.</p>
+
+<h3>Cloud and IBM mapping</h3>
+<div class="tbl"><table>
+<thead><tr><th>Platform</th><th>Native GenAI telemetry</th><th>Note for architects</th></tr></thead>
+<tbody>
+<tr><td>IBM</td><td>watsonx.governance (prompt-template monitoring, quality/drift metrics, AI Factsheets); Instana for traces</td><td>Governance gives model-risk evidence; Instana gives runtime traces. Usually you need both, joined on a request ID.</td></tr>
+<tr><td>Azure</td><td>AI Foundry tracing → Application Insights (OTel-based)</td><td>Easiest path if you are already on Azure Monitor. Content capture is a flag, so check it against your DPDP posture.</td></tr>
+<tr><td>AWS</td><td>Bedrock model-invocation logging → CloudWatch/S3; AgentCore observability</td><td>Invocation logs are per call, not trace trees. Add OTel spans for retrieval and tools.</td></tr>
+<tr><td>GCP</td><td>Vertex AI + Cloud Trace / Cloud Logging</td><td>OTLP export into Cloud Trace works; LLM-specific views are thinner than in Langfuse or Phoenix.</td></tr>
+</tbody></table></div>
+</section>
+
+<section id="tradeoffs">
+<h2><span class="n">3</span>Trade-offs &amp; decision table</h2>
+<div class="tbl"><table>
+<thead><tr><th>Option</th><th>Pick when</th><th>Failure modes</th><th>Cost / latency</th></tr></thead>
+<tbody>
+<tr><td>Langfuse (OSS, MIT core)</td><td>You need self-hosting for data residency, prompt management, datasets and evals in one place, and framework-agnostic OTel ingest</td><td>Self-hosting means running Postgres, ClickHouse, Redis and S3, which you then own. SDK majors move fast (v3→v4→v5 within about 18 months).</td><td>Async batched export, so negligible on the request path. Infra cost grows with ClickHouse volume.</td></tr>
+<tr><td>LangSmith</td><td>The team is heavily on LangChain/LangGraph and SaaS is acceptable</td><td>Self-hosting is an enterprise-tier deal. Pricing is per trace with retention tiers, which gets expensive at high QPS.</td><td>Background thread export. Cost scales with trace count, so sample.</td></tr>
+<tr><td>Arize Phoenix (OSS)</td><td>Local dev, eval-heavy work (evals library, experiments), OpenInference ecosystem; on-prem with simple deployment</td><td>Single-node SQLite by default, so production needs Postgres. Fewer governance features than commercial Arize AX.</td><td>Free. Runs on a laptop (<code>phoenix serve</code>).</td></tr>
+<tr><td>Existing APM only (Datadog / Instana / App Insights)</td><td>The org mandates one pane of glass and only SLOs matter</td><td>Weak prompt/eval UX: no datasets, no prompt diffing, no judge scores.</td><td>Often the most expensive per GB of span data once prompt content is included.</td></tr>
+<tr><td>Raw OTel + Collector fan-out (recommended base)</td><td>Multi-vendor or multi-cloud estate, or you want to avoid lock-in</td><td>You own the semconv drift, Collector config and redaction rules.</td><td>Collector hop adds about 1 ms off-path. Tail sampling needs memory sized for the decision wait window.</td></tr>
+</tbody></table></div>
+<p class="note"><b>Content-capture rule of thumb:</b> log token counts, model and IDs at 100%. Log prompt and completion text only after redaction, only for sampled traces, and with a shorter retention than metadata. That one policy covers most of the DPDP and EU AI Act logging questions you will get in a review.</p>
+</section>
+
+<section id="lab">
+<h2><span class="n">4</span>Hands-on lab · 60–90 min</h2>
+<p><b>Goal:</b> instrument a small RAG pipeline with OpenTelemetry, view the trace tree in a local Phoenix server, and build a <b>cost/latency ledger per prompt version</b> from the same spans with a vendor-neutral <code>SpanProcessor</code>. Everything runs natively on Windows 11 with no Docker or WSL2. Tested on Python 3.13 with the versions in the header.</p>
+
+<h3>Setup (PowerShell)</h3>
+<div class="pre"><span class="tag">PowerShell</span><button class="copy" type="button">Copy</button><pre><code># 1) Ollama for Windows (native installer from ollama.com), then pull a 6 GB-VRAM-friendly model
+ollama pull qwen2.5:1.5b
+
+# 2) Project + venv
+mkdir day27-obs; cd day27-obs
+py -3.13 -m venv .venv
+.\.venv\Scripts\Activate.ps1          # if blocked: Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
+python -m pip install --upgrade pip
+python -m pip install "arize-phoenix==21.0.0" "arize-phoenix-otel==0.17.2" `
+    openinference-instrumentation-openai "openai&gt;=2" "opentelemetry-sdk==1.45.2"
+
+# 3) Start the local Phoenix server in its own terminal (UI + OTLP on :6006, SQLite in ~\.phoenix)
+phoenix serve</code></pre></div>
+
+<h3>Starter code — <code>obs_lab.py</code></h3>
+<div class="pre"><span class="tag">obs_lab.py</span><button class="copy" type="button">Copy</button><pre><code>"""Day 27 lab: trace a mini RAG pipeline with OpenTelemetry -&gt; Phoenix, and build a
+cost/latency/quality ledger from the same spans (vendor-neutral SpanProcessor)."""
+import contextvars, os, statistics, time
+from collections import defaultdict
+
+from openai import OpenAI
+from opentelemetry import trace
+from opentelemetry.sdk.trace import SpanProcessor
+from phoenix.otel import register
+from openinference.instrumentation.openai import OpenAIInstrumentor
+
+PHOENIX = os.getenv("PHOENIX_ENDPOINT", "http://localhost:6006/v1/traces")
+MODEL = os.getenv("LAB_MODEL", "qwen2.5:1.5b")
+BASE_URL = os.getenv("LAB_BASE_URL", "http://localhost:11434/v1")  # Ollama's OpenAI-compatible API
+
+# Shadow price list (USD per 1M tokens). Local models are "free", but pricing them as if they
+# were a hosted model is how you build the business case before choosing a provider.
+PRICES = {MODEL: {"in": 0.15, "out": 0.60}}
+
+PROMPT_VERSION = contextvars.ContextVar("prompt_version", default="?")
+
+
+class CostLedger(SpanProcessor):
+    """Reads token usage from LLM spans. Understands both OpenInference attributes
+    (llm.token_count.*) and OTel GenAI semconv (gen_ai.usage.*), so it survives a swap
+    of instrumentation library."""
+
+    def __init__(self):
+        self.rows = []
+
+    def on_start(self, span, parent_context=None):
+        # Stamp request-scoped metadata on EVERY span (incl. auto-instrumented LLM spans),
+        # the same idea as Langfuse's propagate_attributes(). Enables group-by-version.
+        span.set_attribute("app.prompt.version", PROMPT_VERSION.get())
+
+    def on_end(self, span):
+        a = span.attributes or {}
+        tin = a.get("gen_ai.usage.input_tokens", a.get("llm.token_count.prompt"))
+        tout = a.get("gen_ai.usage.output_tokens", a.get("llm.token_count.completion"))
+        if tin is None:
+            return
+        model = a.get("gen_ai.request.model", a.get("llm.model_name", MODEL))
+        p = PRICES.get(model, next(iter(PRICES.values())))
+        self.rows.append({
+            "version": a.get("app.prompt.version", "?"),
+            "ms": (span.end_time - span.start_time) / 1e6,
+            "tin": tin, "tout": tout,
+            "usd": tin / 1e6 * p["in"] + tout / 1e6 * p["out"],
+        })
+
+    def report(self):
+        by = defaultdict(list)
+        for r in self.rows:
+            by[r["version"]].append(r)
+        print(f"\n{'prompt':&lt;8}{'calls':&gt;6}{'p50 ms':&gt;9}{'p95 ms':&gt;9}{'tok in':&gt;8}{'tok out':&gt;8}{'$/1k req':&gt;10}")
+        for v, rs in sorted(by.items()):
+            ms = sorted(r["ms"] for r in rs)
+            p95 = ms[min(len(ms) - 1, int(0.95 * len(ms)))]
+            usd = sum(r["usd"] for r in rs) / len(rs) * 1000
+            print(f"{v:&lt;8}{len(rs):&gt;6}{statistics.median(ms):&gt;9.0f}{p95:&gt;9.0f}"
+                  f"{sum(r['tin'] for r in rs):&gt;8}{sum(r['tout'] for r in rs):&gt;8}{usd:&gt;10.4f}")
+
+
+# ---- tracing setup -------------------------------------------------------------------------
+tp = register(project_name="day27-observability", endpoint=PHOENIX, batch=True, verbose=False)
+ledger = CostLedger()
+# GOTCHA: phoenix.otel replaces its exporter on add_span_processor() unless told not to.
+tp.add_span_processor(ledger, replace_default_processor=False)
+OpenAIInstrumentor().instrument(tracer_provider=tp)
+tracer = trace.get_tracer("day27.lab")
+
+client = OpenAI(base_url=BASE_URL, api_key="ollama")
+
+DOCS = {
+    "kb-01": "Employees may carry forward at most 10 days of unused annual leave into the next year.",
+    "kb-02": "Expense claims above INR 50,000 need approval from a cost-centre head within 7 days.",
+    "kb-03": "Production access requires a ticket, manager approval and expires after 8 hours.",
+    "kb-04": "Laptops must be encrypted with BitLocker; USB mass storage is blocked by policy.",
+}
+PROMPTS = {
+    "v1": "Answer the question using the context.\nContext:\n{ctx}\nQuestion: {q}",
+    "v2": ("You are a policy assistant. Answer ONLY from the context in one sentence and cite the "
+           "doc id in brackets. If the context does not contain the answer, reply exactly: "
+           "I don't know.\nContext:\n{ctx}\nQuestion: {q}"),
+}
+QUESTIONS = [
+    "How many leave days can I carry forward?",
+    "Who approves an expense claim of INR 80,000?",
+    "How long does production access last?",
+    "What is the office Wi-Fi password?",  # unanswerable: tests abstention
+]
+
+
+def retrieve(q, k=2):
+    with tracer.start_as_current_span("retrieve") as s:
+        s.set_attribute("openinference.span.kind", "RETRIEVER")
+        s.set_attribute("input.value", q)
+        qw = set(q.lower().split())
+        ranked = sorted(DOCS.items(), key=lambda kv: -len(qw &amp; set(kv[1].lower().split())))[:k]
+        for i, (doc_id, text) in enumerate(ranked):  # OpenInference retrieval attribute layout
+            s.set_attribute(f"retrieval.documents.{i}.document.id", doc_id)
+            s.set_attribute(f"retrieval.documents.{i}.document.content", text)
+        return ranked
+
+
+def groundedness(answer, ctx):
+    """Cheap lexical proxy (0..1). In production use an LLM judge or NLI model - see stretch goal."""
+    aw = {w.strip(".,[]").lower() for w in answer.split() if len(w) &gt; 3}
+    cw = {w.strip(".,").lower() for w in ctx.split()}
+    return round(len(aw &amp; cw) / max(1, len(aw)), 2)
+
+
+def answer(q, version):
+    token = PROMPT_VERSION.set(version)
+    try:
+        return _answer(q, version)
+    finally:
+        PROMPT_VERSION.reset(token)
+
+
+def _answer(q, version):
+    with tracer.start_as_current_span("rag.answer") as root:
+        root.set_attribute("openinference.span.kind", "CHAIN")
+        root.set_attribute("input.value", q)
+        root.set_attribute("session.id", "lab-session-1")
+        docs = retrieve(q)
+        ctx = "\n".join(f"[{d}] {t}" for d, t in docs)
+        resp = client.chat.completions.create(
+            model=MODEL, temperature=0, max_tokens=120,
+            messages=[{"role": "user", "content": PROMPTS[version].format(ctx=ctx, q=q)}],
+        )
+        text = resp.choices[0].message.content.strip()
+        g = groundedness(text, ctx)
+        root.set_attribute("output.value", text)
+        root.set_attribute("eval.groundedness", g)
+        print(f"[{version}] {q[:42]:&lt;44} g={g:&lt;5} -&gt; {text[:70]}")
+        return text
+
+
+if __name__ == "__main__":
+    t0 = time.time()
+    for v in PROMPTS:
+        for q in QUESTIONS:
+            answer(q, v)
+    tp.force_flush()
+    ledger.report()
+    print(f"\nDone in {time.time() - t0:.1f}s. Open http://localhost:6006 -&gt; project 'day27-observability'.")
+</code></pre></div>
+
+<h3>Run it</h3>
+<ol class="steps">
+<li>Terminal 1: <code>phoenix serve</code>, then open <code>http://localhost:6006</code>.</li>
+<li>Terminal 2: <code>python obs_lab.py</code>. On the RTX 3050 the first call takes a few seconds while the model loads into VRAM. That is a cold-start outlier; find it in the p95.</li>
+<li>In Phoenix, open project <b>day27-observability</b>. Each trace has a CHAIN → RETRIEVER + LLM tree. Click the LLM span to see input messages, token counts and <code>app.prompt.version</code>.</li>
+</ol>
+
+<h3>Expected output (shape; your numbers will differ)</h3>
+<div class="pre out"><span class="tag">console</span><button class="copy" type="button">Copy</button><pre><code>[v1] How many leave days can I carry forward?     g=0.71  -&gt; Employees can carry forward up to 10 days of unused annual leave.
+[v1] What is the office Wi-Fi password?           g=0.25  -&gt; The context does not mention a Wi-Fi password, but ...
+[v2] How many leave days can I carry forward?     g=0.86  -&gt; You can carry forward at most 10 days [kb-01].
+[v2] What is the office Wi-Fi password?           g=0.0   -&gt; I don't know.
+...
+prompt   calls   p50 ms   p95 ms  tok in tok out  $/1k req
+v1           4      620     3900     281      96    0.0233
+v2           4      540      910     421      60    0.0195
+
+Done in 9.8s. Open http://localhost:6006 -&gt; project 'day27-observability'.</code></pre></div>
+<p><b>What to notice:</b> v2 sends more input tokens (a longer system prompt) but often costs <i>less</i> per request because the answers are shorter. The first v1 call carries the cold-start p95. The "Wi-Fi" question shows abstention behaviour per version, and that is the signal you would turn into an online evaluator.</p>
+
+<p class="note"><b>Gotcha I hit while testing:</b> <code>phoenix.otel</code>'s <code>TracerProvider.add_span_processor()</code> <i>replaces</i> its default exporter unless you pass <code>replace_default_processor=False</code>. Without the flag the ledger works and Phoenix silently shows nothing. Expect this kind of silent export drop in production too, so alert on "spans received = 0".</p>
+
+<h3>Stretch goals</h3>
+<ol class="steps">
+<li><b>Swap to the OTel GenAI semconv instrumentor.</b> Change one import to <code>from opentelemetry.instrumentation.openai_v2 import OpenAIInstrumentor</code> and install the pinned pair below. LLM spans are renamed <code>chat qwen2.5:1.5b</code> and carry <code>gen_ai.*</code>, and the ledger keeps working unchanged. When I tested this, the latest <code>opentelemetry-util-genai</code> (1.3b0) broke the latest instrumentor (2.4b0) with a <code>ModuleNotFoundError</code>. That is a real example of why you pin GenAI instrumentation in a lockfile.
+<div class="pre"><span class="tag">PowerShell</span><button class="copy" type="button">Copy</button><pre><code>python -m pip install "opentelemetry-instrumentation-openai-v2==2.4b0" "opentelemetry-util-genai==1.1b0"</code></pre></div></li>
+<li><b>Dual-export to Langfuse Cloud (free tier) through plain OTLP.</b> Add a second <code>BatchSpanProcessor(OTLPSpanExporter(endpoint="https://cloud.langfuse.com/api/public/otel/v1/traces", headers={"Authorization": "Basic &lt;base64 pk:sk&gt;"}))</code> with <code>replace_default_processor=False</code>. Compare how each tool renders the same trace. Then replace the lexical <code>groundedness()</code> with an LLM-judge call on the same local model and post the result as a score (Langfuse <code>create_score</code>, or a Phoenix span annotation). Look at how far the judge's scores spread when you re-run the same inputs.</li>
+</ol>
+</section>
+
+<section id="repos">
+<h2><span class="n">5</span>GitHub repos to study</h2>
+<p class="sub" style="font-size:14px">All four had PyPI releases in the last six weeks (Langfuse 5.1.0 and Phoenix 21.0.0 on 30 Oct, OpenInference on 31 Oct, contrib instrumentation-genai in its 2026 beta line).</p>
+<div class="repo"><a href="https://github.com/langfuse/langfuse">github.com/langfuse/langfuse</a><span>Search the repo for its OTel ingestion path to see how OTLP spans and <code>gen_ai.*</code> attributes become observations with ClickHouse cost fields. Also look at the self-host <code>docker-compose.yml</code> for the real infrastructure footprint.</span></div>
+<div class="repo"><a href="https://github.com/Arize-ai/phoenix">github.com/Arize-ai/phoenix</a><span>See <code>packages/phoenix-otel</code> (the <code>register()</code> you used) and <code>packages/phoenix-evals</code> for how judges are templated, rate-limited and batched.</span></div>
+<div class="repo"><a href="https://github.com/Arize-ai/openinference">github.com/Arize-ai/openinference</a><span>The <code>spec/</code> folder defines the OpenInference attribute dialect. Compare it line by line with the OTel GenAI semconv; the mismatches are what your Collector may need to translate.</span></div>
+<div class="repo"><a href="https://github.com/open-telemetry/opentelemetry-python-contrib/tree/main/instrumentation-genai">open-telemetry/opentelemetry-python-contrib · instrumentation-genai</a><span>The reference semconv implementations (OpenAI, Vertex AI, LangChain and others) and <code>util/opentelemetry-util-genai</code>. See how message-content capture is gated by environment variables.</span></div>
+</section>
+
+<section id="read">
+<h2><span class="n">6</span>Read / watch</h2>
+<ul>
+<li><a href="https://www.dash0.com/knowledge/opentelemetry-genai-semantic-conventions-explained">Dash0 — OpenTelemetry GenAI semantic conventions explained</a> (updated Sept 2026). The clearest current summary of stability, the repo move, required attributes and content-capture events.</li>
+<li><a href="https://langfuse.com/changelog/2026-10-14-python-sdk-v5-js-sdk-v6">Langfuse — Python SDK v5 / JS SDK v6 changelog</a> plus the <a href="https://langfuse.com/docs/observability/sdk/upgrade-path/python-v4-to-v5">v4 → v5 upgrade guide</a>. Read these for <code>should_export_span</code> filtering, gzip OTLP, and the removal of trace-level I/O setters (set input/output on the root observation instead).</li>
+<li><a href="https://arize.com/docs/phoenix/tracing/how-to-tracing/setup-tracing/setup-using-phoenix-otel">Arize Phoenix — Setup using Phoenix OTEL</a>. Covers <code>register()</code> options (batch, protocol, auto_instrument) and how projects and sessions map onto OTel resources.</li>
+</ul>
+</section>
+
+<section id="interview">
+<h2><span class="n">7</span>Interview questions</h2>
+<details class="qa" open><summary>How is observability for an LLM app different from classic APM, and what would you instrument first?</summary><div>
+<p>APM covers availability and latency. LLM apps also fail silently: a 200 OK can still carry a hallucinated answer. So you add (a) typed span trees (retrieval, LLM, tool, guardrail) so you can localise failures, (b) GenAI attributes such as model, tokens, prompt version and doc IDs so you can slice cost and quality, and (c) scores (feedback, judge) joined by trace ID. I would instrument first: the LLM call with token usage, then retrieval with document IDs and scores, then propagate request-scoped tags (tenant, user, prompt version, feature flag) onto every span. Without that propagation you cannot answer "which version regressed?".</p></div></details>
+<details class="qa"><summary>Langfuse vs LangSmith vs Phoenix for a regulated Indian bank. Defend your pick.</summary><div>
+<p>Data residency and DPDP push towards self-hosting, which favours Langfuse (OSS with prompt management, datasets and evals) or Phoenix. LangSmith self-host is an enterprise contract and is LangChain-centric. I would pick Langfuse self-hosted in-region, behind a private endpoint with SSO/RBAC, fed by an OTel Collector that redacts PII before export. Phoenix would serve developer laptops and offline eval experiments. The lock-in hedge is that all instrumentation is OTel, so the backend is an exporter choice. The cost I accept is running ClickHouse, Postgres and S3, with backups and upgrades.</p></div></details>
+<details class="qa"><summary>Prompts and retrieved chunks contain PII. How do you keep traces useful and compliant?</summary><div>
+<p>Use tiered capture. Metadata (tokens, model, latency, IDs, hashes) goes at 100%. Content goes only after redaction (Presidio or regex processors in the Collector, or Langfuse's mask function at the SDK), only on sampled traces, with shorter retention and RBAC that limits who can view content. Store doc IDs instead of chunk text where you can, because the source system is the record. Encrypt at rest, keep audit logs of who viewed traces, and handle deletion requests by user ID. Per the semconv, content belongs in events, which makes it easy to drop or route separately.</p></div></details>
+<details class="qa"><summary>How do you track and control token cost across teams and providers?</summary><div>
+<p>Emit <code>gen_ai.usage.input_tokens/output_tokens</code>, model and provider on every LLM span, plus <code>tenant</code>, <code>team</code> and <code>feature</code> tags. Compute cost from a versioned price table, in the backend (Langfuse model definitions) or in the Collector, and include cached-token and batch discounts. Dashboards show cost per request, per feature and per successful outcome. Enforce budgets at the gateway (LiteLLM or an AI gateway: per-key quotas, fallback to cheaper models) instead of in observability. Alert on anomalies such as an agent loop that suddenly uses ten times the tokens per trace.</p></div></details>
+<details class="qa"><summary>What sampling strategy would you use at 2,000 RPS, and what is the risk?</summary><div>
+<p>Use head sampling at the SDK for cost control only if necessary, and prefer tail sampling in the Collector: keep 100% of errors, slow traces (above the p99 threshold), negative feedback, guardrail triggers and high-cost traces, plus 5–10% of the rest stratified by tenant. Metrics such as tokens and latency histograms come from unsampled data, so cost dashboards stay exact. The risks: sampled-out traces cannot be judged later, so online evals need their own stratified sample; and tail sampling needs all spans of a trace on the same Collector (load-balancing exporter keyed by trace ID) and memory sized for the decision wait window.</p></div></details>
+</section>
+
+<section id="adr">
+<h2><span class="n">8</span>Architect's lens — ADR-027</h2>
+<dl class="adr">
+<dt>Title</dt><dd>Vendor-neutral GenAI telemetry through OpenTelemetry, with a self-hosted LLM observability backend</dd>
+<dt>Status</dt><dd>Accepted · Nov 2026</dd>
+<dt>Context</dt><dd>Our enterprise knowledge assistant runs on Azure OpenAI and watsonx.ai, behind a LiteLLM gateway, with LangGraph agents and MCP tools. We need trace-level debugging, prompt-version attribution, online eval scores and per-team cost, while meeting DPDP data-residency rules and keeping existing on-call tooling (Instana).</dd>
+<dt>Options</dt><dd>(A) LangSmith SaaS with its SDK. (B) Vendor SDK per tool (Langfuse SDK, Phoenix register). (C) OTel SDK plus GenAI instrumentors → OTel Collector (redact, tail-sample, fan out) → self-hosted Langfuse + Instana + COS archive. (D) APM only.</dd>
+<dt>Decision</dt><dd>Option C. Instrumentation uses only OTel APIs and pinned instrumentors. Request-scoped attributes (<code>tenant</code>, <code>app.prompt.version</code>, <code>feature</code>) are propagated to all spans. Content capture is redacted and sampled. Langfuse is the system of record for prompts, datasets and scores.</dd>
+<dt>Consequences</dt><dd>+ The backend can be swapped through exporter config. + One redaction choke point for audit. + Exact cost metrics alongside sampled traces. − We own semconv drift while <code>gen_ai.*</code> is in Development (mitigation: lockfile pins and a contract test asserting required attributes). − We run Langfuse's ClickHouse/Postgres/Redis/S3 stack (mitigation: managed Postgres and Redis, ClickHouse sizing by monthly span volume). − Two UIs for engineers (Langfuse for quality, Instana for SLOs), joined on trace ID.</dd>
+</dl>
+</section>
+
+<section id="tomorrow">
+<div class="tomorrow"><b>Tomorrow · Day 28:</b> Security, governance &amp; responsible AI: OWASP Top 10 for LLM apps, RBAC, secrets, encryption, network segmentation, audit, EU AI Act and India's DPDP Act.</div>
+</section>
+</main>
+</div>
+
+<script>
+document.querySelectorAll('.copy').forEach(function(b){
+  b.addEventListener('click',function(){
+    var code=b.parentElement.querySelector('code');var t=code.innerText;
+    function sel(){var r=document.createRange();r.selectNodeContents(code);var s=getSelection();s.removeAllRanges();s.addRange(r);b.textContent='Selected';}
+    try{navigator.clipboard.writeText(t).then(function(){b.textContent='Copied';setTimeout(function(){b.textContent='Copy'},1600)},sel);}catch(e){sel();}
+  });
+});
+</script>
+
+</body></html>

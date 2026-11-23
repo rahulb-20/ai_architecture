@@ -1,0 +1,466 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>GenAI Prep · Day 41 — Revision Drill: Multimodal RAG & LangGraph Recovery</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: single reading column; questions are recall cards with answers folded; diagrams, tables and code scroll in their own frames. */
+:root{
+  --bg:#f6f7f9;--surface:#fff;--fg:#1b2230;--muted:#5a6475;--line:#dde2ea;
+  --accent:#2f5bd3;--accent-soft:#e7edfb;--code-bg:#f0f2f6;--warn:#a15c00;--warn-soft:#fbf1e1;
+  --f-display:"IBM Plex Sans Condensed","Arial Narrow",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#11151c;--surface:#181e27;--fg:#e4e8ef;--muted:#9aa4b4;--line:#2b3340;
+  --accent:#8aa8ff;--accent-soft:#1f2a44;--code-bg:#0d1117;--warn:#e0a84a;--warn-soft:#2e2414;color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#11151c;--surface:#181e27;--fg:#e4e8ef;--muted:#9aa4b4;--line:#2b3340;
+  --accent:#8aa8ff;--accent-soft:#1f2a44;--code-bg:#0d1117;--warn:#e0a84a;--warn-soft:#2e2414;color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font:16px/1.62 var(--f-body);padding-block:40px 64px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+main{max-width:760px;margin:0 auto;display:grid;gap:44px}
+main>*{min-width:0}
+h1,h2,h3{font-family:var(--f-display);line-height:1.15;text-wrap:balance;margin:0}
+h1{font-size:clamp(32px,6vw,44px);font-weight:700}
+h2{font-size:26px;font-weight:600}
+h3{font-size:18px;font-weight:600}
+p{margin:0}
+a{color:var(--accent);text-underline-offset:2px}
+code{font:.88em var(--f-mono);background:var(--code-bg);padding:.1em .3em;border-radius:3px;overflow-wrap:anywhere}
+section,header{display:grid;gap:14px}
+section>*,header>*{min-width:0}
+.eyebrow{font:500 12.5px var(--f-mono);letter-spacing:.04em;color:var(--muted)}
+.lede{font-size:18px;color:var(--muted)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font:12.5px var(--f-mono);padding:3px 8px;background:var(--accent-soft);color:var(--accent);border-radius:3px}
+.sub{color:var(--muted)}
+ul,ol{margin:0;padding-left:22px;display:grid;gap:7px}
+.change{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:12px}
+.change>div{background:var(--surface);border:1px solid var(--line);padding:14px 16px;display:grid;gap:8px;align-content:start;min-width:0}
+.bar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+button{font:500 13px var(--f-body);color:var(--accent);background:var(--surface);border:1px solid var(--line);border-radius:4px;padding:5px 11px;cursor:pointer}
+button:hover{border-color:var(--accent)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.qs{display:grid;gap:12px}
+.q{background:var(--surface);border:1px solid var(--line);padding:16px 18px;display:grid;gap:10px;min-width:0}
+.q .tag{font:500 12px var(--f-mono);color:var(--muted)}
+.q .ask{font-weight:600;font-size:17px;line-height:1.42}
+summary{cursor:pointer;color:var(--accent);font-weight:500;font-size:14.5px}
+.ans{display:grid;gap:10px;padding-top:10px}
+.ans>*{min-width:0}
+.probe{font-size:14.5px;color:var(--warn);background:var(--warn-soft);padding:8px 11px}
+.frame{overflow-x:auto;background:var(--surface);border:1px solid var(--line)}
+.frame svg{display:block;width:100%;min-width:680px;height:auto}
+svg text{font-family:var(--f-body);font-size:12.5px;fill:var(--fg)}
+svg .s{font-size:11px;fill:var(--muted)}
+svg .b{fill:var(--surface);stroke:var(--line);stroke-width:1.2}
+svg .k{fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.2}
+svg .w{fill:var(--warn-soft);stroke:var(--warn);stroke-width:1.2}
+svg .l{fill:none;stroke:var(--muted);stroke-width:1.2}
+svg .h{fill:var(--muted)}
+svg .cp{fill:var(--accent)}
+svg .band{fill:var(--bg);stroke:var(--line);stroke-dasharray:4 4}
+table{border-collapse:collapse;width:100%;min-width:600px;font-size:14.5px}
+th,td{text-align:left;vertical-align:top;padding:9px 12px;border-bottom:1px solid var(--line)}
+th{font-weight:600;background:var(--code-bg)}
+tr:last-child td{border-bottom:0}
+td.n{font-variant-numeric:tabular-nums;white-space:nowrap}
+.code{position:relative;background:var(--code-bg);border:1px solid var(--line)}
+.code pre{margin:0;padding:14px 16px;overflow-x:auto;font:13px/1.55 var(--f-mono);tab-size:4}
+.code button{position:absolute;top:7px;right:7px;padding:3px 9px;font-size:12px}
+.src{font-size:14.5px}
+.src li{overflow-wrap:anywhere}
+@media (prefers-reduced-motion:no-preference){summary{transition:color .15s}}
+</style>
+<main>
+<header>
+  <div class="eyebrow">GenAI Architect prep · Day 41 · Revision drill · Thu 19 Nov 2026</div>
+  <h1>Multimodal RAG on messy documents, and ingestion that survives a crash</h1>
+  <p class="lede">Multimodal RAG (Day 12) gets its first drill. LangGraph comes back from Day 17, this time for checkpointing, durability modes and recovery rather than human-in-the-loop. The scenario joins them: a GPU-heavy document pipeline that must never half-index a file.</p>
+  <div class="chips"><span class="chip">langgraph 1.2.22</span><span class="chip">langgraph-checkpoint-postgres 3.2.1</span><span class="chip">docling 2.150.1</span><span class="chip">sentence-transformers 6.3.0</span></div>
+</header>
+
+<section>
+  <h2>Why this matters for the JD</h2>
+  <p>The JD lists document Q&amp;A and knowledge assistants, preferred RAG optimisation, LangGraph and agentic frameworks, plus resilience, DR and rollback. Enterprise corpora are scans, tables and diagrams, and ingestion runs for hours on expensive GPUs. Panels test whether you can say what happens to a half-processed document when a node dies.</p>
+</section>
+
+<section>
+  <h2>What to have current</h2>
+  <div class="change">
+    <div><h3>LangGraph persistence</h3>
+      <ul>
+        <li>Pass <code>durability="exit" | "async" | "sync"</code> on <code>invoke</code> or <code>stream</code>. Only <code>sync</code> commits a checkpoint before the next step starts. <code>exit</code> cannot recover from a process crash mid-run.</li>
+        <li>Resume after an error with <code>graph.invoke(None, config)</code> on the same <code>thread_id</code>. Resumption is at a super-step boundary, and an interrupted node restarts from its first line.</li>
+        <li>Writes from siblings that succeeded are kept in <code>checkpoint_writes</code>, so they are not re-run.</li>
+        <li>Until the first checkpoint is durable, <code>invoke(None, config)</code> raises <code>EmptyInputError</code>. Record admission in your own outbox row.</li>
+        <li>Encrypt with <code>EncryptedSerializer.from_pycryptodome_aes()</code>, which reads <code>LANGGRAPH_AES_KEY</code>. The docs describe no built-in TTL, so prune old checkpoints yourself.</li>
+      </ul></div>
+    <div><h3>Multimodal parsing and retrieval</h3>
+      <ul>
+        <li>Docling's VLM pipeline runs with <code>docling --pipeline vlm --vlm-model granite_docling</code>. Granite-Docling is 258M parameters, Apache 2.0, and emits DocTags.</li>
+        <li>Docling also ships an MCP server, and its formats now include audio and video.</li>
+        <li>The <code>colpali-engine</code> README now says the package is deprecated. It points new work to Sentence Transformers v6 and its <code>MultiVectorEncoder</code>.</li>
+        <li><code>unstructured</code> 0.27.37 requires Python 3.11 to 3.13, so it works on your 3.13 but not on 3.14.</li>
+      </ul></div>
+  </div>
+</section>
+
+<section>
+  <div class="bar"><h2>Eight interview questions</h2><button id="toggle" type="button" aria-pressed="false">Show all answers</button></div>
+  <p class="sub">Answer each aloud in under 90 seconds before opening the model answer.</p>
+  <div class="qs">
+
+  <article class="q"><div class="tag">Q1 · Multimodal RAG</div><div class="ask">Half your corpus is scanned PDFs with charts and forms. Do you parse to text, or retrieve page images with a ColPali-style model? Defend the choice, including storage.</div>
+  <details><summary>Model answer</summary><div class="ans">
+    <p>It depends on what carries the meaning. If the answer lives in the words and tables, parse to text: you get hybrid search, cheap single-vector indexes, chunk-level citations and PII masking on text. If meaning lives in layout, charts or stamps, text extraction loses it, and page-image retrieval wins. The ColPali paper reports that embedding page images directly largely outperforms text-extraction pipelines on its ViDoRe benchmark.</p>
+    <p>The cost is storage and serving. Late-interaction models keep about a thousand patch vectors per page. At 1,030 × 128 dims in fp16, that is about 264 KB per page, compared with 4 KB for one 1,024-dim fp32 vector. A million pages becomes roughly 264 GB against 4 GB, and MaxSim scoring needs an engine that supports multi-vector search.</p>
+    <p>My default is a hybrid. Parse everything to text as the primary index. Route visually dense document types, such as valuation reports and engineering drawings, into a page-image index as well. Fuse the two with RRF, or use the image model only to rerank a candidate set. Token pooling or binary quantisation cuts the multi-vector footprint.</p>
+    <p class="probe">Follow-up: page-image retrieval returns a page, not a passage. The generator then needs a vision LLM, which adds image tokens to every answer.</p>
+  </div></details></article>
+
+  <article class="q"><div class="tag">Q2 · Multimodal RAG</div><div class="ask">Users ask numeric questions over large tables, such as "flood cap for the Silver plan in 2025". Recursive chunking returns half a table. What is your table strategy?</div>
+  <details><summary>Model answer</summary><div class="ans">
+    <p>Treat a table as a structured object, not prose. A layout-aware parser such as Docling detects the table and its cell structure. I store three things for it:</p>
+    <ul>
+      <li>The structured table, as JSON or a dataframe, keyed by document, version and page.</li>
+      <li>A Markdown rendering for the generator. Large tables are split into row groups, and each group repeats the header.</li>
+      <li>A short natural-language summary of what the table covers, which is the text I embed. Raw grids embed poorly.</li>
+    </ul>
+    <p>For lookups and aggregates, retrieval finds the table and a tool does the arithmetic, using SQL or pandas over the structured copy. The LLM should not add up numbers it read from Markdown.</p>
+    <p>I evaluate parsing separately from retrieval, with a cell-level score such as TEDS on a labelled sample. Most "wrong number" incidents turn out to be merged header cells or a table split across pages.</p>
+  </div></details></article>
+
+  <article class="q"><div class="tag">Q3 · Multimodal RAG</div><div class="ask">You switch OCR from a classic engine to a small VLM parser. Text quality looks better, but a reviewer finds an invented sanction amount. Why does this happen, and how do you control it?</div>
+  <details><summary>Model answer</summary><div class="ans">
+    <p>Classic OCR fails visibly. It produces garbled characters that a reader or a dictionary check can spot. A VLM generates text, so on a blurred field it can produce a fluent, plausible value. That failure is harder to catch, and it is worst on exactly the fields that matter: amounts, dates and IDs.</p>
+    <ul>
+      <li><strong>Provenance:</strong> keep page number and bounding box for every element, and show the source crop next to any cited number.</li>
+      <li><strong>Cross-check critical fields:</strong> run a second extractor or classic OCR on detected amounts and dates. Disagreement sends the field to review.</li>
+      <li><strong>Routing:</strong> use the standard layout pipeline for clean digital PDFs, and reserve the VLM for scans or pages the first pass scores poorly.</li>
+      <li><strong>Evaluation:</strong> measure character error rate and field-level exact match on a labelled scan set, by document type and scan quality.</li>
+    </ul>
+    <p class="probe">Follow-up: a 258M model such as Granite-Docling runs on a 6 GB laptop GPU. That makes it practical to keep parsing inside the bank's network.</p>
+  </div></details></article>
+
+  <article class="q"><div class="tag">Q4 · Multimodal RAG</div><div class="ask">Retrieval is solid, but answers about diagrams are weak. Product wants to send every retrieved page image to a vision LLM. What do you push back on?</div>
+  <details><summary>Model answer</summary><div class="ans">
+    <p>Cost, latency and data exposure. Every page image adds image tokens to the prompt, so five pages per answer multiplies input cost and time to first token. Scans also carry personal data that text-side masking never touched.</p>
+    <p>I would route. A classifier or the retrieval metadata decides whether the question needs visual evidence. Most questions are answered from text, captions and table summaries. For the rest, send cropped figure regions rather than full pages, at a resolution chosen by testing. Caption figures once at ingestion so the text index can find them, and keep the crop for answer time.</p>
+    <p>Before turning it on, I would measure answer quality, p95 latency and cost per query on a golden set that includes diagram questions. I would also confirm the vision endpoint runs in-region, and redact or exclude page types such as identity documents.</p>
+  </div></details></article>
+
+  <article class="q"><div class="tag">Q5 · LangGraph</div><div class="ask">Which durability mode do you choose for a five-minute ingestion graph on spot GPUs, and for a 300 ms chat agent? What does each choice cost?</div>
+  <details><summary>Model answer</summary><div class="ans">
+    <p><strong>Ingestion on spot GPUs:</strong> <code>sync</code>. Each step is expensive and the node can disappear, so I want the checkpoint committed before the next step starts. The extra write per super-step is small next to a GPU parse. With <code>exit</code>, losing the pod loses the whole run.</p>
+    <p><strong>Chat agent:</strong> <code>async</code> is usually right. The checkpoint is written while the next step runs, so it adds little latency. The risk is losing the last step on a crash, and the user can resend. <code>exit</code> fits short graphs where the run is the unit of retry and nothing is worth keeping mid-run.</p>
+    <p>One subtlety applies in every mode. Before the first checkpoint is durable, the run cannot be resumed, and <code>invoke(None, config)</code> raises <code>EmptyInputError</code>. If you must tell "never accepted" from "accepted but lost", write an outbox row at admission and have a sweeper restart threads that have no checkpoint.</p>
+  </div></details></article>
+
+  <article class="q"><div class="tag">Q6 · LangGraph</div><div class="ask">After a crash and resume, your vector store holds duplicate chunks. Explain exactly why, and the design rules that prevent it.</div>
+  <details><summary>Model answer</summary><div class="ans">
+    <p>Checkpoints exist at super-step boundaries. A node that fails, or is interrupted, re-runs from its first line on resume. If the node wrote three of five chunks before dying, the retry writes all five again, so you get eight rows. Today's exercise shows exactly that: 5 rows with deterministic keys, 8 without.</p>
+    <p>Siblings that completed in the same super-step are not re-run, because their writes were saved. That is why only the failed branch re-executes.</p>
+    <ul>
+      <li>Every external write is idempotent. Derive the key from stable inputs, such as document, version and content hash, and upsert.</li>
+      <li>Put side effects in their own small nodes, after the expensive pure work, so a retry repeats as little as possible.</li>
+      <li>Code before an <code>interrupt()</code> runs again on resume. Never put a side effect above an interrupt.</li>
+      <li>Publish atomically. Index into a version, then flip an alias once the document is complete, so readers never see half a document.</li>
+    </ul>
+  </div></details></article>
+
+  <article class="q"><div class="tag">Q7 · LangGraph</div><div class="ask">The security review asks what is inside your checkpoint tables. How do you run a Postgres checkpointer for a regulated, multi-tenant workload?</div>
+  <details><summary>Model answer</summary><div class="ans">
+    <p>Checkpoints are full snapshots of state at every step, so they hold whatever you put in state, including prompts, retrieved text and tool results. I treat that store as production data.</p>
+    <ul>
+      <li><strong>Keep state small:</strong> store URIs to page images and parsed output in object storage, not blobs. Mask personal data before it enters state.</li>
+      <li><strong>Encrypt:</strong> application-level encryption with <code>EncryptedSerializer</code>, key from the KMS, in addition to disk encryption.</li>
+      <li><strong>Tenancy:</strong> namespace <code>thread_id</code> by tenant (under 255 characters on Postgres), and enforce it with row-level security or separate schemas. A guessed thread ID must not load another tenant's state.</li>
+      <li><strong>Retention:</strong> the store grows without bound, so a scheduled job prunes by age, aligned with your DPDP retention policy. Erasure requests must reach checkpoints too.</li>
+      <li><strong>Schema change:</strong> in-flight threads hold the old state shape. Add fields as optional, version the state, and drain or migrate long-running threads before removing a field.</li>
+    </ul>
+  </div></details></article>
+
+  <article class="q"><div class="tag">Q8 · LangGraph</div><div class="ask">An agent produced a bad answer last week. Can you replay the run from its checkpoints to debug it? What are the hazards?</div>
+  <details><summary>Model answer</summary><div class="ans">
+    <p>Yes, if retention kept the thread. <code>get_state_history(config)</code> lists snapshots newest first, with each step's writes and the next nodes. I can inspect the state where the run went wrong, and <code>update_state</code> creates a new checkpoint from a corrected state, which forks the run without changing the original.</p>
+    <p>The hazard is that replay is re-execution. The docs say nodes after the chosen checkpoint run again, including LLM calls and API requests. So:</p>
+    <ul>
+      <li>Replay in a sandbox, with write tools stubbed or pointed at test systems.</li>
+      <li>Expect different output. Models and retrieval results have changed since last week, so replay explains the path, while the stored trace explains the actual outcome.</li>
+      <li>Pin the model version and corpus snapshot if you need to reproduce a result rather than explore it.</li>
+    </ul>
+    <p class="probe">Follow-up: checkpoints and traces answer different questions. Keep both, with the trace ID stored in checkpoint metadata.</p>
+  </div></details></article>
+  </div>
+</section>
+
+<section>
+  <h2>Design scenario · 25 minutes on paper</h2>
+  <p><strong>A private bank wants its 6,000 credit officers to query loan files.</strong> About two million pages arrive each month: scanned sanction letters, agreements with schedules of tables, and property valuation reports with photos and site maps.</p>
+  <ul>
+    <li>Parsing runs on preemptible GPU nodes to control cost. A node can vanish at any moment.</li>
+    <li>A reprocessed file must never appear twice, or half-indexed, in search.</li>
+    <li>Data stays in India. Access follows branch and role.</li>
+    <li>Numbers in answers must link to the exact page region they came from.</li>
+    <li>A new parser or embedding model must be rolled out without re-ingesting during business hours.</li>
+  </ul>
+  <p><strong>Produce:</strong> the ingestion graph and its recovery behaviour, the index design, GPU sizing, the evaluation plan and your top three risks.</p>
+  <details class="q"><summary>Reference design</summary><div class="ans">
+    <div class="frame"><svg viewBox="0 0 780 360" role="img" aria-label="Documents enter a queue and an admission outbox, then a LangGraph ingestion graph with a checkpoint after every super-step. The graph classifies, parses, fans out to text, tables and figures, masks PII, embeds, upserts with deterministic keys and finally flips the version alias. A Postgres checkpointer and object storage sit underneath.">
+      <defs><marker id="a" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path class="h" d="M0 0L8 4L0 8z"/></marker></defs>
+      <rect class="b" x="14" y="70" width="104" height="56"/><text x="66" y="94" text-anchor="middle">Queue</text><text class="s" x="66" y="111" text-anchor="middle">+ outbox row</text>
+      <rect class="b" x="146" y="70" width="100" height="56"/><text x="196" y="94" text-anchor="middle">Classify</text><text class="s" x="196" y="111" text-anchor="middle">type, scan quality</text>
+      <rect class="w" x="274" y="70" width="110" height="56"/><text x="329" y="94" text-anchor="middle">Parse</text><text class="s" x="329" y="111" text-anchor="middle">layout or VLM</text>
+      <rect class="b" x="414" y="14" width="110" height="40"/><text x="469" y="39" text-anchor="middle">Text chunks</text>
+      <rect class="b" x="414" y="78" width="110" height="40"/><text x="469" y="103" text-anchor="middle">Tables</text>
+      <rect class="w" x="414" y="142" width="110" height="40"/><text x="469" y="167" text-anchor="middle">Figure captions</text>
+      <rect class="b" x="554" y="70" width="96" height="56"/><text x="602" y="94" text-anchor="middle">Mask + embed</text><text class="s" x="602" y="111" text-anchor="middle">pure, retryable</text>
+      <rect class="k" x="674" y="44" width="96" height="44"/><text x="722" y="64" text-anchor="middle">Upsert</text><text class="s" x="722" y="79" text-anchor="middle">deterministic keys</text>
+      <rect class="k" x="674" y="112" width="96" height="44"/><text x="722" y="132" text-anchor="middle">Flip alias</text><text class="s" x="722" y="147" text-anchor="middle">version goes live</text>
+      <path class="l" marker-end="url(#a)" d="M118 98H144"/><path class="l" marker-end="url(#a)" d="M246 98H272"/>
+      <path class="l" marker-end="url(#a)" d="M384 92L412 36"/><path class="l" marker-end="url(#a)" d="M384 98H412"/><path class="l" marker-end="url(#a)" d="M384 104L412 160"/>
+      <path class="l" marker-end="url(#a)" d="M524 34L552 88"/><path class="l" marker-end="url(#a)" d="M524 98H552"/><path class="l" marker-end="url(#a)" d="M524 162L552 108"/>
+      <path class="l" marker-end="url(#a)" d="M650 90L672 70"/><path class="l" marker-end="url(#a)" d="M722 88V110"/>
+      <circle class="cp" cx="132" cy="214" r="5"/><circle class="cp" cx="260" cy="214" r="5"/><circle class="cp" cx="399" cy="214" r="5"/><circle class="cp" cx="539" cy="214" r="5"/><circle class="cp" cx="662" cy="214" r="5"/>
+      <path class="l" d="M60 214H740" stroke-dasharray="3 4"/>
+      <text class="s" x="60" y="236">Checkpoint after each super-step (durability="sync"). Completed sibling writes are kept, so only a failed branch re-runs.</text>
+      <rect class="band" x="10" y="256" width="760" height="88"/>
+      <rect class="b" x="30" y="276" width="220" height="52"/><text x="140" y="298" text-anchor="middle">Postgres checkpointer</text><text class="s" x="140" y="315" text-anchor="middle">encrypted serde, pruned by age</text>
+      <rect class="b" x="280" y="276" width="220" height="52"/><text x="390" y="298" text-anchor="middle">Object storage (in-region)</text><text class="s" x="390" y="315" text-anchor="middle">pages, crops, DocTags; state holds URIs</text>
+      <rect class="b" x="530" y="276" width="220" height="52"/><text x="640" y="298" text-anchor="middle">Indexes</text><text class="s" x="640" y="315" text-anchor="middle">hybrid text + page-image subset</text>
+    </svg></div>
+    <p><strong>Recovery.</strong> One thread per document version, with <code>thread_id = tenant:doc:version</code>. A sweeper resumes threads whose pods died with <code>invoke(None, config)</code>, and restarts outbox rows that have no checkpoint. A retry policy handles transient VLM timeouts inside a node. A document that fails three resumes goes to a dead-letter queue with its last state.</p>
+    <p><strong>Index.</strong> The text index is hybrid, with metadata for document, version, page, bounding box, branch and role, applied as server-side filters. Valuation reports also go to a page-image index, used as a second retriever and fused with RRF. A new parser or embedding model builds a new index version in the background. Traffic moves by alias after the eval gate passes, and the old version stays for rollback.</p>
+    <p><strong>GPU sizing, as a habit.</strong> Two million pages a month averages about 0.77 pages per second. Plan for a peak three times that, about 2.3 pages per second. With an assumed 1.5 seconds of GPU time per page and 60% useful utilisation, you need about 2.3 × 1.5 ÷ 0.6 ≈ 6 GPUs, plus headroom for preemption. If 20% of pages enter the page-image index at about 264 KB each, that is about 106 GB a month before pooling or quantisation.</p>
+    <div class="frame"><table>
+      <thead><tr><th>Layer</th><th>Check</th><th>Gate</th></tr></thead>
+      <tbody>
+        <tr><td>Parsing</td><td>Field exact match on amounts and dates; table TEDS; character error rate by scan quality</td><td>No regression on critical fields</td></tr>
+        <tr><td>Recovery</td><td>Chaos test: kill pods mid-parse and mid-upsert across 500 documents</td><td>Zero duplicates, zero partial versions, every document terminal</td></tr>
+        <tr><td>Retrieval</td><td>Recall@k by modality (text, table, figure)</td><td>Paired non-inferiority per document type</td></tr>
+        <tr><td>Answers</td><td>Faithfulness; every number carries a page and box citation</td><td>Uncited numbers block release</td></tr>
+        <tr><td>Access</td><td>Per-role negative retrieval cases</td><td>Zero leaks</td></tr>
+        <tr><td>Cost</td><td>GPU seconds and storage per page</td><td>Within budget at peak load</td></tr>
+      </tbody></table></div>
+    <p><strong>Top risks.</strong> A VLM inventing a sanction amount, handled by field cross-checks and source crops. A half-indexed document after a crash, handled by idempotent upserts and the alias flip. Checkpoints becoming a second copy of customer data, handled by URIs in state, masking, encryption and pruning.</p>
+  </div></details>
+</section>
+
+<section>
+  <h2>Today's exercise · 25 minutes</h2>
+  <p>Run a three-branch ingestion graph with a SQLite checkpointer. Two failures are injected: a VLM timeout, then a vector-store reset halfway through the upsert batch. You resume the same thread twice and see which nodes re-run and whether the index gets duplicates. It needs no GPU, API key, WSL2 or Docker.</p>
+  <div class="code"><button type="button" class="copy">Copy</button><pre><code>New-Item -ItemType Directory -Force day41-drill | Out-Null
+Set-Location day41-drill
+py -3.13 -m venv .venv
+.\.venv\Scripts\Activate.ps1   # if blocked: Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
+python -m pip install "langgraph==1.2.22" "langgraph-checkpoint-sqlite==3.1.3"
+notepad day41_resume.py        # paste the script below and save
+python day41_resume.py
+python day41_resume.py --no-ledger</code></pre></div>
+  <div class="code"><button type="button" class="copy">Copy</button><pre><code>"""Day 41 drill: crash-safe multimodal ingestion with LangGraph checkpoints.
+
+parse -&gt; (text | tables | figures in parallel) -&gt; index
+Run 1: the figure-captioning node times out (simulated VLM failure).
+Run 2: resume the same thread; the index node crashes halfway through its writes.
+Run 3: resume again; the run completes.
+Watch which nodes re-execute and whether the vector store gets duplicates.
+"""
+import hashlib
+import operator
+import sqlite3
+import sys
+from pathlib import Path
+from typing import Annotated, TypedDict
+
+from langgraph.checkpoint.sqlite import SqliteSaver
+from langgraph.graph import END, START, StateGraph
+
+DB = Path("day41.db")
+IDEMPOTENT = "--no-ledger" not in sys.argv
+FAIL_PLAN = {"figures": 1, "index": 1}  # failures to inject, per node
+calls: dict[str, int] = {}
+
+# A fake parsed PDF: what Docling would hand you (text, tables, pictures).
+DOC = {
+    "doc_id": "policy-2026-07",
+    "text": ["Section 4.2 covers flood damage.", "Claims must be filed in 30 days."],
+    "tables": [[["Plan", "Flood cap"], ["Gold", "10L"], ["Silver", "4L"]]],
+    "figures": ["fig-1.png", "fig-2.png"],
+}
+
+
+class State(TypedDict):
+    doc_id: str
+    chunks: Annotated[list[dict], operator.add]
+    indexed: int
+
+
+def tick(node: str) -&gt; int:
+    calls[node] = calls.get(node, 0) + 1
+    return calls[node]
+
+
+def maybe_fail(node: str, attempt: int, why: str) -&gt; None:
+    if attempt &lt;= FAIL_PLAN.get(node, 0):
+        raise RuntimeError(f"{node}: {why}")
+
+
+def parse(state: State) -&gt; dict:
+    tick("parse")
+    return {"doc_id": DOC["doc_id"]}
+
+
+def text(state: State) -&gt; dict:
+    tick("text")
+    return {"chunks": [{"kind": "text", "body": t, "page": 1} for t in DOC["text"]]}
+
+
+def tables(state: State) -&gt; dict:
+    tick("tables")
+    out = []
+    for t in DOC["tables"]:
+        header, *rows = t
+        md = "| " + " | ".join(header) + " |\n" + "\n".join(
+            "| " + " | ".join(r) + " |" for r in rows
+        )
+        out.append({"kind": "table", "body": md, "page": 2})
+    return {"chunks": out}
+
+
+def figures(state: State) -&gt; dict:
+    attempt = tick("figures")
+    maybe_fail("figures", attempt, "VLM caption call timed out")
+    caps = [f"[caption of {f}] flood-zone map" for f in DOC["figures"]]
+    return {"chunks": [{"kind": "figure", "body": c, "page": 3} for c in caps]}
+
+
+def index(state: State) -&gt; dict:
+    attempt = tick("index")
+    con = sqlite3.connect(DB)
+    con.execute(
+        "CREATE TABLE IF NOT EXISTS vectors(key TEXT PRIMARY KEY, doc TEXT, body TEXT)"
+        if IDEMPOTENT
+        else "CREATE TABLE IF NOT EXISTS vectors(key TEXT, doc TEXT, body TEXT)"
+    )
+    chunks = sorted(state["chunks"], key=lambda c: (c["page"], c["body"]))
+    for i, c in enumerate(chunks):
+        key = hashlib.sha256(f"{state['doc_id']}|{c['body']}".encode()).hexdigest()[:16]
+        verb = "INSERT OR IGNORE" if IDEMPOTENT else "INSERT"
+        con.execute(f"{verb} INTO vectors VALUES (?,?,?)", (key, state["doc_id"], c["body"]))
+        con.commit()  # each upsert is its own external side effect
+        if i == 2:
+            maybe_fail("index", attempt, "vector store connection reset mid-batch")
+    n = con.execute("SELECT COUNT(*) FROM vectors").fetchone()[0]
+    con.close()
+    return {"indexed": n}
+
+
+def build(checkpointer):
+    g = StateGraph(State)
+    for name, fn in [("parse", parse), ("text", text), ("tables", tables),
+                     ("figures", figures), ("index", index)]:
+        g.add_node(name, fn)
+    g.add_edge(START, "parse")
+    for branch in ("text", "tables", "figures"):
+        g.add_edge("parse", branch)
+    g.add_edge(["text", "tables", "figures"], "index")
+    g.add_edge("index", END)
+    return g.compile(checkpointer=checkpointer)
+
+
+def main() -&gt; None:
+    DB.unlink(missing_ok=True)
+    cfg = {"configurable": {"thread_id": "ingest-policy-2026-07"}}
+    print(f"ledger (idempotent upserts): {IDEMPOTENT}")
+    with SqliteSaver.from_conn_string(str(DB)) as saver:
+        for run, payload in enumerate([{"chunks": []}, None, None], start=1):
+            graph = build(saver)  # a fresh graph object, as after a restart
+            before = dict(calls)
+            try:
+                out = graph.invoke(payload, cfg, durability="sync")
+                status = f"done, indexed={out['indexed']}"
+            except RuntimeError as e:
+                status = f"FAILED ({e})"
+            ran = sorted(n for n in calls if calls[n] != before.get(n, 0))
+            nxt = graph.get_state(cfg).next
+            print(f"run {run}: ran {ran} -&gt; {status}; next={list(nxt)}")
+        steps = sum(1 for _ in saver.list(cfg))
+    con = sqlite3.connect(DB)
+    total, distinct = con.execute(
+        "SELECT COUNT(*), COUNT(DISTINCT body) FROM vectors").fetchone()
+    con.close()
+    print(f"checkpoints on thread: {steps}")
+    print(f"vector rows: {total} (distinct chunks: {distinct})")
+    print(f"node call counts: {dict(sorted(calls.items()))}")
+
+
+if __name__ == "__main__":
+    main()</code></pre></div>
+  <h3>Expected output</h3>
+  <div class="code"><button type="button" class="copy">Copy</button><pre><code>ledger (idempotent upserts): True
+run 1: ran ['figures', 'parse', 'tables', 'text'] -&gt; FAILED (figures: VLM caption call timed out); next=['figures']
+run 2: ran ['figures', 'index'] -&gt; FAILED (index: vector store connection reset mid-batch); next=['index']
+run 3: ran ['index'] -&gt; done, indexed=5; next=[]
+checkpoints on thread: 5
+vector rows: 5 (distinct chunks: 5)
+node call counts: {'figures': 2, 'index': 2, 'parse': 1, 'tables': 1, 'text': 1}
+
+# with --no-ledger, the last lines change to:
+vector rows: 8 (distinct chunks: 5)
+node call counts: {'figures': 2, 'index': 2, 'parse': 1, 'tables': 1, 'text': 1}</code></pre></div>
+  <h3>Then do this</h3>
+  <ol>
+    <li>Explain aloud why <code>text</code> and <code>tables</code> ran once while <code>index</code> ran twice, and where the three extra rows come from in the <code>--no-ledger</code> run.</li>
+    <li>Add <code>for s in graph.get_state_history(cfg): print(s.metadata["step"], s.next)</code> after the loop and match each checkpoint to a super-step.</li>
+    <li>Stretch: replace the <code>raise</code> in <code>figures</code> with <code>os._exit(1)</code>, remove <code>DB.unlink</code>, and run each attempt as a separate process. Compare <code>durability="exit"</code> with <code>"sync"</code>.</li>
+    <li>Stretch: replace the fake <code>DOC</code> with real Docling output from one of your compliance-bot PDFs (<code>python -m pip install docling</code>; the first run downloads layout models). Map Docling's text, tables and pictures to the three branches, and keep page and bounding box in each chunk.</li>
+  </ol>
+</section>
+
+<section>
+  <h2>Repos to look at</h2>
+  <ul>
+    <li><a href="https://github.com/langchain-ai/langgraph">langchain-ai/langgraph</a>. Read the checkpoint libraries under <code>libs/</code>, especially how the Postgres saver stores <code>checkpoint_writes</code>.</li>
+    <li><a href="https://github.com/docling-project/docling">docling-project/docling</a>. Compare the standard and VLM pipelines, and how provenance (page, bounding box) is kept on each element.</li>
+    <li><a href="https://github.com/illuin-tech/colpali">illuin-tech/colpali</a>. Read the model table and the deprecation note, which explains where multi-vector page retrieval is moving.</li>
+  </ul>
+</section>
+
+<section>
+  <h2>Read if you have time</h2>
+  <ul>
+    <li><a href="https://docs.langchain.com/oss/python/langgraph/checkpointers">LangGraph checkpointers</a>. Read the durability modes, the super-step section and the "choose how to continue a thread" table.</li>
+    <li><a href="https://docling-project.github.io/docling/usage/vision_models/">Docling: vision models</a>. The preset table shows which VLMs run locally and on which devices.</li>
+    <li><a href="https://arxiv.org/abs/2407.01449">ColPali: Efficient Document Retrieval with Vision Language Models</a> (Faysse et al.), which introduces the ViDoRe benchmark.</li>
+  </ul>
+</section>
+
+<section>
+  <h2>Tomorrow</h2>
+  <p>Day 42 revision drill: fine-tuning vs RAG with LoRA/QLoRA (Day 3) and model serving with vLLM (Day 23).</p>
+</section>
+
+<section>
+  <h2>Sources</h2>
+  <ul class="src">
+    <li><a href="https://docs.langchain.com/oss/python/langgraph/checkpointers">LangGraph checkpointers</a></li>
+    <li><a href="https://docs.langchain.com/oss/python/langgraph/durable-execution">LangGraph persistence and durable execution</a></li>
+    <li><a href="https://github.com/docling-project/docling">Docling on GitHub</a> and <a href="https://docling-project.github.io/docling/usage/vision_models/">Docling vision models</a></li>
+    <li><a href="https://www.ibm.com/new/announcements/granite-docling-end-to-end-document-conversion">IBM: Granite-Docling announcement</a></li>
+    <li><a href="https://github.com/illuin-tech/colpali">ColPali Engine on GitHub</a> and <a href="https://arxiv.org/abs/2407.01449">ColPali paper (arXiv 2407.01449)</a></li>
+    <li><a href="https://github.com/Unstructured-IO/unstructured">Unstructured on GitHub</a></li>
+    <li>PyPI: <a href="https://pypi.org/project/langgraph/">langgraph</a>, <a href="https://pypi.org/project/langgraph-checkpoint-sqlite/">langgraph-checkpoint-sqlite</a>, <a href="https://pypi.org/project/langgraph-checkpoint-postgres/">langgraph-checkpoint-postgres</a>, <a href="https://pypi.org/project/docling/">docling</a>, <a href="https://pypi.org/project/unstructured/">unstructured</a>, <a href="https://pypi.org/project/colpali-engine/">colpali-engine</a>, <a href="https://pypi.org/project/sentence-transformers/">sentence-transformers</a></li>
+  </ul>
+</section>
+</main>
+<script>
+const t=document.getElementById('toggle'),ds=[...document.querySelectorAll('article.q details')];
+t.addEventListener('click',()=>{const open=!ds.every(d=>d.open);ds.forEach(d=>d.open=open);t.textContent=open?'Hide all answers':'Show all answers';t.setAttribute('aria-pressed',open)});
+document.querySelectorAll('.copy').forEach(b=>b.addEventListener('click',async()=>{const c=b.parentElement.querySelector('code');try{await navigator.clipboard.writeText(c.textContent);b.textContent='Copied'}catch{const r=document.createRange();r.selectNodeContents(c);const s=getSelection();s.removeAllRanges();s.addRange(r);b.textContent='Press Ctrl+C'}setTimeout(()=>b.textContent='Copy',1600)}));
+</script>
+
+</body></html>

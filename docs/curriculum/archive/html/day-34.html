@@ -1,0 +1,435 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>GenAI Prep · Day 34 — Revision Drill: Multi-Agent &amp; Kubernetes</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,650&family=Source+Sans+3:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: single reading column (same system as the Day 31–33 drills), numbered Q&A in drill order, scenario as a whiteboard panel */
+:root{
+  --bg:#f6f7f9; --surface:#ffffff; --fg:#1b2230; --muted:#5a6476; --line:#dde2ea;
+  --accent:#1f5fbf; --accent-soft:#e6eefb; --warn:#9a5b00; --warn-soft:#fbf1e1; --bad:#b3261e; --bad-soft:#fbe9e7; --ok:#1d7a4a; --code:#f0f3f7;
+  --display:"Fraunces",Georgia,serif; --body:"Source Sans 3",system-ui,sans-serif; --mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#11151c; --surface:#181e27; --fg:#e4e8ef; --muted:#9aa4b5; --line:#2a3240;
+  --accent:#7fb0ff; --accent-soft:#1c2a42; --warn:#f0b35c; --warn-soft:#2e2414; --bad:#ff8a80; --bad-soft:#3a1d1b; --ok:#5fd39a; --code:#0d1117; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#11151c; --surface:#181e27; --fg:#e4e8ef; --muted:#9aa4b5; --line:#2a3240;
+  --accent:#7fb0ff; --accent-soft:#1c2a42; --warn:#f0b35c; --warn-soft:#2e2414; --bad:#ff8a80; --bad-soft:#3a1d1b; --ok:#5fd39a; --code:#0d1117; color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:17px;line-height:1.6}
+.wrap{max-width:820px;margin:0 auto;padding-block:40px 64px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:36px}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;line-height:1.2;margin:0}
+h1{font-size:clamp(28px,5vw,40px);font-weight:650}
+h2{font-size:24px;font-weight:650;padding-bottom:8px;border-bottom:1px solid var(--line)}
+h3{font-size:19px;font-weight:500}
+p{margin:0}
+.eyebrow{font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);font-weight:700}
+.lede{color:var(--muted);max-width:65ch}
+header{display:flex;flex-direction:column;gap:12px}
+section{display:flex;flex-direction:column;gap:16px;min-width:0}
+.alert{background:var(--warn-soft);border:1px solid var(--warn);border-radius:8px;padding:14px 16px;display:flex;flex-direction:column;gap:6px}
+.alert b.lbl{color:var(--warn);font-size:13px;letter-spacing:.06em;text-transform:uppercase}
+ul,ol{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:4px}
+.q{display:flex;flex-direction:column;gap:10px;padding:18px 0;border-top:1px solid var(--line);min-width:0}
+.q:first-of-type{border-top:0}
+.qhead{display:flex;gap:12px;align-items:baseline}
+.qn{font-family:var(--mono);font-size:13px;color:var(--accent);font-weight:600;flex:none;width:2.4em}
+.qt{font-weight:700;font-size:17.5px;min-width:0}
+.ans{padding-left:calc(2.4em + 12px);display:flex;flex-direction:column;gap:8px;min-width:0}
+details summary{cursor:pointer;color:var(--accent);font-weight:600;font-size:15px}
+details[open] summary{margin-bottom:8px}
+details>*+*{margin-top:8px}
+code{font-family:var(--mono);font-size:.88em;background:var(--code);padding:1px 5px;border-radius:4px}
+.codebox{position:relative;background:var(--code);border:1px solid var(--line);border-radius:8px;min-width:0}
+.codebox pre{margin:0;padding:14px 16px;overflow-x:auto;font-family:var(--mono);font-size:13.5px;line-height:1.5}
+.codebox pre code{background:none;padding:0}
+.copy{position:absolute;top:8px;right:8px;font:600 12px var(--body);background:var(--surface);color:var(--fg);border:1px solid var(--line);border-radius:6px;padding:4px 10px;cursor:pointer}
+.copy:focus-visible,summary:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:15px;min-width:560px}
+th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:13px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+td.num{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+tr:last-child td{border-bottom:0}
+.scenario{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:20px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.diagram{overflow-x:auto}
+.diagram svg{display:block;min-width:640px;width:100%;height:auto}
+.out{font-family:var(--mono);font-size:13px;background:var(--code);border:1px dashed var(--line);border-radius:8px;padding:12px 14px;overflow-x:auto;white-space:pre;color:var(--ok)}
+.out.bad{color:var(--bad)}
+a{color:var(--accent)}
+.small{font-size:14px;color:var(--muted)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+<header>
+  <div class="eyebrow">Day 34 · Revision drill · Thu 12 Nov 2026</div>
+  <h1>Revision drill: multi-agent patterns and Kubernetes for GenAI</h1>
+  <p class="lede">Two topics re-tested at interview depth: Day 18 (supervisor, hierarchical and handoff patterns, ReAct vs plan-and-execute, when not to go multi-agent) and Day 25 (autoscaling, GPU scheduling, KServe, inference routing). They meet in one place: every extra agent is extra model calls, and those calls land on a GPU pool you have to size, scale and pay for. Eight hard questions, a 25-minute local drill that measures the multiplier, then one design scenario.</p>
+</header>
+
+<div class="alert" role="note">
+  <b class="lbl">Worth knowing before an interview</b>
+  <p><b>The prebuilt <code>langgraph-supervisor</code> and <code>langgraph-swarm</code> packages have gone quiet:</b> last releases 19 Nov 2025 (0.0.31) and 4 Dec 2025 (0.1.0), while <code>langgraph</code> itself shipped 1.2.20 on 5 Nov 2026. LangChain's current docs teach multi-agent as patterns (subagents as tools, handoffs, routers) built with <code>create_agent</code> and plain LangGraph <code>Command</code>. If asked, say you treat the prebuilt packages as reference code and build the pattern yourself, which is also what today's drill does.</p>
+</div>
+
+<section>
+  <h2>Versions to quote (checked on PyPI today)</h2>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Package / project</th><th>Latest</th><th>Released</th><th>Note</th></tr></thead>
+    <tbody>
+      <tr><td><code>langgraph</code></td><td class="num">1.2.20</td><td class="num">5 Nov 2026</td><td>Python ≥3.10; <code>Command(goto=…, update=…)</code> is the handoff primitive.</td></tr>
+      <tr><td><code>langchain-core</code></td><td class="num">1.8.0</td><td class="num">11 Nov 2026</td><td>Released yesterday; pin it in demos rather than float.</td></tr>
+      <tr><td><code>langgraph-supervisor</code></td><td class="num">0.0.31</td><td class="num">19 Nov 2025</td><td>No release in ~12 months. Reference only.</td></tr>
+      <tr><td><code>langgraph-swarm</code></td><td class="num">0.1.0</td><td class="num">4 Dec 2025</td><td>Same status.</td></tr>
+      <tr><td><code>kserve</code> (Python SDK)</td><td class="num">0.21.0</td><td class="num">25 Sep 2026</td><td>LLM path is <code>LLMInferenceService</code>, which builds on llm-d and the Gateway API Inference Extension.</td></tr>
+      <tr><td><code>kubernetes</code> (Python client)</td><td class="num">37.0.2</td><td class="num">6 Nov 2026</td><td>For the stretch goal only.</td></tr>
+      <tr><td>Kubernetes DRA</td><td class="num">GA</td><td class="num">v1.34</td><td>Dynamic Resource Allocation: GPUs requested through <code>ResourceClaim</code>s, not only the <code>nvidia.com/gpu</code> count.</td></tr>
+      <tr><td>KEDA</td><td class="num">2.20</td><td>—</td><td>Current minor; Prometheus scaler is what you use for vLLM queue depth.</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section>
+  <h2>Eight interview questions</h2>
+  <p class="small">Answer each aloud in under 90 seconds before opening the model answer. Q1–4 are multi-agent, Q5–7 are Kubernetes, Q8 is where the two meet.</p>
+
+  <div class="q"><div class="qhead"><span class="qn">Q1</span><span class="qt">A client's team has drawn seven agents for an invoice-processing flow. You think one agent is enough. Make the case, and say what would change your mind.</span></div>
+  <div class="ans"><details><summary>Model answer</summary>
+    <p><b>The default is one agent with good tools,</b> because every hop between agents costs a model call, re-sends context, and is a place where information gets lost. Anthropic's write-up of its multi-agent research system reports such systems using roughly 15× the tokens of a chat interaction; today's drill shows 2.5× on a trivial task and 10× when one worker is vague. Seven agents for a mostly linear flow is a workflow drawn as an org chart.</p>
+    <p>For invoices, most steps are deterministic (extract, validate against PO, post to ERP), so I would make them graph nodes or tools, with one agent only where judgement is needed (exception handling).</p>
+    <p><b>What changes my mind,</b> in order of strength:</p>
+    <ul>
+      <li><b>Context isolation:</b> sub-tasks that each need a lot of context the others don't (one reads 200-page contracts, another queries the ERP). A sub-agent returns a summary and keeps the main context small.</li>
+      <li><b>Different trust or permissions:</b> the agent that reads untrusted vendor emails must not hold the "post payment" tool (the Day 21 privilege-separation argument).</li>
+      <li><b>Real parallelism:</b> independent research branches that can run at the same time and cut wall-clock time.</li>
+      <li><b>Separate ownership:</b> different teams own, version and evaluate different capabilities.</li>
+      <li><b>Tool overload:</b> more than ~20–30 tools in one agent, where tool-selection accuracy measurably drops on your eval set.</li>
+    </ul>
+    <p>Then I would ask for the evidence: an eval showing the single agent fails on a named slice of cases.</p>
+  </details></div></div>
+
+  <div class="q"><div class="qhead"><span class="qn">Q2</span><span class="qt">Compare supervisor, hierarchical, and handoff (swarm) topologies. Which one do you pick for a customer-support assistant with billing, tech-support and retention specialists?</span></div>
+  <div class="ans"><details><summary>Model answer</summary>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Topology</th><th>How control flows</th><th>Pick when</th><th>Failure mode</th></tr></thead>
+      <tbody>
+        <tr><td>Supervisor (subagents as tools)</td><td>Central agent calls specialists and gets results back</td><td>You need one place to enforce policy, budget and the final answer</td><td>Supervisor is a bottleneck and an extra call per hop; it paraphrases specialist output and loses detail</td></tr>
+        <tr><td>Hierarchical</td><td>Supervisors of supervisors</td><td>Large domains with team ownership per branch</td><td>Latency stacks per layer; errors are hard to localise</td></tr>
+        <tr><td>Handoffs / swarm</td><td>The active agent transfers control to a peer; the user then talks to that peer</td><td>Conversational flows where the specialist should own the dialogue</td><td>Ping-pong transfers, and no single place to enforce policy</td></tr>
+        <tr><td>Router (one-shot)</td><td>A classifier picks one agent, no return</td><td>Clear, mostly disjoint intents</td><td>Misroutes on mixed intents; needs a fallback</td></tr>
+      </tbody>
+    </table></div>
+    <p><b>For support:</b> a router up front plus handoffs, because the specialist should own the conversation and a supervisor in the loop adds a model call to every turn. Add rules the model cannot override in code: retention may only be entered from billing, at most 2 transfers per conversation, then a human. Keep a shared, typed conversation state (customer ID, intent, verified flag) so a handoff does not re-ask the customer.</p>
+  </details></div></div>
+
+  <div class="q"><div class="qhead"><span class="qn">Q3</span><span class="qt">ReAct or plan-and-execute for a 15-step data-migration agent (your Snowflake-to-PySpark case)? Defend it on cost, reliability and auditability.</span></div>
+  <div class="ans"><details><summary>Model answer</summary>
+    <ul>
+      <li><b>ReAct</b> decides the next step after every observation. It adapts well, but every step re-reads the growing history, so cost grows roughly quadratically in steps, and it drifts on long tasks.</li>
+      <li><b>Plan-and-execute</b> makes an explicit plan once (with a strong model), then executes steps with cheaper models or plain code, and re-plans only on failure. Cost is close to linear, and the plan is an artefact you can review, approve and diff.</li>
+      <li><b>For a migration:</b> plan-and-execute. The plan (object inventory, dependency order, conversion per object, validation queries) goes through a human approval step in LangGraph (<code>interrupt</code>), each step is checkpointed so a failure resumes rather than restarts, and the plan plus per-step results become the audit trail the client signs off.</li>
+      <li>Use <b>ReAct inside a step</b> where it helps, for example fixing one failing PySpark conversion against test output, with a step budget.</li>
+      <li>Failure modes to name: a stale plan after an early surprise (fix: re-plan triggers on validation failure), and over-planning trivial work (fix: route simple objects straight to a deterministic converter).</li>
+    </ul>
+  </details></div></div>
+
+  <div class="q"><div class="qhead"><span class="qn">Q4</span><span class="qt">The multi-agent system works in demos but loops or gives inconsistent answers in production. How do you debug it, and what controls do you add?</span></div>
+  <div class="ans"><details><summary>Model answer</summary>
+    <ul>
+      <li><b>Trace first.</b> One root span per run with child spans per agent and per handoff (Day 27's <code>invoke_agent</code> and <code>execute_tool</code> spans). Look at the handoff payloads: most failures are information lost or mangled at a handoff, not a bad model.</li>
+      <li><b>Common causes:</b> ping-pong delegation (A thinks B owns it, B hands back); a worker reports "it depends" and the supervisor re-delegates forever (today's <code>--flaky</code> run); a specialist sees the full history and acts on another agent's instructions; temperature &gt; 0 on routing calls.</li>
+      <li><b>Controls in code, not prompts:</b> hop and token budgets per run that end in escalation (the drill's <code>MAX_HOPS</code>), with <code>recursion_limit</code> only as a backstop; typed handoff contracts (a Pydantic schema per hand-off with a required <code>status: done | blocked | needs_input</code>); temperature 0 and structured output for routing; idempotent tools so a retry does not double-act.</li>
+      <li><b>Reproduce from checkpoints:</b> replay the failing run from its LangGraph checkpoint with the same state, then fix and add it to the regression set.</li>
+      <li><b>Evaluate at two levels:</b> each agent against its own golden set, and the whole system on end-to-end tasks, tracking calls and cost per task as metrics that gate releases.</li>
+    </ul>
+  </details></div></div>
+
+  <div class="q"><div class="qhead"><span class="qn">Q5</span><span class="qt">You deploy vLLM on Kubernetes with an HPA on CPU at 70%. Users see 20-second waits at 10 a.m. while the HPA shows nothing wrong. Explain and fix it.</span></div>
+  <div class="ans"><details><summary>Model answer</summary>
+    <p>LLM serving is GPU- and memory-bound. CPU stays low while requests queue for KV-cache space, so CPU is the wrong signal. Fix:</p>
+    <ul>
+      <li><b>Scale on serving signals</b> from vLLM's Prometheus endpoint: requests waiting in the queue (<code>vllm:num_requests_waiting</code>) and KV-cache usage, through KEDA's Prometheus scaler or the HPA with a custom-metrics adapter. Example target: scale out when the average waiting count per pod exceeds 3 for 60 s. Check the exact metric names against your vLLM version, because they have been renamed between releases.</li>
+      <li><b>Cold start is the real problem:</b> a new pod needs a GPU node (minutes if the cluster autoscaler or Karpenter must add one), a 10 GB+ image pull, and weight loading. Mitigations: keep warm minimum replicas sized for the morning peak, schedule scale-up ahead of known peaks (KEDA cron scaler), pre-pull images, and cache weights on a node-local disk or a shared volume.</li>
+      <li><b>Admission control:</b> cap concurrency per pod and return 429 with a retry-after at the gateway instead of letting latency grow without limit.</li>
+      <li>Scale-to-zero is fine for dev and batch, rarely for interactive production.</li>
+    </ul>
+  </details></div></div>
+
+  <div class="q"><div class="qhead"><span class="qn">Q6</span><span class="qt">One cluster must host a 70B model, a 3B guard model, an embedding model and nightly fine-tuning jobs. How do you schedule GPUs without wasting them?</span></div>
+  <div class="ans"><details><summary>Model answer</summary>
+    <ul>
+      <li><b>Separate node pools</b> by GPU class, with taints and tolerations, so a CPU pod never lands on a GPU node and small models do not take an H100.</li>
+      <li><b>70B:</b> tensor parallelism across the GPUs of one node (for example 4× 80 GB). If it must span nodes, use LeaderWorkerSet so the group is scheduled and restarted as a unit.</li>
+      <li><b>Small models:</b> share GPUs. MIG gives hardware isolation with fixed slices (A100/H100); time-slicing or MPS is more flexible but without memory isolation, so one noisy model can push another out of memory. Put the guard model on a MIG slice because it is latency-critical.</li>
+      <li><b>DRA (GA since Kubernetes 1.34)</b> lets pods request devices by attributes (memory, MIG profile) through <code>ResourceClaim</code>s instead of a bare <code>nvidia.com/gpu: 1</code>. Name it as the direction, and check whether your managed service and the NVIDIA DRA driver support it yet.</li>
+      <li><b>Fine-tuning jobs:</b> a lower PriorityClass and a batch queue (Kueue) with quotas, so training uses idle GPUs at night and is pre-empted when serving needs them. Checkpoint often so pre-emption is cheap.</li>
+      <li>Report GPU utilisation and cost per namespace (DCGM exporter), because idle reserved GPUs are the largest waste in most GenAI clusters.</li>
+    </ul>
+  </details></div></div>
+
+  <div class="q"><div class="qhead"><span class="qn">Q7</span><span class="qt">Why is a normal Kubernetes Service a poor load balancer for LLM pods, and what do you use instead? Where do KServe and llm-d fit?</span></div>
+  <div class="ans"><details><summary>Model answer</summary>
+    <ul>
+      <li>A Service spreads connections roughly evenly, but LLM requests vary 100× in cost (10 tokens vs 8,000), and pods differ in queue length, KV-cache use, and which prompt prefixes or LoRA adapters they already hold. Even spreading creates hot pods and wastes prefix-cache hits.</li>
+      <li><b>Gateway API Inference Extension:</b> an <code>InferencePool</code> of model-server pods and an endpoint picker that chooses a pod per request using queue depth, KV-cache use, adapter affinity and request criticality. Envoy-based gateways (Istio, kgateway, agentgateway, NGINX Gateway Fabric) implement it.</li>
+      <li><b>llm-d</b> adds prefix-cache-aware routing and prefill/decode disaggregation on top of vLLM. <b>KServe's <code>LLMInferenceService</code></b> packages this as one custom resource, with the platform concerns (autoscaling, rollout, storage) KServe already handles.</li>
+      <li><b>Put an AI gateway in front</b> (LiteLLM or your API gateway, Day 23) for auth, quotas, provider fallback and cost tags. Inference routing inside the cluster and the AI gateway at the edge are different layers. On IBM's side, OpenShift AI ships llm-d-based distributed inference, which is a useful mapping for watsonx clients running on-prem.</li>
+    </ul>
+  </details></div></div>
+
+  <div class="q"><div class="qhead"><span class="qn">Q8</span><span class="qt">You're putting a LangGraph multi-agent system on Kubernetes. Is each agent its own microservice? How do you handle state, long runs and rollouts?</span></div>
+  <div class="ans"><details><summary>Model answer</summary>
+    <ul>
+      <li><b>Agents are code, not services.</b> One graph is one deployable. Split an agent into its own service only when it needs different scaling, a different security boundary (for example the tool-holding agent in a separate namespace with its own service account), or a different owning team. Splitting by default adds network hops and makes tracing and versioning harder.</li>
+      <li><b>Stateless pods, durable state:</b> a Postgres checkpointer holds graph state, so any pod can resume a run and a pod restart does not lose work. Human-in-the-loop pauses become rows in the database, not open connections.</li>
+      <li><b>Long runs</b> (minutes) go through a queue: the API enqueues, worker pods run graphs, and KEDA scales workers on queue length. Clients stream progress or poll. Keep the HTTP tier separate from the workers.</li>
+      <li><b>Models are a shared pool</b> behind the gateway, not per agent. Size it from calls per task × tasks per second, which is why the multiplier from today's drill matters for capacity planning.</li>
+      <li><b>Rollouts:</b> version the graph with its prompts as one release bundle (Day 26), canary by percentage of new runs, never move in-flight runs to a new graph version, and gate promotion on eval scores plus calls-per-task and cost-per-task.</li>
+    </ul>
+  </details></div></div>
+</section>
+
+<section>
+  <h2>25-minute local drill: measure the multi-agent tax</h2>
+  <p>The same three HR tasks go through (A) one agent with two tools and (B) a supervisor that hands off to two specialist agents with LangGraph <code>Command</code>. A deterministic stub model meters calls, tokens and approximate latency, so the numbers are repeatable. It runs on native Windows with no GPU and no API key.</p>
+  <div class="codebox"><button class="copy" type="button">Copy</button><pre><code>mkdir agent-tax; cd agent-tax
+py -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install langgraph==1.2.20</code></pre></div>
+  <p>Save as <code>multi_vs_single.py</code>:</p>
+  <div class="codebox"><button class="copy" type="button">Copy</button><pre><code>&quot;&quot;&quot;Day 34 drill: what a supervisor multi-agent design really costs.
+Runs the same 3 tasks through (A) one agent with two tools and (B) a supervisor
+that hands off to two specialist agents, using LangGraph Command handoffs.
+A deterministic stub &quot;LLM&quot; meters calls, tokens and simulated latency, so it
+runs on any laptop with no GPU or API key.
+
+  python multi_vs_single.py            # compare both designs
+  python multi_vs_single.py --flaky    # a worker gives vague answers: watch the loop guard
+&quot;&quot;&quot;
+import sys
+from typing import Annotated, Literal, TypedDict
+import operator
+from langgraph.graph import StateGraph, START, END
+from langgraph.types import Command
+from langgraph.errors import GraphRecursionError
+
+FLAKY = &quot;--flaky&quot; in sys.argv
+MAX_HOPS = 6  # explicit business-level budget, tighter than LangGraph&#x27;s recursion_limit
+
+# ---- metering stub LLM ---------------------------------------------------------
+class Meter:
+    def __init__(self): self.calls = self.tin = self.tout = 0; self.ms = 0.0
+    def charge(self, prompt_tokens: int, out_tokens: int):
+        self.calls += 1; self.tin += prompt_tokens; self.tout += out_tokens
+        self.ms += 250 + prompt_tokens * 0.05 + out_tokens * 20   # TTFT + prefill + decode (rough 3B-class numbers)
+
+def toks(history: list[str]) -&gt; int:
+    return sum(len(h.split()) * 4 // 3 for h in history) + 300   # +300 for system prompt and tool schemas
+
+POLICY = {&quot;carry forward&quot;: &quot;Max carry-forward is 45 days (hr-leave-v4#2).&quot;}
+def policy_tool(q): return next((v for k, v in POLICY.items() if k in q), &quot;No policy found.&quot;)
+def calc_tool(q): return &quot;Encashment = 30 days x Rs 2,000 = Rs 60,000.&quot;
+
+TASKS = [
+    &quot;What is the leave carry forward limit?&quot;,
+    &quot;Compute leave encashment for 30 days at Rs 2,000 per day.&quot;,
+    &quot;What is the carry forward limit, and compute encashment for 30 days at Rs 2,000?&quot;,
+]
+
+def needs(task):  # what the &quot;model&quot; would decide to call
+    n = []
+    if &quot;carry forward&quot; in task: n.append(&quot;policy&quot;)
+    if &quot;compute&quot; in task.lower(): n.append(&quot;calc&quot;)
+    return n
+
+# ---- (A) single agent: one ReAct loop, two tools --------------------------------
+def single_agent(task, m: Meter):
+    hist = [task]
+    for tool in needs(task):                      # one model call per tool decision
+        m.charge(toks(hist), 30)
+        hist.append((policy_tool if tool == &quot;policy&quot; else calc_tool)(task))
+    m.charge(toks(hist), 60)                      # final answer
+    return &quot; &quot;.join(hist[1:])
+
+# ---- (B) supervisor + two specialist agents, Command handoffs --------------------
+class S(TypedDict):
+    task: str
+    history: Annotated[list[str], operator.add]
+    done: Annotated[list[str], operator.add]
+    hops: int
+    answer: str
+
+def make_supervisor(m: Meter):
+    def supervisor(state: S) -&gt; Command[Literal[&quot;policy_agent&quot;, &quot;calc_agent&quot;, &quot;__end__&quot;]]:
+        m.charge(toks(state[&quot;history&quot;]), 20)      # routing decision is an LLM call
+        if state[&quot;hops&quot;] &gt;= MAX_HOPS:
+            return Command(goto=END, update={&quot;answer&quot;: &quot;ESCALATE: hop budget exhausted&quot;})
+        todo = [n for n in needs(state[&quot;task&quot;]) if n not in state[&quot;done&quot;]]
+        if not todo:
+            m.charge(toks(state[&quot;history&quot;]), 60)  # synthesis call
+            return Command(goto=END, update={&quot;answer&quot;: &quot; &quot;.join(state[&quot;history&quot;][1:])})
+        return Command(goto=f&quot;{todo[0]}_agent&quot;, update={&quot;hops&quot;: state[&quot;hops&quot;] + 1})
+    return supervisor
+
+def make_worker(name, tool, m: Meter):
+    def worker(state: S) -&gt; Command[Literal[&quot;supervisor&quot;]]:
+        m.charge(toks(state[&quot;history&quot;]), 30)      # worker decides to call its tool
+        out = tool(state[&quot;task&quot;])
+        m.charge(toks(state[&quot;history&quot;] + [out]), 40)  # worker writes its report
+        if FLAKY and name == &quot;calc&quot;:
+            return Command(goto=&quot;supervisor&quot;, update={&quot;history&quot;: [&quot;calc_agent: it depends on the salary basis.&quot;]})
+        return Command(goto=&quot;supervisor&quot;, update={&quot;history&quot;: [f&quot;{name}_agent: {out}&quot;], &quot;done&quot;: [name]})
+    return worker
+
+def build(m: Meter):
+    g = StateGraph(S)
+    g.add_node(&quot;supervisor&quot;, make_supervisor(m))
+    g.add_node(&quot;policy_agent&quot;, make_worker(&quot;policy&quot;, policy_tool, m))
+    g.add_node(&quot;calc_agent&quot;, make_worker(&quot;calc&quot;, calc_tool, m))
+    g.add_edge(START, &quot;supervisor&quot;)
+    return g.compile()
+
+def row(label, m):
+    cost = m.tin * 0.15 + m.tout * 0.60   # USD per 1M requests at $0.15 in / $0.60 out per 1M tokens
+    print(f&quot;  {label:&lt;11} calls={m.calls:&lt;3} in_tok={m.tin:&lt;6} out_tok={m.tout:&lt;5} ~latency={m.ms/1000:5.1f}s  ~${cost:,.0f} per 1M requests&quot;)
+
+if __name__ == &quot;__main__&quot;:
+    print(f&quot;flaky={FLAKY}  max_hops={MAX_HOPS}\n&quot;)
+    for t in TASKS:
+        print(f&quot;TASK: {t}&quot;)
+        a, b = Meter(), Meter()
+        single_agent(t, a)
+        try:
+            out = build(b).invoke({&quot;task&quot;: t, &quot;history&quot;: [t], &quot;done&quot;: [], &quot;hops&quot;: 0, &quot;answer&quot;: &quot;&quot;},
+                                  {&quot;recursion_limit&quot;: 25})
+            ans = out[&quot;answer&quot;]
+        except GraphRecursionError:
+            ans = &quot;GraphRecursionError (no business-level guard!)&quot;
+        row(&quot;single&quot;, a); row(&quot;supervisor&quot;, b)
+        print(f&quot;  supervisor/single: calls x{b.calls/a.calls:.1f}, input tokens x{b.tin/a.tin:.1f}, latency x{b.ms/a.ms:.1f}&quot;)
+        print(f&quot;  answer: {ans}\n&quot;)</code></pre></div>
+  <div class="codebox"><button class="copy" type="button">Copy</button><pre><code>python multi_vs_single.py
+python multi_vs_single.py --flaky</code></pre></div>
+  <p class="small">Expected output (tested today on Python 3.13 with langgraph 1.2.20; the numbers are deterministic). Normal run, mixed task:</p>
+  <div class="out">TASK: What is the carry forward limit, and compute encashment for 30 days at Rs 2,000?
+  single      calls=3   in_tok=989    out_tok=120   ~latency=  3.2s  ~$220 per 1M requests
+  supervisor  calls=8   in_tok=2654   out_tok=260   ~latency=  7.3s  ~$554 per 1M requests
+  supervisor/single: calls x2.7, input tokens x2.7, latency x2.3
+  answer: policy_agent: Max carry-forward is 45 days (hr-leave-v4#2). calc_agent: Encashment = 30 days x Rs 2,000 = Rs 60,000.</div>
+  <p class="small">With <code>--flaky</code> the calc agent keeps saying "it depends", the supervisor keeps re-delegating, and the hop budget stops it:</p>
+  <div class="out bad">TASK: Compute leave encashment for 30 days at Rs 2,000 per day.
+  single      calls=2   in_tok=641    out_tok=90    ~latency=  2.3s  ~$150 per 1M requests
+  supervisor  calls=19  in_tok=6503   out_tok=560   ~latency= 16.3s  ~$1,311 per 1M requests
+  supervisor/single: calls x9.5, input tokens x10.1, latency x7.0
+  answer: ESCALATE: hop budget exhausted</div>
+  <p><b>Then break it on purpose (10 min):</b></p>
+  <ol>
+    <li>Set <code>MAX_HOPS = 99</code> and run <code>--flaky</code> again. Now only LangGraph's <code>recursion_limit=25</code> stops it: 37 calls, about 21× the input tokens, and a <code>GraphRecursionError</code> instead of a clean escalation. That is Q4: the framework limit is a backstop, not a business control.</li>
+    <li>The supervisor passes the whole history to every worker. Change <code>make_worker</code> so a worker sees only <code>[state["task"]]</code> and compare input tokens. That is the context-isolation argument from Q1, measured.</li>
+  </ol>
+  <p><b>Stretch goals:</b></p>
+  <ul>
+    <li><b>Real model, real numbers.</b> <code>ollama pull llama3.2:3b</code> and <code>python -m pip install langchain-ollama</code>, then replace the supervisor's routing with <code>ChatOllama(model="llama3.2:3b", temperature=0).with_structured_output(...)</code> returning <code>{"next": "policy_agent" | "calc_agent" | "FINISH"}</code>. Record real <code>prompt_eval_count</code> and latency on your RTX 3050, and count how often a 3B model misroutes the mixed task.</li>
+    <li><b>Turn calls into GPU capacity (Q8).</b> Take 50 tasks per second at peak, multiply by calls per task from your run, assume 0.8 s of GPU time per call on one replica that serves 8 concurrent requests, and work out the replica count for the single-agent and supervisor designs. Then write the KEDA <code>ScaledObject</code> (Prometheus trigger on <code>vllm:num_requests_waiting</code>) you would deploy. Running it locally needs Docker Desktop with WSL2 and <code>kind</code>; reading and writing the YAML does not.</li>
+  </ul>
+</section>
+
+<section>
+  <h2>Design scenario (25 minutes, paper first)</h2>
+  <div class="scenario">
+    <p><b>Brief.</b> A general insurer in India wants an agentic motor-claims assistant. It reads the claim form, photos and the surveyor's report, checks the policy wording, scores fraud signals, and drafts a settlement recommendation for a human adjuster. Volume is 40,000 claims a day, rising to 10× for two weeks after monsoon floods. Data must stay in India, so models are self-hosted open-weight models on the insurer's Kubernetes platform (OpenShift, 16× L40S GPUs today). Targets: a draft within 3 minutes for 95% of claims, no settlement without adjuster approval, and a cost per claim the CFO can see.</p>
+    <p><b>Your deliverable:</b> the agent topology and why, the Kubernetes layout and scaling signals, a capacity estimate for the flood peak, three NFRs with numbers, and one ADR.</p>
+    <div class="diagram" role="img" aria-label="Claims flow: intake API enqueues a claim. Graph worker pods, scaled by KEDA on queue length, run a plan-and-execute graph with deterministic extraction and policy-check steps, a vision sub-agent for photos and a fraud sub-agent, then pause for adjuster approval stored in a Postgres checkpointer. Workers call a shared model pool through an AI gateway and an inference pool router: a vision model, a 30B-class text model and an embedding model on separate GPU node pools.">
+      <svg viewBox="0 0 700 330" xmlns="http://www.w3.org/2000/svg" font-family="Source Sans 3, system-ui, sans-serif" font-size="13">
+        <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker></defs>
+        <text x="10" y="20" fill="var(--muted)" font-size="12" font-weight="700" letter-spacing="1">AGENT LAYER</text>
+        <rect x="10" y="36" width="90" height="56" rx="6" fill="var(--surface)" stroke="var(--line)"/>
+        <text x="55" y="60" text-anchor="middle" fill="var(--fg)" font-weight="700">Intake API</text><text x="55" y="77" text-anchor="middle" fill="var(--muted)">enqueue</text>
+        <rect x="120" y="36" width="80" height="56" rx="6" fill="var(--surface)" stroke="var(--line)"/>
+        <text x="160" y="60" text-anchor="middle" fill="var(--fg)" font-weight="700">Queue</text><text x="160" y="77" text-anchor="middle" fill="var(--muted)">claims</text>
+        <rect x="220" y="30" width="330" height="120" rx="8" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"/>
+        <text x="232" y="48" fill="var(--fg)" font-weight="700">Graph workers (KEDA on queue length)</text>
+        <rect x="232" y="58" width="96" height="34" rx="5" fill="var(--surface)" stroke="var(--line)"/><text x="280" y="79" text-anchor="middle" fill="var(--fg)">Plan</text>
+        <rect x="336" y="58" width="96" height="34" rx="5" fill="var(--surface)" stroke="var(--line)"/><text x="384" y="79" text-anchor="middle" fill="var(--fg)">Extract + policy</text>
+        <rect x="440" y="58" width="100" height="34" rx="5" fill="var(--warn-soft)" stroke="var(--warn)"/><text x="490" y="79" text-anchor="middle" fill="var(--fg)">Vision sub-agent</text>
+        <rect x="336" y="102" width="96" height="34" rx="5" fill="var(--warn-soft)" stroke="var(--warn)"/><text x="384" y="123" text-anchor="middle" fill="var(--fg)">Fraud sub-agent</text>
+        <rect x="440" y="102" width="100" height="34" rx="5" fill="var(--surface)" stroke="var(--line)"/><text x="490" y="123" text-anchor="middle" fill="var(--fg)">Draft + interrupt</text>
+        <rect x="580" y="36" width="110" height="56" rx="6" fill="var(--bad-soft)" stroke="var(--bad)"/>
+        <text x="635" y="60" text-anchor="middle" fill="var(--fg)" font-weight="700">Adjuster</text><text x="635" y="77" text-anchor="middle" fill="var(--fg)">approves</text>
+        <rect x="580" y="104" width="110" height="34" rx="6" fill="var(--surface)" stroke="var(--line)"/>
+        <text x="635" y="125" text-anchor="middle" fill="var(--fg)">Postgres checkpoints</text>
+        <g stroke="var(--muted)">
+          <line x1="100" y1="64" x2="118" y2="64" marker-end="url(#ar)"/>
+          <line x1="200" y1="64" x2="218" y2="64" marker-end="url(#ar)"/>
+          <line x1="328" y1="75" x2="334" y2="75" marker-end="url(#ar)"/>
+          <line x1="432" y1="75" x2="438" y2="75" marker-end="url(#ar)"/>
+          <line x1="540" y1="119" x2="578" y2="70" marker-end="url(#ar)"/>
+          <line x1="550" y1="121" x2="578" y2="121" marker-end="url(#ar)"/>
+        </g>
+        <text x="10" y="186" fill="var(--muted)" font-size="12" font-weight="700" letter-spacing="1">MODEL LAYER</text>
+        <rect x="220" y="176" width="330" height="34" rx="6" fill="var(--surface)" stroke="var(--line)"/>
+        <text x="385" y="197" text-anchor="middle" fill="var(--fg)">AI gateway (quota · cost tags) → InferencePool router</text>
+        <line x1="385" y1="150" x2="385" y2="174" stroke="var(--muted)" marker-end="url(#ar)"/>
+        <g fill="var(--surface)" stroke="var(--line)"><rect x="150" y="250" width="150" height="60" rx="6"/><rect x="315" y="250" width="150" height="60" rx="6"/><rect x="480" y="250" width="150" height="60" rx="6"/></g>
+        <g text-anchor="middle"><text x="225" y="274" fill="var(--fg)" font-weight="700">Vision model</text><text x="225" y="292" fill="var(--muted)">GPU pool A</text>
+        <text x="390" y="274" fill="var(--fg)" font-weight="700">30B-class text model</text><text x="390" y="292" fill="var(--muted)">GPU pool B</text>
+        <text x="555" y="274" fill="var(--fg)" font-weight="700">Embeddings + guard</text><text x="555" y="292" fill="var(--muted)">shared GPU (MIG / slices)</text></g>
+        <g stroke="var(--muted)"><line x1="330" y1="210" x2="240" y2="248" marker-end="url(#ar)"/><line x1="385" y1="210" x2="390" y2="248" marker-end="url(#ar)"/><line x1="440" y1="210" x2="540" y2="248" marker-end="url(#ar)"/></g>
+      </svg>
+    </div>
+    <p class="small">One possible shape, for checking your answer after you sketch your own.</p>
+    <details><summary>What a strong answer covers</summary>
+      <ul>
+        <li><b>Topology:</b> plan-and-execute with mostly deterministic steps, and only two real sub-agents: vision (photos and the surveyor's report need large, separate context) and fraud (it holds data the drafting step should not see, and has its own evaluation and owner). No supervisor chatting in the loop. Hop budget per claim, then route to a human queue.</li>
+        <li><b>Human approval</b> is a LangGraph <code>interrupt</code> persisted in Postgres. The settlement tool is not callable by any agent; it is called by the adjuster's UI after approval.</li>
+        <li><b>Capacity, roughly:</b> 40,000 claims a day is about 0.5 claims a second on average; plan for 2 a second at the normal daytime peak and 20 a second in a flood. At about 12 model calls per claim, the flood peak is about 240 calls a second. Because the 3-minute target is lenient, queue the work and let it run at higher batch sizes instead of buying for instant latency. Work out GPUs from measured calls per second per replica, then decide what to do with the gap: burst capacity from an Indian region of a cloud provider, or a degraded mode (vision only for claims above a value threshold) during floods.</li>
+        <li><b>Kubernetes:</b> separate node pools per model; KEDA scales graph workers on queue length and model replicas on <code>num_requests_waiting</code>; the cron scaler pre-warms when the IMD issues a flood warning; Kueue gives batch re-scoring a lower priority than live claims; the router uses an InferencePool so prefix caching works for the long, shared policy-wording prompts.</li>
+        <li><b>Cost per claim:</b> tokens per call and GPU-seconds per call from traces, multiplied by the internal GPU-hour rate, shown per claim type on a dashboard; alert if calls per claim rises above its baseline, since that is how a loop shows up in cost before it shows up in complaints.</li>
+        <li><b>NFR examples:</b> 95% of drafts within 3 minutes at 10× baseline load; 0 settlements without a recorded adjuster ID (contract test plus daily audit query); recovery point of the last completed step after a pod or node failure (checkpointer); median model calls per claim ≤ 12, a release gate.</li>
+        <li><b>ADR candidate:</b> two sub-agents within one deployable versus separate microservices per agent. Argue it on the security boundary for fraud data, independent scaling of the vision path during floods, and tracing and release complexity.</li>
+      </ul>
+    </details>
+  </div>
+</section>
+
+<section>
+  <h2>Repos to revisit (10 min each)</h2>
+  <ul>
+    <li><a href="https://github.com/langchain-ai/langgraph" target="_blank" rel="noopener">langchain-ai/langgraph</a> — read how <code>Command</code> and <code>interrupt</code> are implemented, and the Postgres checkpointer package.</li>
+    <li><a href="https://github.com/kserve/kserve" target="_blank" rel="noopener">kserve/kserve</a> — the <code>LLMInferenceService</code> CRD and its sample manifests.</li>
+    <li><a href="https://github.com/kubernetes-sigs/gateway-api-inference-extension" target="_blank" rel="noopener">kubernetes-sigs/gateway-api-inference-extension</a> — the <code>InferencePool</code> spec and the endpoint picker's scoring plugins.</li>
+    <li><a href="https://github.com/kedacore/keda" target="_blank" rel="noopener">kedacore/keda</a> — the Prometheus and cron scalers you would combine for Q5.</li>
+  </ul>
+</section>
+
+<section>
+  <h2>Read before tomorrow (optional, 20 min)</h2>
+  <ul>
+    <li><a href="https://www.langchain.com/blog/choosing-the-right-multi-agent-architecture" target="_blank" rel="noopener">LangChain: choosing the right multi-agent architecture</a> — their own framing of subagents, handoffs and routers; useful for Q2.</li>
+    <li><a href="https://www.anthropic.com/engineering/multi-agent-research-system" target="_blank" rel="noopener">Anthropic: how we built our multi-agent research system</a> — source of the ~15× token figure in Q1, and when multi-agent pays for itself.</li>
+    <li><a href="https://docs.langchain.com/oss/python/langchain/multi-agent/index" target="_blank" rel="noopener">LangChain docs: multi-agent</a> — the current patterns with <code>create_agent</code>.</li>
+    <li><a href="https://kubernetes.io/blog/2025/06/05/introducing-gateway-api-inference-extension/" target="_blank" rel="noopener">Kubernetes blog: introducing the Gateway API Inference Extension</a> — why model-aware routing exists (Q7).</li>
+    <li><a href="https://kubernetes.io/blog/2025/09/01/kubernetes-v1-34-dra-updates/" target="_blank" rel="noopener">Kubernetes v1.34: DRA has graduated to GA</a> — the GPU-request model for Q6.</li>
+  </ul>
+</section>
+
+<section>
+  <h2>Tomorrow</h2>
+  <p>Day 35 drill: agent memory (Day 19) with cloud reference architectures for GenAI (Day 22).</p>
+</section>
+</div>
+
+<script>
+document.querySelectorAll('.copy').forEach(function(b){
+  b.addEventListener('click',function(){
+    var code=b.parentElement.querySelector('code');
+    var t=code.innerText;
+    var done=function(){b.textContent='Copied';setTimeout(function(){b.textContent='Copy'},1500)};
+    var fallback=function(){var r=document.createRange();r.selectNodeContents(code);var s=getSelection();s.removeAllRanges();s.addRange(r);b.textContent='Selected, press Ctrl+C'};
+    try{navigator.clipboard.writeText(t).then(done,fallback)}catch(e){fallback()}
+  });
+});
+</script>
+
+</body></html>

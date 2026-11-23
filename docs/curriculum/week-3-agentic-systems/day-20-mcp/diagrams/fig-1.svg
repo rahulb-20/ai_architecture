@@ -1,0 +1,42 @@
+<svg font-family="IBM Plex Sans, Segoe UI, Arial, sans-serif" aria-label="MCP architecture: host with LLM and clients connects to a local stdio server and, through a gateway, to remote Streamable HTTP servers protected by an authorization server" role="img" style="background:#ffffff" viewbox="0 0 760 360" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="ar" markerheight="7" markerwidth="7" orient="auto" refx="9" refy="5" viewbox="0 0 10 10"><path d="M0,0 L10,5 L0,10 z" fill="#555"></path></marker></defs>
+<rect fill="#555" height="250" rx="8" stroke="#555" width="230" x="10" y="40"></rect>
+<text fill="#555" font-size="13" font-weight="600" x="26" y="64">Host (agent app)</text>
+<text fill="#555" font-size="11" x="26" y="82">policy · consent · approvals</text>
+<rect fill="#555" height="44" rx="6" stroke="#555" width="198" x="26" y="96"></rect>
+<text fill="#555" font-size="12" text-anchor="middle" x="125" y="123">LLM (any provider)</text>
+<rect fill="#555" height="34" rx="6" stroke="#555" width="198" x="26" y="156"></rect>
+<text fill="#555" font-size="12" text-anchor="middle" x="125" y="178">MCP client A</text>
+<rect fill="#555" height="34" rx="6" stroke="#555" width="198" x="26" y="200"></rect>
+<text fill="#555" font-size="12" text-anchor="middle" x="125" y="222">MCP client B</text>
+<rect fill="#555" height="34" rx="6" stroke="#555" width="198" x="26" y="244"></rect>
+<text fill="#555" font-size="12" text-anchor="middle" x="125" y="266">MCP client C</text>
+<rect fill="#555" height="54" rx="6" stroke="#555" width="160" x="300" y="146"></rect>
+<text fill="#555" font-size="12" font-weight="600" text-anchor="middle" x="380" y="168">Local server</text>
+<text fill="#555" font-size="11" text-anchor="middle" x="380" y="186">stdio · creds from env</text>
+<line marker-end="url(#ar)" stroke="#555" x1="224" x2="298" y1="173" y2="173"></line>
+<text fill="#555" font-size="10" x="232" y="166">stdio</text>
+<rect fill="#555" height="70" rx="6" stroke="#555" width="160" x="300" y="226"></rect>
+<text fill="#555" font-size="12" font-weight="600" text-anchor="middle" x="380" y="250">MCP gateway</text>
+<text fill="#555" font-size="11" text-anchor="middle" x="380" y="267">allow-list · authz · audit</text>
+<text fill="#555" font-size="11" text-anchor="middle" x="380" y="283">rate limits · tool pinning</text>
+<line marker-end="url(#ar)" stroke="#555" x1="224" x2="298" y1="217" y2="250"></line>
+<line marker-end="url(#ar)" stroke="#555" x1="224" x2="298" y1="261" y2="266"></line>
+<text fill="#555" font-size="10" x="232" y="296">Streamable HTTP + Bearer</text>
+<rect fill="#555" height="44" rx="6" stroke="#555" width="220" x="530" y="200"></rect>
+<text fill="#555" font-size="12" text-anchor="middle" x="640" y="226">Remote server: HR policies</text>
+<rect fill="#555" height="44" rx="6" stroke="#555" width="220" x="530" y="256"></rect>
+<text fill="#555" font-size="12" text-anchor="middle" x="640" y="282">Remote server: Snowflake</text>
+<line marker-end="url(#ar)" stroke="#555" x1="460" x2="528" y1="252" y2="224"></line>
+<line marker-end="url(#ar)" stroke="#555" x1="460" x2="528" y1="270" y2="278"></line>
+<rect fill="#555" height="74" rx="6" stroke="#555" stroke-dasharray="4 3" width="220" x="530" y="40"></rect>
+<text fill="#555" font-size="12" font-weight="600" x="546" y="62">Authorization server (IdP)</text>
+<text fill="#555" font-size="11" x="546" y="80">Entra ID · Keycloak · IBM Verify</text>
+<text fill="#555" font-size="11" x="546" y="96">tokens with aud = one server</text>
+<path d="M240 70 C 380 40, 420 60, 528 72" fill="none" marker-end="url(#ar)" stroke="#555" stroke-dasharray="4 3"></path>
+<text fill="#555" font-size="10" x="300" y="44">OAuth 2.1 + PKCE, resource=…</text>
+<line marker-end="url(#ar)" stroke="#555" stroke-dasharray="4 3" x1="640" x2="640" y1="116" y2="198"></line>
+<text fill="#555" font-size="10" x="648" y="160">RFC 9728 metadata</text>
+<text fill="#555" font-size="10" x="648" y="174">points here</text>
+<text fill="#555" font-size="11" x="10" y="330">One client per server. The host never forwards one server's token to another (no token passthrough).</text>
+</svg>

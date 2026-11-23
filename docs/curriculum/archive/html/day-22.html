@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GenAI Prep · Day 22 — Cloud Reference Architectures for GenAI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* Layout idea: a single reading column (~72ch) with wide tables/code allowed to break out; a sticky section index on wide screens. */
+:root{
+  --bg:#f5f7fa; --surface:#ffffff; --ink:#18202c; --muted:#5a6678; --line:#d9dfe8;
+  --accent:#2a55c9; --accent-soft:#e6ecfb;
+  --bad:#b4232c; --bad-soft:#fbe9ea; --warn:#9a5b00; --warn-soft:#fdf1dc; --good:#1d7a4a; --good-soft:#e3f4ea;
+  --code-bg:#eef1f6;
+  --display:"IBM Plex Sans Condensed","Arial Narrow",system-ui,sans-serif;
+  --body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0f141c; --surface:#161d28; --ink:#e4e9f1; --muted:#9aa6b8; --line:#2a3445;
+    --accent:#7fa2ff; --accent-soft:#1d2a47;
+    --bad:#ff8a8f; --bad-soft:#3a1d22; --warn:#f3bb5c; --warn-soft:#3a2c14; --good:#6fd29c; --good-soft:#163024;
+    --code-bg:#0b1017; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0f141c; --surface:#161d28; --ink:#e4e9f1; --muted:#9aa6b8; --line:#2a3445;
+  --accent:#7fa2ff; --accent-soft:#1d2a47;
+  --bad:#ff8a8f; --bad-soft:#3a1d22; --warn:#f3bb5c; --warn-soft:#3a2c14; --good:#6fd29c; --good-soft:#163024;
+  --code-bg:#0b1017; color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:16px/1.6 var(--body);}
+.wrap{max-width:1180px;margin:0 auto;padding:32px 20px 80px;display:grid;grid-template-columns:200px minmax(0,1fr);gap:40px}
+nav.toc{position:sticky;top:20px;align-self:start;font-size:14px}
+nav.toc ol{list-style:none;margin:0;padding:0;display:grid;gap:4px}
+nav.toc a{color:var(--muted);text-decoration:none;display:block;padding:3px 8px;border-left:2px solid var(--line)}
+nav.toc a:hover,nav.toc a:focus-visible{color:var(--accent);border-left-color:var(--accent)}
+main{min-width:0}
+header.top{display:grid;gap:6px;padding-bottom:20px;border-bottom:1px solid var(--line);margin-bottom:8px}
+.kicker{font:600 13px/1 var(--mono);color:var(--accent);letter-spacing:.04em}
+h1{font:700 clamp(28px,4vw,40px)/1.15 var(--display);margin:0;text-wrap:balance}
+.sub{color:var(--muted);margin:0;max-width:72ch}
+.meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.chip{font:500 12.5px/1 var(--mono);padding:6px 9px;border-radius:999px;background:var(--accent-soft);color:var(--accent)}
+section{padding:28px 0;border-bottom:1px solid var(--line)}
+h2{font:600 24px/1.25 var(--display);margin:0 0 12px;text-wrap:balance;display:flex;gap:10px;align-items:baseline}
+h2 .n{font:500 14px var(--mono);color:var(--accent)}
+h3{font:600 18px/1.3 var(--display);margin:22px 0 8px}
+p,li{max-width:74ch}
+ul,ol{padding-left:22px}
+li{margin:4px 0}
+a{color:var(--accent)}
+code{font:0.88em var(--mono);background:var(--code-bg);padding:1px 5px;border-radius:4px}
+.callout{border-left:3px solid var(--accent);background:var(--accent-soft);padding:12px 16px;border-radius:0 6px 6px 0;margin:14px 0;max-width:78ch}
+.callout.warn{border-left-color:var(--warn);background:var(--warn-soft)}
+.tbl{overflow-x:auto;margin:12px 0;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:14.5px;min-width:760px}
+th,td{text-align:left;vertical-align:top;padding:9px 12px;border-bottom:1px solid var(--line)}
+th{font:600 13px/1.3 var(--body);color:var(--muted);background:var(--code-bg)}
+tr:last-child td{border-bottom:0}
+td:first-child{font-weight:600}
+.pill{display:inline-block;font:600 11.5px/1 var(--mono);padding:4px 7px;border-radius:4px;white-space:nowrap}
+.pill.bad{background:var(--bad-soft);color:var(--bad)} .pill.warn{background:var(--warn-soft);color:var(--warn)} .pill.good{background:var(--good-soft);color:var(--good)}
+.code{position:relative;margin:12px 0}
+.code .bar{display:flex;justify-content:space-between;align-items:center;background:var(--surface);border:1px solid var(--line);border-bottom:0;border-radius:8px 8px 0 0;padding:6px 8px 6px 12px;font:500 12.5px var(--mono);color:var(--muted)}
+.code pre{margin:0;overflow-x:auto;background:var(--code-bg);border:1px solid var(--line);border-radius:0 0 8px 8px;padding:14px;font:13px/1.55 var(--mono);tab-size:4}
+button.copy{font:500 12px var(--body);border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:5px;padding:4px 10px;cursor:pointer}
+button.copy:hover{border-color:var(--accent);color:var(--accent)}
+button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.diagram{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:12px;margin:14px 0}
+.diagram svg{display:block;min-width:820px;width:100%;height:auto}
+.diagram svg text{font-family:var(--body);fill:var(--ink)}
+.diagram .box{fill:var(--surface);stroke:var(--line);stroke-width:1.5}
+.diagram .acc{fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5}
+.diagram .geo{fill:none;stroke:var(--good);stroke-width:2;stroke-dasharray:7 5}
+.diagram .leak{stroke:var(--bad);stroke-width:2;stroke-dasharray:4 4;fill:none}
+.diagram .flow{stroke:var(--accent);stroke-width:2;fill:none}
+.diagram .muted{fill:var(--muted)}
+.diagram .badtxt{fill:var(--bad)} .diagram .goodtxt{fill:var(--good)}
+.qa{display:grid;gap:12px}
+details{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:12px 16px}
+details[open]{border-color:var(--accent)}
+summary{cursor:pointer;font-weight:600}
+details p,details ul{margin:8px 0 0}
+.adr{display:grid;grid-template-columns:140px minmax(0,1fr);gap:0;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--surface)}
+.adr>div{padding:10px 14px;border-bottom:1px solid var(--line)}
+.adr>div:nth-child(odd){font:600 13px var(--mono);color:var(--muted);background:var(--code-bg)}
+.adr>div:nth-last-child(-n+2){border-bottom:0}
+.steps{counter-reset:s;list-style:none;padding:0}
+.steps li{counter-increment:s;position:relative;padding-left:40px;margin:10px 0}
+.steps li::before{content:counter(s);position:absolute;left:0;top:0;width:26px;height:26px;border-radius:50%;background:var(--accent);color:var(--surface);font:600 13px/26px var(--mono);text-align:center}
+footer{padding-top:24px;color:var(--muted);font-size:14px}
+@media (max-width:860px){.wrap{grid-template-columns:1fr}nav.toc{display:none}.adr{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<nav class="toc" aria-label="Sections">
+<ol>
+<li><a href="#why">1 · Why it matters</a></li>
+<li><a href="#concept">2 · Concept brief</a></li>
+<li><a href="#tradeoffs">3 · Trade-offs</a></li>
+<li><a href="#exercise">4 · Hands-on</a></li>
+<li><a href="#repos">5 · Repos</a></li>
+<li><a href="#read">6 · Read</a></li>
+<li><a href="#interview">7 · Interview</a></li>
+<li><a href="#adr">8 · ADR</a></li>
+<li><a href="#tomorrow">9 · Tomorrow</a></li>
+</ol>
+</nav>
+<main>
+<header class="top">
+<div class="kicker">DAY 22 / 30 · WEEK 4 — CLOUD, PRODUCTION &amp; ARCHITECTURE</div>
+<h1>Cloud reference architectures for GenAI</h1>
+<p class="sub">Microsoft Foundry (Azure OpenAI), Amazon Bedrock, Gemini Enterprise Agent Platform (formerly Vertex AI) and watsonx.ai, compared on the four things a security review actually probes: network path, identity, where prompts are processed, and where data comes to rest.</p>
+<div class="meta"><span class="chip">Sat 31 Oct 2026</span><span class="chip">~90 min exercise · no cloud account needed</span><span class="chip">Runs on CPU</span></div>
+</header>
+
+<section id="why">
+<h2><span class="n">01</span>Why this matters for the JD</h2>
+<p>The JD's must-have line "cloud architecture for GenAI (compute, networking, storage, IAM, logging/monitoring, managed services)" and the good-to-haves "security (RBAC/IAM, secrets, encryption, network segmentation)" and "compliance" all land here. In an architecture review the first hard question about any managed LLM is rarely the model. It's <em>"show me the packet path and tell me which country the prompt is processed in."</em> Today is about answering that for all four platforms you'll be asked about, watsonx included.</p>
+</section>
+
+<section id="concept">
+<h2><span class="n">02</span>Concept brief</h2>
+<h3>The reference shape is the same on every cloud</h3>
+<p>Strip the branding and every enterprise GenAI landing zone has six layers: ingress (WAF / API gateway), a private app tier, an <strong>AI gateway</strong> that owns model routing, quotas and logging, a <strong>model plane</strong> reached over private link, a <strong>data plane</strong> (vector store, blob, cache) behind its own private endpoints, and cross-cutting identity, keys and observability. Nothing in the app tier holds a model API key; nothing in the model or data plane accepts public traffic.</p>
+
+<div class="diagram" role="img" aria-label="Reference architecture: users reach a WAF, then a private app tier, then an AI gateway, which calls the model plane and data plane over private endpoints inside an in-country boundary. A dashed red path shows a global deployment type sending prompts outside the boundary.">
+<svg viewBox="0 0 980 430" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--accent)"/></marker><marker id="arb" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--bad)"/></marker></defs>
+<rect class="geo" x="150" y="20" width="640" height="340" rx="14"/>
+<text x="166" y="44" font-size="13" font-weight="600" class="goodtxt">Residency boundary: India (e.g. centralindia / ap-south-1 / asia-south1)</text>
+<rect class="box" x="10" y="150" width="120" height="70" rx="8"/>
+<text x="70" y="180" text-anchor="middle" font-size="14" font-weight="600">Users / on-prem</text>
+<text x="70" y="200" text-anchor="middle" font-size="12" class="muted">ExpressRoute / DX</text>
+<rect class="box" x="170" y="150" width="120" height="70" rx="8"/>
+<text x="230" y="180" text-anchor="middle" font-size="14" font-weight="600">WAF / API GW</text>
+<text x="230" y="200" text-anchor="middle" font-size="12" class="muted">ingress, authN</text>
+<rect class="box" x="320" y="150" width="130" height="70" rx="8"/>
+<text x="385" y="180" text-anchor="middle" font-size="14" font-weight="600">App tier</text>
+<text x="385" y="200" text-anchor="middle" font-size="12" class="muted">AKS / EKS / GKE / OCP</text>
+<rect class="acc" x="480" y="150" width="130" height="70" rx="8"/>
+<text x="545" y="180" text-anchor="middle" font-size="14" font-weight="600">AI gateway</text>
+<text x="545" y="200" text-anchor="middle" font-size="12" class="muted">route · quota · log</text>
+<rect class="acc" x="640" y="80" width="135" height="80" rx="8"/>
+<text x="707" y="108" text-anchor="middle" font-size="14" font-weight="600">Model plane</text>
+<text x="707" y="127" text-anchor="middle" font-size="12" class="muted">Foundry · Bedrock</text>
+<text x="707" y="143" text-anchor="middle" font-size="12" class="muted">GEAP · watsonx.ai</text>
+<rect class="box" x="640" y="210" width="135" height="80" rx="8"/>
+<text x="707" y="238" text-anchor="middle" font-size="14" font-weight="600">Data plane</text>
+<text x="707" y="257" text-anchor="middle" font-size="12" class="muted">vector DB · blob</text>
+<text x="707" y="273" text-anchor="middle" font-size="12" class="muted">cache · in-geo logs</text>
+<text x="625" y="75" font-size="11" class="muted">PE / VPCE / PSC / VPE</text>
+<text x="625" y="305" font-size="11" class="muted">PE / VPCE / PSC</text>
+<rect class="box" x="170" y="290" width="440" height="50" rx="8"/>
+<text x="390" y="312" text-anchor="middle" font-size="13" font-weight="600">Identity · Keys · Observability</text>
+<text x="390" y="330" text-anchor="middle" font-size="12" class="muted">Managed identity · IAM role · workload identity · trusted profile · CMK</text>
+<g style="color:var(--accent)">
+<line class="flow" x1="130" y1="185" x2="168" y2="185" marker-end="url(#ar)"/>
+<line class="flow" x1="290" y1="185" x2="318" y2="185" marker-end="url(#ar)"/>
+<line class="flow" x1="450" y1="185" x2="478" y2="185" marker-end="url(#ar)"/>
+<line class="flow" x1="610" y1="175" x2="638" y2="130" marker-end="url(#ar)"/>
+<line class="flow" x1="610" y1="200" x2="638" y2="245" marker-end="url(#ar)"/>
+</g>
+<g style="color:var(--bad)">
+<path class="leak" d="M775,110 C860,110 870,70 900,70"/>
+</g>
+<rect class="box" x="820" y="290" width="150" height="40" rx="8" style="stroke:var(--bad)"/>
+<text x="895" y="315" text-anchor="middle" font-size="12" class="badtxt" font-weight="600">Any-region GPU pool</text>
+<line x1="900" y1="70" x2="900" y2="286" style="stroke:var(--bad);stroke-width:1.5;stroke-dasharray:4 4" marker-end="url(#arb)"/>
+<text x="810" y="52" font-size="12" class="badtxt" font-weight="600">Global SKU / global. profile</text>
+<text x="150" y="400" font-size="12.5" class="muted">The resource lives in India in both cases. The deployment type or inference profile decides whether the prompt leaves.</text>
+</svg>
+</div>
+
+<h3>Residency has two axes, and only one is set by "region"</h3>
+<p>Where your resource and stored data live (<strong>at rest</strong>) is the region you pick. Where a prompt is <strong>processed</strong> is set separately, by a deployment type or inference profile. This is the single most common gap in GenAI designs reviewed by architects coming from classic cloud.</p>
+<ul>
+<li><strong>Microsoft Foundry (Azure OpenAI)</strong>: <code>GlobalStandard</code> / <code>GlobalProvisionedManaged</code> / <code>GlobalBatch</code> may process in any Azure region. <code>DataZone*</code> processes only inside the US, EU or APAC zone. <code>Standard</code> and <code>ProvisionedManaged</code> process within the resource's geography. Microsoft states data at rest stays in the designated geography in all cases (the Developer tier is the exception, with no residency guarantee). Note: an India resource on Data Zone is still "APAC", not "India".</li>
+<li><strong>Amazon Bedrock</strong>: calling a model ID directly stays in-region. Geographic cross-Region inference profiles (<code>us.</code>, <code>eu.</code>, <code>apac.</code>, <code>in.</code> …) keep processing inside that geography. <code>global.</code> profiles can route to any commercial Region, about 10% cheaper. CloudTrail/CloudWatch stay in the source Region, but AWS notes prompts kept for abuse detection are stored in the <em>destination</em> Region.</li>
+<li><strong>Gemini Enterprise Agent Platform</strong> (Vertex AI was rebranded at Next '26): the <code>global</code> endpoint maximises availability; a regional endpoint such as <code>asia-south1</code> pins processing. Perimeter control is VPC Service Controls; private access is Private Service Connect / Private Google Access.</li>
+<li><strong>watsonx.ai</strong>: IBM Cloud regions are Dallas, Frankfurt, London, Tokyo, Sydney and Toronto. For India, watsonx.ai, .governance, .data and Orchestrate have been available as SaaS on AWS Mumbai (<code>ap-south-1</code>) since July 2025. The sovereign option is watsonx software on OpenShift, on-prem or in your own VPC. On IBM Cloud, the runtime takes <code>--service-endpoints public|private|public-and-private</code>; private turns off internet access.</li>
+</ul>
+
+<h3>Provider mapping (use this in reviews)</h3>
+<div class="tbl"><table>
+<thead><tr><th>Concern</th><th>Azure / Foundry</th><th>AWS / Bedrock</th><th>GCP / GEAP</th><th>IBM / watsonx</th></tr></thead>
+<tbody>
+<tr><td>Private path to model</td><td>Private Endpoint + <code>privatelink.openai.azure.com</code> DNS zone; public network access off</td><td>Interface VPC endpoint (PrivateLink) for <code>bedrock-runtime</code>; endpoint policy</td><td>Private Service Connect / Private Google Access</td><td>Private service endpoint / VPE on IBM Cloud; AWS PrivateLink for SaaS on AWS</td></tr>
+<tr><td>Exfiltration perimeter</td><td>Disable public access, NSG + firewall egress, Azure Policy deny</td><td>SCPs + VPC endpoint policies; deny <code>global.*</code> via <code>bedrock:InferenceProfileArn</code></td><td>VPC Service Controls perimeter</td><td>Context-based restrictions; or OpenShift network policies</td></tr>
+<tr><td>Workload identity</td><td>Managed identity + "Cognitive Services OpenAI User"; local (key) auth off</td><td>IAM role, <code>bedrock:InvokeModel</code> scoped to model / profile ARNs</td><td>Service account / workload identity federation</td><td>Service ID or trusted profile + IAM access groups</td></tr>
+<tr><td>Processing locality knob</td><td>Deployment type: Global / DataZone / Standard</td><td>Model ID vs geo / global inference profile</td><td>Global vs regional endpoint</td><td>Region choice; software for sovereignty</td></tr>
+<tr><td>Keys</td><td>CMK in Key Vault</td><td>KMS CMK</td><td>CMEK (Cloud KMS)</td><td>Key Protect / Hyper Protect Crypto Services</td></tr>
+<tr><td>Gateway</td><td>API Management AI gateway</td><td>API Gateway + Lambda, or a self-run gateway</td><td>Apigee</td><td>watsonx.governance for policy; any gateway in front</td></tr>
+</tbody></table></div>
+<div class="callout warn"><strong>DPDP reality check:</strong> India's DPDP Act does not impose blanket localisation; it allows cross-border transfer except to countries the government restricts by notification. Sector rules (RBI on payment data, SEBI, IRDAI) and client contracts are usually stricter. Treat "in-India processing" as a policy choice you can justify, not as DPDP's default. Confirm with the client's legal team; this is not legal advice.</div>
+</section>
+
+<section id="tradeoffs">
+<h2><span class="n">03</span>Trade-offs &amp; decision table</h2>
+<div class="tbl"><table>
+<thead><tr><th>Option</th><th>Pick when</th><th>Failure modes</th><th>Cost / latency</th></tr></thead>
+<tbody>
+<tr><td>In-region / geography<br><span class="pill good">strict residency</span></td><td>Personal, regulated or contract-bound data; the regulator or client wants a named country</td><td>Lower quota and 429s at peak; new models arrive late in India regions; single-region outage takes you down</td><td>List price, sometimes higher; lowest network RTT from in-country users</td></tr>
+<tr><td>Data zone / geo profile<br><span class="pill warn">regional bloc</span></td><td>"Stay in the EU" or "stay in APAC" is enough; you need more burst capacity</td><td>APAC ≠ India: fails a country-level policy. Engineers assume the zone is the region</td><td>Comparable to standard; better throughput; small extra latency when routed to another Region</td></tr>
+<tr><td>Global SKU / global. profile<br><span class="pill bad">no residency</span></td><td>Public or synthetic data, internal tooling, burst capacity, earliest model access</td><td>Silent compliance breach if personal data is routed here. Abuse-monitoring copies stored where the request ran</td><td>Cheapest (Bedrock ~10% less) and highest quota; latency varies per request</td></tr>
+<tr><td>Provisioned throughput (PTU, Bedrock provisioned, GCP provisioned)</td><td>Steady high volume with a p95 latency SLO</td><td>You pay for idle capacity; capacity is per region, so DR doubles the commitment</td><td>Predictable latency; break-even only at sustained utilisation</td></tr>
+<tr><td>Self-hosted (vLLM / watsonx software on OpenShift, AKS/EKS/GKE GPUs)</td><td>Air-gapped or sovereign needs; open-weight models (Granite, Llama) are good enough</td><td>GPU scarcity, patching, eval and safety stack all become your job</td><td>Highest fixed cost; cheapest at very high, steady volume; you control the latency</td></tr>
+</tbody></table></div>
+<p><strong>Defensible default:</strong> route by data classification at the AI gateway. Personal/sensitive classes go to in-geo deployments only; public classes may use global capacity. Enforce it twice: in IaC policy (CI) and in cloud guardrails (Azure Policy / SCP / VPC-SC), so neither a developer nor a Terraform module can opt out.</p>
+</section>
+
+<section id="exercise">
+<h2><span class="n">04</span>Hands-on: residency &amp; network policy-as-code</h2>
+<p><strong>Goal (60–90 min):</strong> build a CI-ready checker that reads a multi-cloud GenAI estate spec, works out <em>where each prompt is actually processed</em>, and fails the build on residency, network, identity and logging violations. Then see what a generic IaC scanner (Checkov) catches and what it misses. No cloud account, no GPU, no Docker.</p>
+
+<h3>Setup (PowerShell, Python 3.13)</h3>
+<div class="code"><div class="bar"><span>PowerShell</span><button class="copy" type="button">Copy</button></div><pre><code>mkdir day22-lz; cd day22-lz
+py -m venv .venv
+.\.venv\Scripts\Activate.ps1   # if blocked: Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
+python -m pip install --upgrade pip
+python -m pip install pyyaml pydantic rich checkov
+mkdir tf</code></pre></div>
+<p>Tested with pydantic 2.13, rich 15.0, PyYAML 6.0.3 and checkov 3.4.0 on Python 3.13. Checkov is a big install (about 1–2 minutes).</p>
+
+<h3>Steps</h3>
+<ol class="steps">
+<li><strong>10 min.</strong> Save <code>landing_zone.yaml</code> (below). It describes five workloads across Azure, AWS, GCP and watsonx, under a strict "process in India" policy. Before running anything, predict which ones fail.</li>
+<li><strong>20 min.</strong> Save <code>lz_check.py</code>. Read <code>processing_scope()</code> closely: it encodes today's key idea (deployment type / profile prefix → processing scope).</li>
+<li><strong>10 min.</strong> Run it and check the exit code. Fix the two HIGH findings in the YAML (Azure → <code>Standard</code>; Bedrock → an in-region model ID or the <code>in.</code> profile) and re-run until it exits 0.</li>
+<li><strong>15 min.</strong> Save <code>tf/main.tf</code> and run Checkov. Note that it flags public access, local auth, missing managed identity and CMK, but <em>not</em> the <code>GlobalStandard</code> SKU. Generic scanners don't model residency.</li>
+<li><strong>15 min.</strong> Write a 5-line note for a review board: which control catches which failure, and where each runs (PR / plan / runtime).</li>
+</ol>
+
+<div class="code"><div class="bar"><span>landing_zone.yaml</span><button class="copy" type="button">Copy</button></div><pre><code># Declarative spec of an India-based enterprise&#x27;s GenAI estate across 4 clouds.
+# Policy: personal data of Indian users -&gt; processing must stay in India (stricter
+# than DPDP&#x27;s default, chosen by the bank&#x27;s own risk policy / RBI-style guidance).
+policy:
+  allowed_processing_geos: [IN]          # where prompts/completions may be processed
+  allowed_at_rest_geos: [IN]
+  require_private_network: true
+  forbid_static_keys: true               # managed identity / IAM roles / service IDs only
+  require_prompt_logging: true           # to YOUR log sink, in-geo
+  max_cross_region_hops: 0
+
+workloads:
+  - name: hr-policy-copilot
+    provider: azure
+    service: Microsoft Foundry (Azure OpenAI)
+    region: centralindia
+    deployment_type: GlobalStandard       # cheapest + highest quota... but processes anywhere
+    network: private_endpoint
+    auth: managed_identity
+    logging: {prompts: true, sink_region: centralindia}
+    data_class: personal
+
+  - name: claims-summariser
+    provider: aws
+    service: Amazon Bedrock
+    region: ap-south-1
+    model_id: apac.anthropic.claude-sonnet   # geographic CRIS profile
+    network: vpc_endpoint
+    auth: iam_role
+    logging: {prompts: true, sink_region: ap-south-1}
+    data_class: personal
+
+  - name: kyc-doc-extractor
+    provider: aws
+    service: Amazon Bedrock
+    region: ap-south-1
+    model_id: in.amazon.nova-pro             # India geographic profile
+    network: vpc_endpoint
+    auth: iam_role
+    logging: {prompts: true, sink_region: ap-south-1}
+    data_class: personal
+
+  - name: marketing-copy
+    provider: gcp
+    service: Gemini Enterprise Agent Platform (ex-Vertex AI)
+    region: global
+    network: public
+    auth: api_key
+    logging: {prompts: false}
+    data_class: public
+
+  - name: compliance-rag
+    provider: ibm
+    service: watsonx.ai (SaaS on AWS)
+    region: ap-south-1
+    network: private_endpoint
+    auth: service_id
+    logging: {prompts: true, sink_region: ap-south-1}
+    data_class: personal</code></pre></div>
+<div class="code"><div class="bar"><span>lz_check.py</span><button class="copy" type="button">Copy</button></div><pre><code>&quot;&quot;&quot;Day 22 - GenAI landing-zone policy-as-code checker.
+
+Resolves WHERE each workload&#x27;s prompts are actually processed (deployment type /
+inference profile / endpoint), then evaluates residency, network, identity and
+logging rules. Exit code 1 on any HIGH finding -&gt; drop it into CI as a gate.
+
+Usage:  python lz_check.py landing_zone.yaml [--json]
+&quot;&quot;&quot;
+from __future__ import annotations
+
+import json
+import sys
+from pathlib import Path
+from typing import Literal
+
+import yaml
+from pydantic import BaseModel, Field
+from rich.console import Console
+from rich.table import Table
+
+# --------------------------------------------------------------------------- #
+# Region -&gt; geography maps (extend as needed). &quot;GLOBAL&quot; = may leave any geo.
+# --------------------------------------------------------------------------- #
+REGION_GEO = {
+    # Azure
+    &quot;centralindia&quot;: &quot;IN&quot;, &quot;southindia&quot;: &quot;IN&quot;, &quot;westindia&quot;: &quot;IN&quot;,
+    &quot;eastus&quot;: &quot;US&quot;, &quot;eastus2&quot;: &quot;US&quot;, &quot;swedencentral&quot;: &quot;EU&quot;, &quot;westeurope&quot;: &quot;EU&quot;,
+    &quot;japaneast&quot;: &quot;JP&quot;,
+    # AWS (also used by watsonx SaaS on AWS)
+    &quot;ap-south-1&quot;: &quot;IN&quot;, &quot;ap-south-2&quot;: &quot;IN&quot;, &quot;us-east-1&quot;: &quot;US&quot;, &quot;eu-central-1&quot;: &quot;EU&quot;,
+    # GCP
+    &quot;asia-south1&quot;: &quot;IN&quot;, &quot;asia-south2&quot;: &quot;IN&quot;, &quot;us-central1&quot;: &quot;US&quot;, &quot;europe-west4&quot;: &quot;EU&quot;,
+    # IBM Cloud
+    &quot;us-south&quot;: &quot;US&quot;, &quot;eu-de&quot;: &quot;EU&quot;, &quot;eu-gb&quot;: &quot;UK&quot;, &quot;jp-tok&quot;: &quot;JP&quot;,
+    &quot;au-syd&quot;: &quot;AU&quot;, &quot;ca-tor&quot;: &quot;CA&quot;,
+    &quot;global&quot;: &quot;GLOBAL&quot;,
+}
+# Azure data zones are US / EU / APAC (per Microsoft Foundry deployment-types doc).
+AZURE_DATA_ZONE = {&quot;IN&quot;: &quot;APAC&quot;, &quot;JP&quot;: &quot;APAC&quot;, &quot;US&quot;: &quot;US&quot;, &quot;EU&quot;: &quot;EU&quot;}
+# Bedrock inference-profile prefixes -&gt; processing scope.
+BEDROCK_PREFIX = {&quot;global&quot;: &quot;GLOBAL&quot;, &quot;us&quot;: &quot;US&quot;, &quot;eu&quot;: &quot;EU&quot;, &quot;apac&quot;: &quot;APAC&quot;, &quot;in&quot;: &quot;IN&quot;}
+
+PRIVATE_NETS = {&quot;private_endpoint&quot;, &quot;vpc_endpoint&quot;, &quot;psc&quot;, &quot;vpe&quot;}
+STATIC_KEYS = {&quot;api_key&quot;, &quot;access_key&quot;, &quot;shared_key&quot;}
+
+
+class Policy(BaseModel):
+    allowed_processing_geos: list[str]
+    allowed_at_rest_geos: list[str]
+    require_private_network: bool = True
+    forbid_static_keys: bool = True
+    require_prompt_logging: bool = True
+    max_cross_region_hops: int = 0
+
+
+class Logging(BaseModel):
+    prompts: bool = False
+    sink_region: str | None = None
+
+
+class Workload(BaseModel):
+    name: str
+    provider: Literal[&quot;azure&quot;, &quot;aws&quot;, &quot;gcp&quot;, &quot;ibm&quot;]
+    service: str
+    region: str
+    deployment_type: str | None = None   # Azure
+    model_id: str | None = None          # Bedrock
+    network: str
+    auth: str
+    logging: Logging = Field(default_factory=Logging)
+    data_class: Literal[&quot;public&quot;, &quot;internal&quot;, &quot;personal&quot;, &quot;sensitive&quot;] = &quot;internal&quot;
+
+
+class Spec(BaseModel):
+    policy: Policy
+    workloads: list[Workload]
+
+
+class Finding(BaseModel):
+    workload: str
+    severity: Literal[&quot;HIGH&quot;, &quot;MEDIUM&quot;, &quot;LOW&quot;]
+    rule: str
+    detail: str
+    fix: str
+
+
+def processing_scope(w: Workload) -&gt; str:
+    &quot;&quot;&quot;Where can a prompt for this workload be processed?&quot;&quot;&quot;
+    geo = REGION_GEO.get(w.region, &quot;UNKNOWN&quot;)
+    if w.provider == &quot;azure&quot;:
+        dt = (w.deployment_type or &quot;Standard&quot;).lower()
+        if dt.startswith(&quot;global&quot;) or dt == &quot;developertier&quot;:
+            return &quot;GLOBAL&quot;
+        if dt.startswith(&quot;datazone&quot;):
+            return AZURE_DATA_ZONE.get(geo, &quot;UNKNOWN&quot;)
+        return geo  # Standard / ProvisionedManaged -&gt; customer geography
+    if w.provider == &quot;aws&quot; and w.model_id:
+        prefix = w.model_id.split(&quot;.&quot;, 1)[0]
+        return BEDROCK_PREFIX.get(prefix, geo)  # no prefix = in-region on-demand
+    return geo
+
+
+def check(spec: Spec) -&gt; tuple[list[Finding], list[dict]]:
+    p, findings, matrix = spec.policy, [], []
+    for w in spec.workloads:
+        scope = processing_scope(w)
+        at_rest = REGION_GEO.get(w.region, &quot;UNKNOWN&quot;)
+        matrix.append({&quot;workload&quot;: w.name, &quot;provider&quot;: w.provider, &quot;region&quot;: w.region,
+                       &quot;processing_scope&quot;: scope, &quot;at_rest&quot;: at_rest, &quot;data&quot;: w.data_class})
+        regulated = w.data_class in {&quot;personal&quot;, &quot;sensitive&quot;}
+
+        if regulated and scope not in p.allowed_processing_geos:
+            fix = {&quot;azure&quot;: &quot;Use Standard or ProvisionedManaged in an India region &quot;
+                            &quot;(DataZone=APAC still leaves India).&quot;,
+                   &quot;aws&quot;: &quot;Use an in-region model ID or the in. profile; deny global.* &quot;
+                          &quot;and other geo profiles via SCP on bedrock:InferenceProfileArn.&quot;,
+                   &quot;gcp&quot;: &quot;Pin a regional endpoint (asia-south1) - not global.&quot;,
+                   &quot;ibm&quot;: &quot;Use a watsonx region in-geo (e.g. SaaS on AWS ap-south-1).&quot;}[w.provider]
+            findings.append(Finding(workload=w.name, severity=&quot;HIGH&quot;, rule=&quot;RESIDENCY-PROCESSING&quot;,
+                                    detail=f&quot;{w.data_class} data processed in scope &#x27;{scope}&#x27;, &quot;
+                                           f&quot;allowed {p.allowed_processing_geos}&quot;, fix=fix))
+        if regulated and at_rest not in p.allowed_at_rest_geos:
+            findings.append(Finding(workload=w.name, severity=&quot;HIGH&quot;, rule=&quot;RESIDENCY-AT-REST&quot;,
+                                    detail=f&quot;resource geo {at_rest}&quot;, fix=&quot;Move resource region.&quot;))
+        if p.require_private_network and w.network not in PRIVATE_NETS:
+            findings.append(Finding(workload=w.name, severity=&quot;HIGH&quot; if regulated else &quot;MEDIUM&quot;,
+                                    rule=&quot;NET-PRIVATE&quot;,
+                                    detail=f&quot;network={w.network}&quot;,
+                                    fix=&quot;Private Endpoint / VPC interface endpoint / PSC / VPE; &quot;
+                                        &quot;disable public network access on the resource.&quot;))
+        if p.forbid_static_keys and w.auth in STATIC_KEYS:
+            findings.append(Finding(workload=w.name, severity=&quot;HIGH&quot; if regulated else &quot;MEDIUM&quot;,
+                                    rule=&quot;IAM-NO-STATIC-KEYS&quot;, detail=f&quot;auth={w.auth}&quot;,
+                                    fix=&quot;Managed identity / IAM role / workload identity &quot;
+                                        &quot;federation; disable local (key) auth.&quot;))
+        if p.require_prompt_logging and not w.logging.prompts:
+            findings.append(Finding(workload=w.name, severity=&quot;MEDIUM&quot;, rule=&quot;OBS-PROMPT-LOG&quot;,
+                                    detail=&quot;prompt/response logging off&quot;,
+                                    fix=&quot;Log via gateway (APIM/AI gateway) to an in-geo sink, &quot;
+                                        &quot;with PII masking.&quot;))
+        if w.logging.prompts and w.logging.sink_region and regulated:
+            sink_geo = REGION_GEO.get(w.logging.sink_region, &quot;UNKNOWN&quot;)
+            if sink_geo not in p.allowed_at_rest_geos:
+                findings.append(Finding(workload=w.name, severity=&quot;HIGH&quot;, rule=&quot;RESIDENCY-LOGS&quot;,
+                                        detail=f&quot;log sink in {sink_geo}&quot;,
+                                        fix=&quot;Logs are data at rest - keep sink in-geo.&quot;))
+    return findings, matrix
+
+
+def main() -&gt; int:
+    if len(sys.argv) &lt; 2:
+        print(__doc__)
+        return 2
+    spec = Spec.model_validate(yaml.safe_load(Path(sys.argv[1]).read_text(encoding=&quot;utf-8&quot;)))
+    findings, matrix = check(spec)
+    if &quot;--json&quot; in sys.argv:
+        print(json.dumps({&quot;matrix&quot;: matrix, &quot;findings&quot;: [f.model_dump() for f in findings]}, indent=2))
+    else:
+        c = Console()
+        t = Table(title=&quot;Residency matrix&quot;)
+        for col in (&quot;workload&quot;, &quot;provider&quot;, &quot;region&quot;, &quot;processing_scope&quot;, &quot;at_rest&quot;, &quot;data&quot;):
+            t.add_column(col)
+        for row in matrix:
+            ok = row[&quot;processing_scope&quot;] in spec.policy.allowed_processing_geos
+            style = None if ok or row[&quot;data&quot;] == &quot;public&quot; else &quot;red&quot;
+            t.add_row(*[str(row[k]) for k in row], style=style)
+        c.print(t)
+        ft = Table(title=f&quot;Findings ({len(findings)})&quot;)
+        for col in (&quot;sev&quot;, &quot;workload&quot;, &quot;rule&quot;, &quot;detail&quot;, &quot;fix&quot;):
+            ft.add_column(col, overflow=&quot;fold&quot;)
+        for f in sorted(findings, key=lambda f: (&quot;HIGH&quot;, &quot;MEDIUM&quot;, &quot;LOW&quot;).index(f.severity)):
+            ft.add_row(f.severity, f.workload, f.rule, f.detail, f.fix,
+                       style=&quot;red&quot; if f.severity == &quot;HIGH&quot; else &quot;yellow&quot;)
+        c.print(ft)
+    return 1 if any(f.severity == &quot;HIGH&quot; for f in findings) else 0
+
+
+if __name__ == &quot;__main__&quot;:
+    sys.exit(main())</code></pre></div>
+<div class="code"><div class="bar"><span>tf/main.tf</span><button class="copy" type="button">Copy</button></div><pre><code>resource &quot;azurerm_cognitive_account&quot; &quot;aoai&quot; {
+  name                          = &quot;aoai-hr-copilot-cin&quot;
+  location                      = &quot;centralindia&quot;
+  resource_group_name           = &quot;rg-genai-cin&quot;
+  kind                          = &quot;OpenAI&quot;
+  sku_name                      = &quot;S0&quot;
+  custom_subdomain_name         = &quot;aoai-hr-copilot-cin&quot;
+  public_network_access_enabled = true   # &lt;- checkov should flag
+  local_auth_enabled            = true   # &lt;- API keys on: should flag
+}
+
+resource &quot;azurerm_cognitive_deployment&quot; &quot;gpt&quot; {
+  name                 = &quot;chat&quot;
+  cognitive_account_id = azurerm_cognitive_account.aoai.id
+  model {
+    format  = &quot;OpenAI&quot;
+    name    = &quot;gpt-4.1-mini&quot;
+    version = &quot;2025-04-14&quot;
+  }
+  sku {
+    name = &quot;GlobalStandard&quot;   # &lt;- residency risk: not caught by generic scanners
+  }
+}</code></pre></div>
+<div class="code"><div class="bar"><span>Run</span><button class="copy" type="button">Copy</button></div><pre><code>python lz_check.py landing_zone.yaml; "exit=$LASTEXITCODE"
+python lz_check.py landing_zone.yaml --json &gt; findings.json
+checkov -d tf --framework terraform --compact --quiet</code></pre></div>
+
+<h3>Expected output (abridged)</h3>
+<div class="code"><div class="bar"><span>output</span><button class="copy" type="button">Copy</button></div><pre><code>Residency matrix
+ workload           provider  region        processing_scope  at_rest  data
+ hr-policy-copilot  azure     centralindia  GLOBAL            IN       personal   (red)
+ claims-summariser  aws       ap-south-1    APAC              IN       personal   (red)
+ kyc-doc-extractor  aws       ap-south-1    IN                IN       personal
+ marketing-copy     gcp       global        GLOBAL            GLOBAL   public
+ compliance-rag     ibm       ap-south-1    IN                IN       personal
+
+Findings (5)
+ HIGH    hr-policy-copilot  RESIDENCY-PROCESSING  personal data processed in scope &#x27;GLOBAL&#x27;, allowed [&#x27;IN&#x27;]
+ HIGH    claims-summariser  RESIDENCY-PROCESSING  personal data processed in scope &#x27;APAC&#x27;, allowed [&#x27;IN&#x27;]
+ MEDIUM  marketing-copy     NET-PRIVATE           network=public
+ MEDIUM  marketing-copy     IAM-NO-STATIC-KEYS    auth=api_key
+ MEDIUM  marketing-copy     OBS-PROMPT-LOG        prompt/response logging off
+exit=1
+
+# checkov
+Passed checks: 0, Failed checks: 5, Skipped checks: 0
+Check: CKV_AZURE_238: &quot;Ensure that all Azure Cognitive Services accounts are configured with a managed identity&quot;
+Check: CKV_AZURE_247: &quot;Ensure that Azure Cognitive Services account hosted with OpenAI is configured with data loss prevention&quot;
+Check: CKV_AZURE_236: &quot;Ensure that Cognitive Services accounts disable local authentication&quot;
+Check: CKV_AZURE_134: &quot;Ensure that Cognitive Services accounts disable public network access&quot;
+Check: CKV2_AZURE_22: &quot;Ensure that Cognitive Services enables customer-managed key for encryption&quot;
+# note: nothing flags sku.name = &quot;GlobalStandard&quot;</code></pre></div>
+<p>The model IDs and the TF model version are illustrative; the checker only reads the prefix and SKU. Checkov may print a warning that it can't reach the Prisma guidelines API. That's harmless offline.</p>
+
+<h3>Stretch goals</h3>
+<ol>
+<li><strong>Close the scanner gap.</strong> Write a custom Checkov Python check (load it with <code>--external-checks-dir</code>) that fails <code>azurerm_cognitive_deployment</code> when <code>sku.name</code> starts with <code>Global</code> or <code>DataZone</code>. Then add the same rule to a GitHub Actions job that runs both tools on every PR.</li>
+<li><strong>Model the data plane and DR.</strong> Add <code>vector_store</code>, <code>embeddings</code> and <code>dr_region</code> fields per workload. Flag a workload whose embeddings model processes out-of-geo or whose DR region breaks the residency rule (for example Mumbai with a Singapore DR). Emit a Mermaid diagram of the estate from the YAML.</li>
+</ol>
+</section>
+
+<section id="repos">
+<h2><span class="n">05</span>GitHub repos to study</h2>
+<ul>
+<li><a href="https://github.com/Azure/AI-Landing-Zones">Azure/AI-Landing-Zones</a>: Microsoft's AI landing zone reference (Portal, Bicep, Terraform on AVM; in preview). Read the <a href="https://azure.github.io/AI-Landing-Zones/bicep/concepts-networking">networking concepts</a> page for how hub-spoke, private DNS and Foundry private endpoints fit together.</li>
+<li><a href="https://github.com/Azure-Samples/AI-Gateway">Azure-Samples/AI-Gateway</a>: 30+ APIM + Foundry labs with Bicep. Study the private connectivity lab, plus token rate-limiting and backend-pool load balancing across regional deployments.</li>
+<li><a href="https://github.com/awslabs/agentcore-samples">awslabs/agentcore-samples</a>: Bedrock AgentCore samples. Look at <code>04-infrastructure-as-code</code> (CloudFormation / CDK / Terraform) for how IAM roles and resources are wired. The Starter Toolkit is deprecated; use the AgentCore CLI.</li>
+<li><a href="https://github.com/GoogleCloudPlatform/generative-ai">GoogleCloudPlatform/generative-ai</a>: the official Gemini / Agent Platform samples. Use <code>rag-grounding</code> and <code>agents</code>; for landing-zone IaC the README points to the separate genai-factory blueprints.</li>
+<li><em>Bonus for your CoE:</em> <a href="https://github.com/IBM/watsonx-ai-samples">IBM/watsonx-ai-samples</a>: notebooks split by <code>cloud</code> vs <code>cpd5.x</code>. Diffing the two shows what changes between SaaS and software (on-prem) deployments.</li>
+</ul>
+</section>
+
+<section id="read">
+<h2><span class="n">06</span>Read / watch</h2>
+<ol>
+<li><a href="https://learn.microsoft.com/en-us/azure/foundry/foundry-models/concepts/deployment-types">Deployment types for Microsoft Foundry Models</a> (Microsoft Learn, updated Aug 2026). The authoritative statement on processing vs at-rest per SKU.</li>
+<li><a href="https://docs.aws.amazon.com/bedrock/latest/userguide/geographic-cross-region-inference.html">Bedrock geographic cross-Region inference</a> and <a href="https://docs.aws.amazon.com/bedrock/latest/userguide/global-cross-region-inference.html">global cross-Region inference</a>. Read the IAM/SCP sections; they're the enforcement recipe.</li>
+<li><a href="https://docs.cloud.google.com/vertex-ai/generative-ai/docs/security-controls">Google: security controls for generative AI</a> (VPC-SC, CMEK, data residency per feature) and IBM's <a href="https://www.ibm.com/docs/en/SSYOK8/wsj/getting-started/regional-datactr.html">watsonx regional availability</a> + <a href="https://www.ibm.com/docs/SSYOK8/wsj/analyze-data/ml-service-endpoint.html">private service endpoints</a>.</li>
+</ol>
+</section>
+
+<section id="interview">
+<h2><span class="n">07</span>Interview questions</h2>
+<div class="qa">
+<details><summary>1. A team says "We deployed Azure OpenAI in Central India, so we're DPDP- and RBI-compliant." What do you check?</summary>
+<p>Region only sets at rest. I'd check: (a) deployment type: Global or DataZone means processing can leave India (DataZone = APAC); (b) every other model call in the flow: embeddings, rerankers, batch, fine-tuning jobs, evaluators; (c) where logs and traces land, including the gateway's and the observability vendor's SaaS region; (d) the vector store and its backups and DR replica; (e) abuse-monitoring data retention, and whether an approved exemption applies; (f) human support access. Then I'd show where policy enforces it: Azure Policy on the SKU, plus a gateway allow-list.</p></details>
+<details><summary>2. Design private connectivity from an on-prem app to Bedrock or Foundry. What breaks first?</summary>
+<p>Hub-spoke: ExpressRoute or Direct Connect into a hub, then a private endpoint or interface VPC endpoint in a spoke, public network access disabled. <strong>DNS breaks first</strong>: on-prem resolvers must forward the service zone (for example <code>privatelink.openai.azure.com</code>) to Azure DNS Private Resolver or a Route 53 Resolver inbound endpoint. Otherwise the client resolves the public IP and the call fails, or leaves through the internet egress. Next come TLS inspection proxies breaking streaming (SSE), and endpoint policies that forget the inference-profile ARNs.</p></details>
+<details><summary>3. How do you stop developers from using Bedrock global inference for regulated workloads?</summary>
+<p>Defence in depth. An SCP denies <code>bedrock:InvokeModel*</code> where <code>bedrock:InferenceProfileArn</code> is <code>ArnLike arn:aws:bedrock:*:*:inference-profile/global.*</code> (AWS's documented pattern, together with <code>aws:RequestedRegion = unspecified</code>) on regulated OUs. IAM roles are scoped to specific profile and model ARNs. The AI gateway keeps an allow-list of model IDs per data class. CI policy-as-code rejects the IaC. The SCP is the control that can't be bypassed; the others give earlier, friendlier feedback.</p></details>
+<details><summary>4. Your India-only deployment hits 429s at peak. Options, without breaking residency?</summary>
+<p>(1) Spread across in-country regions: Central + South India on Azure, Mumbai + Hyderabad on AWS (or the <code>in.</code> profile), using gateway backend pools with health-based failover. (2) Buy provisioned throughput for the steady base and send spillover to standard. (3) Shape demand: semantic and prompt caching, smaller models for easy intents, Batch for offline jobs. (4) Classify traffic: only <em>public</em>-class requests may spill to DataZone or Global. (5) Queue with back-pressure and honour Retry-After. The latency SLO decides between (2) and (5).</p></details>
+<details><summary>5. When would you recommend watsonx over a hyperscaler's native model service?</summary>
+<p>When governance and deployment flexibility matter more than having the newest frontier model: (a) sovereign or air-gapped needs, met by watsonx software on OpenShift on-prem with the same toolchain as SaaS; (b) a multi-cloud estate wanting one governance plane (watsonx.governance for model inventory, risk and fact sheets); (c) Granite's open weights and IBM's IP indemnity for enterprise use; (d) India residency through SaaS on AWS Mumbai. Trade-offs: a smaller frontier-model catalogue, so you often pair it with a hyperscaler behind the same gateway.</p></details>
+</div>
+</section>
+
+<section id="adr">
+<h2><span class="n">08</span>Architect's lens: ADR-022</h2>
+<div class="adr">
+<div>Title</div><div>Model-plane processing locality for personal-data GenAI workloads (India)</div>
+<div>Status</div><div>Accepted</div>
+<div>Context</div><div>A BFSI client, regulated in India, is putting five GenAI workloads on Azure, AWS and watsonx. Its risk policy requires in-India processing for personal data. Peak load is 3× the average. Global SKUs are cheaper and have more quota.</div>
+<div>Options</div><div>A. Global SKUs everywhere plus contractual assurances. B. Data-zone / geo profiles (APAC). C. In-geo regional deployments + provisioned throughput for the base load, routed by data class at the gateway. D. Self-host open-weight models on OpenShift in the client DC.</div>
+<div>Decision</div><div><strong>C</strong>, with D kept for any workload that later requires an air gap. Public-class traffic may use Global capacity through the same gateway.</div>
+<div>Consequences</div><div>+ Passes the residency audit; enforced in CI (policy-as-code), in the cloud (Azure Policy / SCP) and at runtime (gateway allow-list). − Roughly 10–20% higher unit cost than Global; new models arrive later; PTU is committed per region, so DR doubles the commitment. Revisit when India regions get the target models at Global quota, or when the client's policy relaxes to DPDP baseline.</div>
+</div>
+</section>
+
+<section id="tomorrow">
+<h2><span class="n">09</span>Tomorrow</h2>
+<p>Day 23: Model serving &amp; gateways: vLLM, TGI, Ollama, LiteLLM / AI gateway, rate limits, fallback routing, quotas and caching. Today's data-class router becomes a real gateway.</p>
+</section>
+
+<footer>Sources: Microsoft Learn (Foundry deployment types), AWS Bedrock user guide (geographic and global cross-Region inference), Google Cloud generative-AI security controls and Gemini Enterprise Agent Platform release notes, IBM Docs (watsonx regional availability, watsonx.ai Runtime service endpoints), IBM India newsroom (watsonx on AWS India, Jul 2025). Verified 31 Oct 2026.</footer>
+</main>
+</div>
+<script>
+document.querySelectorAll('button.copy').forEach(function(btn){
+  btn.addEventListener('click', function(){
+    var code = btn.closest('.code').querySelector('pre').innerText;
+    var done = function(t){ btn.textContent = t; setTimeout(function(){ btn.textContent = 'Copy'; }, 1500); };
+    try {
+      navigator.clipboard.writeText(code).then(function(){ done('Copied'); }, function(){ done('Select & Ctrl+C'); });
+    } catch (e) { done('Select & Ctrl+C'); }
+  });
+});
+</script>
+</body>
+</html>

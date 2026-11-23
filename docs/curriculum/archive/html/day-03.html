@@ -1,0 +1,517 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>GenAI Prep · Day 3 — Fine-tuning vs RAG vs Prompting</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Serif:wght@500;600&display=swap">
+<style>
+/* Layout: single reading column (~72ch) with a sticky section index on wide screens; study-notebook feel in IBM Plex. */
+:root{
+  --bg:#f6f7f9; --surface:#ffffff; --fg:#1b2230; --muted:#5a6475; --line:#dde2ea;
+  --accent:#0f62fe; --accent-soft:#e5edff; --warn:#a2470b; --warn-soft:#fdf0e6; --ok:#1d7a46; --ok-soft:#e6f4ec;
+  --code-bg:#f0f2f6;
+  --f-display:"IBM Plex Serif",Georgia,serif; --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif; --f-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#12151b; --surface:#1a1f28; --fg:#e4e8ef; --muted:#9aa4b5; --line:#2c3341;
+  --accent:#78a9ff; --accent-soft:#1d2a45; --warn:#f2a36b; --warn-soft:#3a2617; --ok:#6fdc9c; --ok-soft:#173226; --code-bg:#151a22; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#12151b; --surface:#1a1f28; --fg:#e4e8ef; --muted:#9aa4b5; --line:#2c3341;
+  --accent:#78a9ff; --accent-soft:#1d2a45; --warn:#f2a36b; --warn-soft:#3a2617; --ok:#6fdc9c; --ok-soft:#173226; --code-bg:#151a22; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:16px;line-height:1.6}
+.wrap{max-width:1120px;margin:0 auto;padding-inline:20px;padding-block:32px 64px;display:grid;grid-template-columns:200px minmax(0,1fr);gap:48px}
+nav.toc{position:sticky;top:calc(env(safe-area-inset-top,0px) + 24px);align-self:start;font-size:13.5px}
+nav.toc ol{list-style:none;padding:0;margin:0;display:grid;gap:6px}
+nav.toc a{color:var(--muted);text-decoration:none}
+nav.toc a:hover,nav.toc a:focus-visible{color:var(--accent)}
+nav.toc .lbl{font-family:var(--f-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
+main{min-width:0;max-width:760px}
+header.top{display:grid;gap:10px;padding-bottom:24px;border-bottom:1px solid var(--line);margin-bottom:8px}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+h1{font-family:var(--f-display);font-weight:600;font-size:clamp(28px,4.4vw,40px);line-height:1.15;margin:0;text-wrap:balance}
+.dek{color:var(--muted);margin:0;max-width:62ch}
+.meta{display:flex;flex-wrap:wrap;gap:8px;font-family:var(--f-mono);font-size:12px}
+.chip{border:1px solid var(--line);border-radius:999px;padding:2px 10px;color:var(--muted);background:var(--surface)}
+section{padding-top:36px;scroll-margin-top:16px}
+h2{font-family:var(--f-display);font-weight:600;font-size:24px;margin:0 0 12px;display:flex;gap:12px;align-items:baseline;text-wrap:balance}
+h2 .n{font-family:var(--f-mono);font-size:13px;color:var(--accent);font-weight:500}
+h3{font-size:17px;font-weight:600;margin:24px 0 8px}
+p{margin:0 0 12px}
+ul,ol{margin:0 0 12px;padding-left:22px}
+li{margin-bottom:6px}
+a{color:var(--accent)}
+code{font-family:var(--f-mono);font-size:.88em;background:var(--code-bg);padding:1px 5px;border-radius:4px}
+.callout{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:14px 16px;margin:16px 0}
+.callout.warn{background:var(--warn-soft);border-color:transparent}
+.callout.warn strong{color:var(--warn)}
+.callout.ok{background:var(--ok-soft);border-color:transparent}
+.tbl{overflow-x:auto;margin:12px 0 16px;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:14px;min-width:640px}
+th,td{text-align:left;vertical-align:top;padding:10px 12px;border-bottom:1px solid var(--line)}
+th{font-family:var(--f-mono);font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:500;background:var(--bg)}
+tr:last-child td{border-bottom:0}
+td:first-child{font-weight:600;white-space:nowrap}
+.code{position:relative;margin:12px 0 16px;border:1px solid var(--line);border-radius:8px;background:var(--code-bg)}
+.code .bar{display:flex;justify-content:space-between;align-items:center;padding:6px 10px 6px 14px;border-bottom:1px solid var(--line);font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+.code pre{margin:0;padding:14px;overflow-x:auto;font-family:var(--f-mono);font-size:13px;line-height:1.55;tab-size:4}
+.code pre code{background:none;padding:0;font-size:inherit}
+button.copy{font-family:var(--f-mono);font-size:12px;border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:6px;padding:3px 10px;cursor:pointer}
+button.copy:hover{border-color:var(--accent);color:var(--accent)}
+button.copy:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.diagram{overflow-x:auto;margin:16px 0;border:1px solid var(--line);border-radius:8px;background:var(--surface);padding:12px}
+.diagram svg{display:block;min-width:620px;width:100%;height:auto}
+.diagram text{font-family:var(--f-body)}
+.qa{border-top:1px solid var(--line);padding:14px 0}
+.qa:first-of-type{border-top:0}
+.qa .q{font-weight:600;margin-bottom:6px}
+.qa .a{color:var(--fg)}
+.adr{display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px 16px;border:1px solid var(--line);border-radius:8px;padding:16px;background:var(--surface)}
+.adr dt{font-family:var(--f-mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding-top:3px}
+.adr dd{margin:0}
+.repo{display:grid;gap:4px;padding:12px 0;border-top:1px solid var(--line)}
+.repo:first-of-type{border-top:0}
+.repo a{font-family:var(--f-mono);font-size:14px;font-weight:500}
+.repo span{color:var(--muted);font-size:14.5px}
+.tomorrow{margin-top:40px;padding:16px;border-radius:8px;background:var(--accent-soft)}
+footer{margin-top:40px;font-size:13px;color:var(--muted)}
+@media (max-width:860px){.wrap{grid-template-columns:minmax(0,1fr);gap:0;padding-inline:16px}nav.toc{display:none}.adr{grid-template-columns:minmax(0,1fr)}}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+</style>
+
+<div class="wrap">
+<nav class="toc" aria-label="Sections">
+  <div class="lbl">Day 3 of 30</div>
+  <ol>
+    <li><a href="#why">1 · Why it matters</a></li>
+    <li><a href="#concept">2 · Concept brief</a></li>
+    <li><a href="#tradeoffs">3 · Trade-offs</a></li>
+    <li><a href="#lab">4 · Hands-on lab</a></li>
+    <li><a href="#repos">5 · Repos</a></li>
+    <li><a href="#read">6 · Read / watch</a></li>
+    <li><a href="#interview">7 · Interview Qs</a></li>
+    <li><a href="#adr">8 · Architect's lens</a></li>
+    <li><a href="#tomorrow">9 · Tomorrow</a></li>
+  </ol>
+</nav>
+
+<main>
+<header class="top">
+  <div class="eyebrow">Week 1 · LLM &amp; retrieval foundations · Day 3</div>
+  <h1>Fine-tuning vs RAG vs prompting</h1>
+  <p class="dek">A decision framework you can defend in a design review: what each lever actually changes in the model, LoRA/QLoRA/PEFT mechanics, and where InstructLab-style tuning still earns its cost.</p>
+  <div class="meta"><span class="chip">Mon 12 Oct 2026</span><span class="chip">~45 min read + 75 min lab</span><span class="chip">peft 0.21 · trl 1.15 · transformers 5.19</span></div>
+</header>
+
+<section id="why">
+<h2><span class="n">01</span>Why this matters for the JD</h2>
+<p>The JD lists <em>"fine-tuning vs RAG"</em> as a must-have LLM concept and <em>"RAG optimization"</em> plus <em>"multi-provider LLM integration"</em> as preferred. In architect interviews this is the most common opening question, and the follow-ups test whether you can tie the choice to NFRs: freshness, auditability, cost per request, latency and data residency. You have shipped both sides (Granite/InstructLab tuning and a RAG compliance bot), so the goal today is to turn that experience into a crisp, reusable framework.</p>
+</section>
+
+<section id="concept">
+<h2><span class="n">02</span>Concept brief</h2>
+<h3>Three levers, three different things they change</h3>
+<ul>
+  <li><strong>Prompting</strong> changes the <em>input</em>. No weights move. It steers behaviour the model already has. Cost is paid per request in prompt tokens, forever.</li>
+  <li><strong>RAG</strong> changes the <em>input at runtime</em> with retrieved evidence. It is the right tool for <em>knowledge</em>: facts that change, need citations, or are permissioned per user. Cost is retrieval latency plus context tokens.</li>
+  <li><strong>Fine-tuning</strong> changes the <em>weights</em>. It is the right tool for <em>behaviour</em>: output format, tone, domain vocabulary, task skill (classification, extraction, tool-call syntax), and shrinking prompts. It is weak at injecting new facts reliably (Ovadia et al. 2023 found RAG beat unsupervised fine-tuning for knowledge injection), and facts baked into weights cannot be cited, revoked or permission-filtered.</li>
+</ul>
+<p>The one-line rule for reviews: <strong>RAG for what the model should know, fine-tuning for how it should behave, prompting until you can prove it is not enough.</strong> The two combine well: RAFT (Zhang et al. 2024) fine-tunes the model to <em>use</em> retrieved context better, including ignoring distractor documents.</p>
+
+<div class="diagram" role="img" aria-label="Decision flow: start with prompting and evals; if the gap is knowledge go to RAG, if behaviour go to PEFT, if both combine them; full fine-tuning or continued pretraining only when PEFT plateaus.">
+<svg viewBox="0 0 720 330" xmlns="http://www.w3.org/2000/svg">
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker></defs>
+  <g font-size="13" fill="var(--fg)">
+    <rect x="250" y="12" width="220" height="50" rx="8" fill="var(--surface)" stroke="var(--line)"/>
+    <text x="360" y="33" text-anchor="middle" font-weight="600">Prompt + golden eval set</text>
+    <text x="360" y="51" text-anchor="middle" fill="var(--muted)" font-size="12">baseline first, measure the gap</text>
+    <line x1="360" y1="62" x2="360" y2="92" stroke="var(--muted)" marker-end="url(#ar)"/>
+    <rect x="250" y="94" width="220" height="44" rx="22" fill="var(--accent-soft)" stroke="var(--accent)"/>
+    <text x="360" y="121" text-anchor="middle" font-weight="600">What is missing?</text>
+    <line x1="270" y1="138" x2="120" y2="182" stroke="var(--muted)" marker-end="url(#ar)"/>
+    <line x1="360" y1="138" x2="360" y2="182" stroke="var(--muted)" marker-end="url(#ar)"/>
+    <line x1="450" y1="138" x2="600" y2="182" stroke="var(--muted)" marker-end="url(#ar)"/>
+    <text x="165" y="152" text-anchor="middle" fill="var(--muted)" font-size="12">knowledge</text>
+    <text x="395" y="165" text-anchor="middle" fill="var(--muted)" font-size="12">both</text>
+    <text x="560" y="152" text-anchor="middle" fill="var(--muted)" font-size="12">behaviour</text>
+    <rect x="20" y="184" width="200" height="74" rx="8" fill="var(--surface)" stroke="var(--line)"/>
+    <text x="120" y="207" text-anchor="middle" font-weight="600">RAG</text>
+    <text x="120" y="226" text-anchor="middle" fill="var(--muted)" font-size="12">fresh, cited, ACL-filtered</text>
+    <text x="120" y="243" text-anchor="middle" fill="var(--muted)" font-size="12">facts at query time</text>
+    <rect x="260" y="184" width="200" height="74" rx="8" fill="var(--surface)" stroke="var(--line)"/>
+    <text x="360" y="207" text-anchor="middle" font-weight="600">RAG + tuned reader</text>
+    <text x="360" y="226" text-anchor="middle" fill="var(--muted)" font-size="12">RAFT-style: train the model</text>
+    <text x="360" y="243" text-anchor="middle" fill="var(--muted)" font-size="12">to use/ignore context</text>
+    <rect x="500" y="184" width="200" height="74" rx="8" fill="var(--surface)" stroke="var(--line)"/>
+    <text x="600" y="207" text-anchor="middle" font-weight="600">PEFT (LoRA / QLoRA)</text>
+    <text x="600" y="226" text-anchor="middle" fill="var(--muted)" font-size="12">format, tone, task skill,</text>
+    <text x="600" y="243" text-anchor="middle" fill="var(--muted)" font-size="12">shorter prompts, smaller model</text>
+    <line x1="600" y1="258" x2="600" y2="282" stroke="var(--muted)" marker-end="url(#ar)"/>
+    <rect x="470" y="284" width="240" height="38" rx="8" fill="var(--warn-soft)" stroke="var(--warn)"/>
+    <text x="590" y="308" text-anchor="middle" font-size="12.5">Full FT / continued pretraining (rare)</text>
+    <text x="20" y="306" fill="var(--muted)" font-size="12">Each step right/down costs more to build, operate and re-do when the base model changes.</text>
+  </g>
+</svg>
+</div>
+
+<h3>PEFT mechanics you should be able to whiteboard</h3>
+<ul>
+  <li><strong>LoRA</strong>: freeze W; learn a low-rank update ΔW = B·A with rank r (typically 8–64). Effective scale is <code>lora_alpha / r</code> (rsLoRA uses <code>alpha/√r</code>, which behaves better at high rank). Trainable params are usually 0.1–2% of the model. Adapters are small files, so you can host many per base model (multi-LoRA serving in vLLM / watsonx deployments).</li>
+  <li><strong>QLoRA</strong>: base weights loaded in 4-bit NF4 with double quantization; LoRA adapters train in bf16 on top. It is what makes 7–8B tuning fit on a single 24 GB card, and 1–2B models fit on your 6 GB 3050.</li>
+  <li><strong>Variants worth naming</strong>: DoRA (magnitude/direction split, slightly better quality, merge before serving), PiSSA and LoftQ initialisations (less quantization error than plain QLoRA), aLoRA (activated LoRA that can share the base model's KV cache). All are config flags in current PEFT.</li>
+  <li><strong>"LoRA learns less and forgets less"</strong> (Biderman et al. 2024): LoRA under-performs full FT on large new-domain skills like code and maths but preserves general ability better. That is the argument for LoRA in enterprise: lower regression risk on everything you did not train for.</li>
+</ul>
+
+<h3>Where InstructLab-style tuning fits now</h3>
+<p>InstructLab's idea was taxonomy-driven synthetic data generation (SDG) from a small number of seed examples, followed by multi-phase tuning of Granite. The method still wins when you have <em>little labelled data but clear domain skills</em> and need an on-prem, auditable training pipeline.</p>
+<div class="callout warn"><strong>Status change you should know before an interview:</strong> the <code>instructlab/instructlab</code> CLI repo was archived on 23 Apr 2026 and its last PyPI release (0.26.1) dates from May 2025. Red Hat split the components into <code>sdg_hub</code> (synthetic data) and <code>training_hub</code> (SFT, OSFT continual learning, LoRA via an Unsloth backend). If your RAG compliance bot depends on the InstructLab CLI, note it as a dependency risk in its decision log.</div>
+
+<h3>Platform map</h3>
+<div class="tbl"><table>
+<thead><tr><th>Need</th><th>IBM watsonx</th><th>Azure</th><th>AWS</th><th>GCP</th></tr></thead>
+<tbody>
+<tr><td>Managed RAG</td><td>watsonx.ai RAG patterns / AutoAI for RAG, watsonx Discovery</td><td>AI Foundry + Azure AI Search</td><td>Bedrock Knowledge Bases</td><td>Vertex AI RAG Engine / Search</td></tr>
+<tr><td>Managed tuning</td><td>watsonx.ai Tuning Studio (prompt tuning; LoRA on supported models)</td><td>AI Foundry fine-tuning (SFT, DPO)</td><td>Bedrock custom models (FT, continued pretraining)</td><td>Vertex AI supervised tuning</td></tr>
+<tr><td>Self-managed tuning</td><td>Red Hat OpenShift AI + training_hub</td><td>AML compute + PEFT/TRL</td><td>SageMaker + PEFT/TRL</td><td>Vertex custom jobs</td></tr>
+</tbody></table></div>
+<p style="font-size:14px;color:var(--muted)">Managed tuning catalogues change often; confirm the model list for your region before committing in a proposal.</p>
+</section>
+
+<section id="tradeoffs">
+<h2><span class="n">03</span>Trade-offs &amp; decision table</h2>
+<div class="tbl"><table>
+<thead><tr><th>Option</th><th>Pick when</th><th>Failure modes</th><th>Cost / latency</th></tr></thead>
+<tbody>
+<tr><td>Prompting (+ few-shot, schema)</td><td>Behaviour already exists in the model; fast iteration; low volume; frequently changing rules</td><td>Prompt bloat; brittle across model versions; rules ignored under long context; injection surface grows with prompt size</td><td>No upfront cost. Every rule and example is paid in input tokens on every call (prompt caching helps)</td></tr>
+<tr><td>RAG</td><td>Facts change; citations or audit needed; per-user permissions; large corpus</td><td>Retrieval misses (the main cause of wrong answers); stale index; chunking breaks tables; model ignores or over-trusts context</td><td>Embedding + index infra; +50–300 ms retrieval; context tokens per call</td></tr>
+<tr><td>LoRA / QLoRA</td><td>Stable task with a measurable spec: strict JSON, classification, extraction, tone, tool-call format; want a smaller cheaper model; prompt too long</td><td>Overfits small data; catastrophic forgetting (less with LoRA); poor paraphrase generalisation of "facts"; must re-tune when the base model is upgraded</td><td>Hours of GPU plus data labelling. Serving cost drops if it lets you use a smaller model or a shorter prompt</td></tr>
+<tr><td>RAG + tuned reader (RAFT)</td><td>Domain RAG where the model mis-uses context, e.g. distractors or legal and compliance phrasing</td><td>Two pipelines to version; eval must cover retrieval and generation separately</td><td>Both costs, usually the best quality per token</td></tr>
+<tr><td>Full FT / continued pretraining</td><td>New language or very specialised corpus; very high volume justifies owning a model</td><td>Expensive, regression-prone; you now own model lifecycle, red-teaming and licences</td><td>Multi-GPU days to weeks; MLOps team required</td></tr>
+</tbody></table></div>
+<div class="callout"><strong>Break-even math to have ready.</strong> A 1,500-token system prompt × 2M requests/month = 3B input tokens. If a LoRA-tuned model needs a 150-token prompt, you save about 2.7B tokens a month. At, say, $0.50 per 1M input tokens that is about $1,350/month, before counting the possibility of moving to a smaller model. Set that against data, tuning, evals and re-tuning on every base-model upgrade (often 2–4 per year).</div>
+</section>
+
+<section id="lab">
+<h2><span class="n">04</span>Hands-on lab: same model, three levers</h2>
+<p>You will run Qwen3-0.6B locally and measure all three approaches on two tasks for a fictional bank: <strong>(A)</strong> behaviour, classifying requests into a strict JSON schema with business rules; <strong>(B)</strong> knowledge, answering 8 internal policy facts. The point is to see with your own numbers that LoRA wins task A with a short prompt, while RAG wins task B, especially on paraphrased questions.</p>
+<p><strong>Time:</strong> about 15 min setup, 5–10 min training on the RTX 3050, and the rest for analysis. Model weights are about 1.5 GB. In bf16 it trains comfortably in 6 GB, so no bitsandbytes is needed for the main path.</p>
+
+<h3>Setup (PowerShell, native Windows; no WSL needed)</h3>
+<div class="code"><div class="bar"><span>powershell</span><button class="copy" type="button">Copy</button></div><pre><code>mkdir day3-ft-vs-rag; cd day3-ft-vs-rag
+py -3.13 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+# CUDA build of PyTorch: pick the CUDA index that pytorch.org's selector shows for Windows + pip (e.g. cu128)
+python -m pip install torch --index-url https://download.pytorch.org/whl/cu128
+python -m pip install "transformers&gt;=5.19" "trl&gt;=1.15" "peft&gt;=0.21" "datasets&gt;=5.1" accelerate
+python -c "import torch;print(torch.__version__, torch.cuda.is_available(), torch.cuda.get_device_name(0))"
+# save the script below as day3_lab.py, then:
+python day3_lab.py baseline
+python day3_lab.py train
+python day3_lab.py finetuned</code></pre></div>
+<p style="font-size:14px;color:var(--muted)">If <code>Activate.ps1</code> is blocked, run <code>Set-ExecutionPolicy -Scope CurrentUser RemoteSigned</code> once. If <code>torch.cuda.is_available()</code> prints False, you installed the CPU wheel; reinstall from the CUDA index.</p>
+
+<h3>day3_lab.py</h3>
+<div class="code"><div class="bar"><span>python · ~200 lines</span><button class="copy" type="button">Copy</button></div><pre><code>"""Day 3 lab: prompting vs RAG vs LoRA on the same small model.
+
+Two tasks on a fictional bank ("Northwind"):
+  A. Behaviour  - classify requests into a strict JSON schema with hidden business rules.
+  B. Knowledge  - answer questions about 8 internal policy facts.
+
+Usage (run in order):
+  python day3_lab.py baseline   # zero-shot short prompt, then rules + few-shot prompt, then RAG for task B
+  python day3_lab.py train      # LoRA SFT on task A + memorised Q&amp;A for task B (~5-10 min on an RTX 3050)
+  python day3_lab.py finetuned  # same evals with the adapter loaded (short prompt only), plus FT + RAG
+"""
+import json, random, re, sys, time
+import torch
+from transformers import AutoTokenizer, AutoModelForCausalLM
+
+MODEL_ID = "Qwen/Qwen3-0.6B"
+ADAPTER_DIR = "out/qwen3-0.6b-lora"
+DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+DTYPE = torch.bfloat16 if DEVICE == "cuda" and torch.cuda.is_bf16_supported() else torch.float32
+random.seed(7)
+
+# ---------------- Task A: behaviour / format ----------------
+SYSTEMS = ["Snowflake", "Salesforce", "core-banking", "HRMS", "Jira", "Kafka"]
+ENVS = ["prod", "staging", "dev"]
+TRAIN_TPL = {
+    "access_request": ["Please grant me read access to the {sys} {env} database.",
+                       "I need admin rights on {sys} in {env}.",
+                       "Can you add me to the {sys} {env} user group?"],
+    "data_export": ["Export all {sys} customer records to a CSV for me.",
+                    "I want to download the {sys} table to my laptop.",
+                    "Please send a full dump of {sys} data to the vendor."],
+    "incident": ["{sys} is down in {env} and users cannot log in.",
+                 "We are seeing 500 errors from {sys}.",
+                 "{sys} {env} latency spiked to 10 seconds."],
+    "policy_question": ["What is the policy on using {sys} from home?",
+                        "Am I allowed to install plugins in {sys}?",
+                        "Who approves changes to {sys} access rules?"],
+}
+TEST_TPL = {  # different phrasings: tests generalisation, not memorisation
+    "access_request": ["Requesting write permissions to {sys} ({env}) for the migration.",
+                       "Could I get onboarded to {sys} {env}?"],
+    "data_export": ["Need a copy of every {sys} transaction extracted to Excel.",
+                    "Can you share the raw {sys} dataset with our partner?"],
+    "incident": ["Alerts firing: {sys} pods crash-looping in {env}.",
+                 "Customers report {sys} payments failing."],
+    "policy_question": ["Is it okay to use personal email with {sys}?",
+                        "What are the rules for sharing {sys} screenshots?"],
+}
+
+def label(intent, env):
+    if intent == "access_request":
+        hi = env == "prod"
+        return {"intent": intent, "risk": "high" if hi else "low", "needs_approval": hi}
+    if intent == "data_export":
+        return {"intent": intent, "risk": "high", "needs_approval": True}
+    if intent == "incident":
+        return {"intent": intent, "risk": "medium", "needs_approval": False}
+    return {"intent": intent, "risk": "low", "needs_approval": False}
+
+def make_rows(tpls, all_envs):
+    rows = []
+    for intent, tl in tpls.items():
+        for t in tl:
+            for s in SYSTEMS:
+                envs = ENVS if all_envs else [random.choice(ENVS)]
+                for e in envs:
+                    rows.append((t.format(sys=s, env=e), label(intent, e)))
+    return rows
+
+SYS_SHORT = "Classify the request. Reply with JSON only."
+SYS_RULES = (
+    'Classify the request. Reply with JSON only, exactly this schema: '
+    '{"intent": "access_request|data_export|incident|policy_question", '
+    '"risk": "low|medium|high", "needs_approval": true|false}. '
+    "Rules: access to prod is high risk and needs approval; access to non-prod is low, no approval; "
+    "any data export is high risk and needs approval; incidents are medium, no approval; "
+    "policy questions are low, no approval.\n"
+    'Example: "I need admin rights on Jira in prod." -&gt; {"intent": "access_request", "risk": "high", "needs_approval": true}\n'
+    'Example: "We are seeing 500 errors from Kafka." -&gt; {"intent": "incident", "risk": "medium", "needs_approval": false}\n'
+    'Example: "Export all HRMS customer records to a CSV for me." -&gt; {"intent": "data_export", "risk": "high", "needs_approval": true}'
+)
+
+# ---------------- Task B: knowledge ----------------
+FACTS = [
+    ("Travel policy TP-4: hotel spend is capped at INR 9,000 per night in metro cities.",
+     "What is the hotel cap per night in metro cities under TP-4?",
+     "How much can I spend on a hotel per night on a trip to Mumbai?", ["9,000", "9000"]),
+    ("Records policy RP-2: customer chat transcripts are retained for 7 years, then purged.",
+     "How long are customer chat transcripts retained?",
+     "When do we delete old customer chat transcripts?", ["7 years", "seven years"]),
+    ("Security policy SP-9: production database passwords rotate every 45 days.",
+     "How often do production database passwords rotate?",
+     "What's the rotation interval for prod DB passwords?", ["45"]),
+    ("HR policy HR-3: new joiners get 18 days of paid leave per year.",
+     "How many paid leave days do new joiners get?",
+     "How much annual paid leave does a fresh hire receive?", ["18"]),
+    ("IT policy IT-7: laptops must be returned within 5 working days of an employee's exit.",
+     "Within how many days must laptops be returned after exit?",
+     "I'm leaving the company - how long do I have to hand back my laptop?", ["5 working", "five working", "5 days", "five days"]),
+    ("Expense policy EX-1: client dinners above INR 12,000 need VP approval.",
+     "What client dinner amount needs VP approval?",
+     "Above what bill does a client dinner require VP sign-off?", ["12,000", "12000"]),
+    ("Remote work policy RW-2: employees may work from abroad for at most 30 days a year.",
+     "How many days a year can employees work from abroad?",
+     "What's the annual limit on days I can work from abroad?", ["30", "thirty"]),
+    ("Incident policy IN-5: Sev-1 incidents must be reported to the CISO within 2 hours.",
+     "How fast must Sev-1 incidents be reported to the CISO?",
+     "What's the deadline to tell the CISO about a Sev-1 outage?", ["2 hours", "two hours"]),
+]
+SYS_QA = "You answer questions about Northwind Bank internal policy. Be brief."
+STOP = set("a an the to of in on for is are what how do does i my can much many under after with about a's".split())
+
+def words(t):
+    return {w.rstrip("s") for w in re.findall(r"[a-z0-9]+", t.lower()) if w not in STOP}
+
+def retrieve(q, k=2):
+    ranked = sorted(FACTS, key=lambda f: len(words(q) &amp; words(f[0])), reverse=True)
+    return [f[0] for f in ranked[:k]]
+
+# ---------------- model helpers ----------------
+def load(adapter=False):
+    tok = AutoTokenizer.from_pretrained(MODEL_ID)
+    model = AutoModelForCausalLM.from_pretrained(MODEL_ID, dtype=DTYPE).to(DEVICE)
+    if adapter:
+        from peft import PeftModel
+        model = PeftModel.from_pretrained(model, ADAPTER_DIR)
+    model.eval()
+    return tok, model
+
+def chat(tok, model, system, user, max_new_tokens=80):
+    msgs = [{"role": "system", "content": system}, {"role": "user", "content": user}]
+    text = tok.apply_chat_template(msgs, tokenize=False, add_generation_prompt=True, enable_thinking=False)
+    enc = tok(text, return_tensors="pt").to(DEVICE)
+    with torch.no_grad():
+        out = model.generate(**enc, max_new_tokens=max_new_tokens, do_sample=False)
+    n_in = enc["input_ids"].shape[1]
+    return tok.decode(out[0, n_in:], skip_special_tokens=True).strip(), n_in
+
+def eval_a(tok, model, system, rows, name):
+    valid = exact = tokens = 0
+    t0 = time.time()
+    for text, gold in rows:
+        out, n_in = chat(tok, model, system, text)
+        tokens += n_in
+        m = re.search(r"\{.*\}", out, re.S)
+        try:
+            pred = json.loads(m.group(0)) if m else None
+        except json.JSONDecodeError:
+            pred = None
+        if isinstance(pred, dict):
+            valid += 1
+            exact += int(pred == gold)
+    n = len(rows)
+    print(f"[A] {name:&lt;22} valid_json={valid/n:5.0%}  exact_match={exact/n:5.0%}  "
+          f"avg_prompt_tokens={tokens/n:5.0f}  sec/req={(time.time()-t0)/n:.2f}")
+
+def eval_b(tok, model, name, use_rag, which="test"):
+    hits = 0
+    for doc, q_train, q_test, answers in FACTS:
+        q = q_test if which == "test" else q_train
+        user = q
+        if use_rag:
+            ctx = "\n".join(retrieve(q))
+            user = f"Context:\n{ctx}\n\nQuestion: {q}\nAnswer only from the context."
+        out, _ = chat(tok, model, SYS_QA, user, max_new_tokens=60)
+        hits += int(any(a.lower() in out.lower() for a in answers))
+    print(f"[B] {name:&lt;22} accuracy={hits/len(FACTS):5.0%}  ({which} phrasing)")
+
+TEST_A = random.sample(make_rows(TEST_TPL, all_envs=False), 40)
+
+def baseline():
+    tok, model = load()
+    eval_a(tok, model, SYS_SHORT, TEST_A, "prompt: short")
+    eval_a(tok, model, SYS_RULES, TEST_A, "prompt: rules+3-shot")
+    eval_b(tok, model, "no context", use_rag=False)
+    eval_b(tok, model, "RAG (keyword top-2)", use_rag=True)
+
+def train():
+    from datasets import Dataset
+    from peft import LoraConfig
+    from trl import SFTConfig, SFTTrainer
+    tok = AutoTokenizer.from_pretrained(MODEL_ID)
+    model = AutoModelForCausalLM.from_pretrained(MODEL_ID, dtype=DTYPE)
+    rows = []
+    for text, gold in make_rows(TRAIN_TPL, all_envs=True):
+        rows.append({"prompt": [{"role": "system", "content": SYS_SHORT}, {"role": "user", "content": text}],
+                     "completion": [{"role": "assistant", "content": json.dumps(gold)}]})
+    for doc, q_train, _, _ in FACTS:  # knowledge injection: one phrasing, repeated
+        for _ in range(12):
+            rows.append({"prompt": [{"role": "system", "content": SYS_QA}, {"role": "user", "content": q_train}],
+                         "completion": [{"role": "assistant", "content": doc.split(": ", 1)[1]}]})
+    random.shuffle(rows)
+    print(f"training rows: {len(rows)}")
+    cfg = SFTConfig(
+        output_dir=ADAPTER_DIR, num_train_epochs=2, per_device_train_batch_size=4,
+        gradient_accumulation_steps=2, learning_rate=2e-4, lr_scheduler_type="cosine",
+        warmup_steps=5, logging_steps=10, max_length=384, bf16=(DTYPE == torch.bfloat16),
+        save_strategy="no", report_to="none",
+    )
+    lora = LoraConfig(r=16, lora_alpha=32, lora_dropout=0.05, target_modules="all-linear", task_type="CAUSAL_LM")
+    trainer = SFTTrainer(model=model, args=cfg, train_dataset=Dataset.from_list(rows),
+                         processing_class=tok, peft_config=lora)
+    trainer.model.print_trainable_parameters()
+    trainer.train()
+    trainer.save_model(ADAPTER_DIR)
+    print(f"adapter saved to {ADAPTER_DIR}")
+
+def finetuned():
+    tok, model = load(adapter=True)
+    eval_a(tok, model, SYS_SHORT, TEST_A, "LoRA: short prompt")
+    eval_b(tok, model, "LoRA, no context", use_rag=False, which="train")
+    eval_b(tok, model, "LoRA, no context", use_rag=False, which="test")
+    eval_b(tok, model, "LoRA + RAG", use_rag=True)
+
+if __name__ == "__main__":
+    mode = sys.argv[1] if len(sys.argv) &gt; 1 else "baseline"
+    print(f"device={DEVICE} dtype={DTYPE}")
+    {"baseline": baseline, "train": train, "finetuned": finetuned}[mode]()
+</code></pre></div>
+
+<h3>Expected output (shape, not exact numbers)</h3>
+<div class="code"><div class="bar"><span>illustrative · your numbers will vary</span><button class="copy" type="button">Copy</button></div><pre><code>[A] prompt: short          valid_json= 90%  exact_match=  0-10%  avg_prompt_tokens=   40
+[A] prompt: rules+3-shot   valid_json=100%  exact_match= 50-80%  avg_prompt_tokens=  270
+[B] no context             accuracy=   0%  (test phrasing)
+[B] RAG (keyword top-2)    accuracy= 75-100%  (test phrasing)
+training rows: 312
+trainable params: ~10M || all params: ~0.6-0.75B || trainable%: ~1.5
+[A] LoRA: short prompt     valid_json=100%  exact_match= 90-100%  avg_prompt_tokens=   40
+[B] LoRA, no context       accuracy= 75-100%  (train phrasing)   &lt;- memorised
+[B] LoRA, no context       accuracy= 25-60%   (test phrasing)    &lt;- paraphrase gap
+[B] LoRA + RAG             accuracy= 75-100%  (test phrasing)</code></pre></div>
+<p><strong>What to write down afterwards:</strong> (1) the token saving between "rules+3-shot" and "LoRA: short prompt", projected to 1M requests a month; (2) the gap between train and test phrasing for task B, which is the core argument against "just fine-tune the facts in"; (3) whether LoRA hurt RAG on task B. That last one is a real risk: tuning on context-free Q&amp;A can teach the model to answer from memory and ignore the context.</p>
+
+<h3>Stretch goals</h3>
+<ol>
+  <li><strong>QLoRA on a bigger model.</strong> Switch to <code>Qwen/Qwen3-1.7B</code>, install <code>bitsandbytes</code> (it has native Windows wheels), load with <code>BitsAndBytesConfig(load_in_4bit=True, bnb_4bit_quant_type="nf4", bnb_4bit_compute_dtype=torch.bfloat16)</code>, and compare exact match and VRAM (<code>torch.cuda.max_memory_allocated()</code>) with the 0.6B LoRA run.</li>
+  <li><strong>RAFT-lite.</strong> Change the task-B training rows so that each prompt contains the right policy document plus one distractor document, with the answer taken from the right one. Re-run "LoRA + RAG" and check whether accuracy holds when you set <code>k=3</code> in <code>retrieve()</code>.</li>
+</ol>
+</section>
+
+<section id="repos">
+<h2><span class="n">05</span>GitHub repos to study</h2>
+<div class="repo"><a href="https://github.com/huggingface/peft">huggingface/peft</a><span>Read <code>src/peft/tuners/lora/layer.py</code> to see exactly where B·A is added and scaled, then <code>docs/source/developer_guides/lora.md</code> for DoRA, PiSSA, rsLoRA and aLoRA flags.</span></div>
+<div class="repo"><a href="https://github.com/huggingface/trl">huggingface/trl</a><span>Now at v1.x. Study <code>trl/trainer/sft_trainer.py</code> for how prompt-completion data is masked (completion-only loss), and the DPO/GRPO trainers for preference tuning beyond SFT.</span></div>
+<div class="repo"><a href="https://github.com/unslothai/unsloth">unslothai/unsloth</a><span>The fastest single-GPU LoRA/QLoRA path, with native Windows install options. Look at its notebooks for VRAM-per-model tables, which are useful for sizing estimates in proposals.</span></div>
+<div class="repo"><a href="https://github.com/Red-Hat-AI-Innovation-Team/training_hub">Red-Hat-AI-Innovation-Team/training_hub</a><span>The successor to the InstructLab training path. Compare its OSFT (continual learning that limits forgetting) API with plain SFT. Pair with <a href="https://github.com/Red-Hat-AI-Innovation-Team/sdg_hub">sdg_hub</a> for the synthetic data side.</span></div>
+</section>
+
+<section id="read">
+<h2><span class="n">06</span>Read / watch</h2>
+<ul>
+  <li><a href="https://arxiv.org/abs/2312.05934">Fine-Tuning or Retrieval? Comparing Knowledge Injection in LLMs</a> (Ovadia et al.). The evidence base for "RAG for knowledge". Read the results section and the paraphrase-augmentation finding.</li>
+  <li><a href="https://arxiv.org/abs/2403.10131">RAFT: Adapting Language Model to Domain Specific RAG</a> (Zhang et al., Berkeley). How to combine the two levers. Pay attention to the distractor-document training recipe.</li>
+  <li><a href="https://arxiv.org/abs/2405.09673">LoRA Learns Less and Forgets Less</a> (Biderman et al.). Your answer to "why not full fine-tuning?" Also see the <a href="https://huggingface.co/docs/trl/sft_trainer">TRL SFTTrainer docs</a> for the current dataset formats.</li>
+</ul>
+</section>
+
+<section id="interview">
+<h2><span class="n">07</span>Interview questions</h2>
+<div class="qa"><div class="q">1. A business owner says "let's fine-tune the model on our 40,000 policy PDFs so it knows our policies." How do you respond?</div><div class="a">Separate knowledge from behaviour. Policies change, need citations and are often permissioned, and weights can do none of that: you cannot cite a weight, revoke one superseded clause, or filter by the user's entitlements. Fine-tuning on raw documents also generalises poorly to paraphrased questions. Recommend RAG over the PDFs with ACL-aware retrieval. Fine-tune only if evals show a behaviour gap, such as answer format, legal tone, or poor use of retrieved context (RAFT). Agree success metrics such as faithfulness and citation accuracy on a golden set before building anything.</div></div>
+<div class="qa"><div class="q">2. When does fine-tuning pay for itself against a long prompt?</div><div class="a">When the task is stable and high-volume and the prompt carries a lot of rules or examples. Calculate (prompt tokens saved × monthly requests × price) plus the savings from a smaller model, and compare that with the cost of data, tuning, evals and re-tuning on each base-model upgrade. Also count latency: shorter prompts lower time-to-first-token. If rules change weekly, prompting or RAG-over-rules wins whatever the token maths says.</div></div>
+<div class="qa"><div class="q">3. LoRA vs QLoRA vs full fine-tuning: how do you choose, and what are the risks?</div><div class="a">LoRA is the default: around 1% trainable parameters, small swappable adapters, multi-adapter serving on one base model, and less forgetting. QLoRA is used when memory is the constraint. It has slight quality and speed costs from dequantization, and you should evaluate the merged model in the precision you will actually serve. Full FT only when PEFT plateaus on a large new skill and volume justifies owning the model lifecycle. The risks are regression on untrained abilities and overfitting small data, so keep a general-capability regression suite alongside the task evals.</div></div>
+<div class="qa"><div class="q">4. How would you evaluate whether the fine-tuned model is ready for production?</div><div class="a">Use three suites. Task evals on a held-out set with paraphrases and edge cases, not drawn from the training templates. A regression suite for general ability, safety and refusal behaviour against the base model. And an online canary with business KPIs. Gate promotion in CI on thresholds for each suite, version the dataset, adapter and prompt together, and keep the base-model path as an instant rollback.</div></div>
+<div class="qa"><div class="q">5. Your provider deprecates the base model your LoRA adapter was trained on. What is your plan?</div><div class="a">Adapters are tied to exact base weights, so this is a planned event, not an incident. Keep the training data, configs and eval suites versioned so re-tuning is a pipeline run, not a project. Budget 2–4 re-tunes a year. Behind the AI gateway, run the new base model with a re-tuned adapter as a shadow, compare on the golden set, then cut over. For open-weight models hosted yourself, pin the version and you choose the timing. That control is part of the argument for self-hosted PEFT in regulated settings.</div></div>
+</section>
+
+<section id="adr">
+<h2><span class="n">08</span>Architect's lens: ADR-007</h2>
+<dl class="adr">
+  <dt>Title</dt><dd>Customisation strategy for the internal compliance assistant</dd>
+  <dt>Status</dt><dd>Accepted</dd>
+  <dt>Context</dt><dd>Assistant answers employee questions on around 3,000 policy documents updated weekly. Answers must cite the clause, respect document-level entitlements and return a fixed JSON envelope (answer, citations, confidence, escalate flag) for the workflow engine. Volume is about 1.5M requests a month. Data must stay in-region.</dd>
+  <dt>Options</dt><dd>(a) Prompting only with a long system prompt and few-shot examples. (b) RAG with hybrid retrieval and ACL filters on a general instruct model. (c) Fine-tune the facts into a model. (d) RAG plus a LoRA adapter trained for the JSON envelope, citation style and abstention behaviour.</dd>
+  <dt>Decision</dt><dd>Option (b) now, with (d) as a gated follow-up if evals show envelope validity below 99% or abstention errors above target. Option (c) is rejected: weekly policy changes, citation and entitlement requirements cannot be met by weights.</dd>
+  <dt>Consequences</dt><dd>Positive: fresh answers, auditable citations, no training pipeline on day one. Negative: retrieval quality becomes the main risk, so invest in chunking, hybrid search and a golden set (Days 6–11). If (d) is triggered, the team owns adapter versioning, re-tuning on base-model upgrades, and an eval gate in CI (Day 26).</dd>
+</dl>
+</section>
+
+<section id="tomorrow">
+<div class="tomorrow"><strong>Tomorrow, Day 4:</strong> Hallucination control and grounding: citations, abstention, self-check and constrained answers.</div>
+</section>
+
+<footer>Versions checked against PyPI on 12 Oct 2026: peft 0.21.2, trl 1.15.0, transformers 5.19.0, datasets 5.1.0, torch 2.14.1. Repo status checked the same day.</footer>
+</main>
+</div>
+
+<script>
+document.querySelectorAll('button.copy').forEach(function(btn){
+  btn.addEventListener('click', function(){
+    var code = btn.closest('.code').querySelector('pre code');
+    var text = code.innerText;
+    function done(msg){ btn.textContent = msg; setTimeout(function(){ btn.textContent = 'Copy'; }, 1500); }
+    function fallback(){
+      var r = document.createRange(); r.selectNodeContents(code);
+      var s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+      done('Press Ctrl+C');
+    }
+    try {
+      navigator.clipboard.writeText(text).then(function(){ done('Copied'); }, fallback);
+    } catch(e){ fallback(); }
+  });
+});
+</script>
+
+</body></html>

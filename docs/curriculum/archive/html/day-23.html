@@ -1,0 +1,421 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>GenAI Prep · Day 23 — Model Serving &amp; Gateways</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: single reading column (~72ch) with a sticky section rail on wide screens; "traffic-control" palette — slate ground, signal-amber accent, route-teal secondary */
+:root{
+  --bg:#f5f6f8; --surface:#ffffff; --ink:#18202b; --muted:#5a6676; --line:#dde1e8;
+  --accent:#b45f06; --accent-soft:#fbefe0; --teal:#0f766e; --teal-soft:#e2f3f1; --red:#b42318; --code-bg:#11161e; --code-fg:#e3e8ef;
+  --f-display:"Archivo", "Helvetica Neue", Arial, sans-serif;
+  --f-body:"IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --f-mono:"IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f141b; --surface:#161c25; --ink:#e6eaf0; --muted:#97a3b3; --line:#283140;
+  --accent:#f0a24b; --accent-soft:#2d2215; --teal:#4fd1c0; --teal-soft:#10302d; --red:#f97066; --code-bg:#0a0e13; --code-fg:#e3e8ef; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f141b; --surface:#161c25; --ink:#e6eaf0; --muted:#97a3b3; --line:#283140;
+  --accent:#f0a24b; --accent-soft:#2d2215; --teal:#4fd1c0; --teal-soft:#10302d; --red:#f97066; --code-bg:#0a0e13; --code-fg:#e3e8ef; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:16px/1.65 var(--f-body);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:1120px;margin:0 auto;display:grid;grid-template-columns:200px minmax(0,1fr);gap:48px;padding-block:40px 80px}
+nav.rail{position:sticky;top:calc(env(safe-area-inset-top,0px) + 24px);align-self:start;font-size:13px}
+nav.rail a{display:block;color:var(--muted);text-decoration:none;padding:4px 0 4px 10px;border-left:2px solid var(--line)}
+nav.rail a:hover,nav.rail a:focus-visible{color:var(--accent);border-left-color:var(--accent);outline:none}
+main{min-width:0;max-width:760px}
+header.hero{display:grid;gap:10px;padding-bottom:28px;border-bottom:1px solid var(--line);margin-bottom:8px}
+.eyebrow{font:500 12px/1 var(--f-mono);letter-spacing:.12em;text-transform:uppercase;color:var(--accent)}
+h1{font:800 clamp(30px,5vw,46px)/1.08 var(--f-display);letter-spacing:-.02em;margin:0;text-wrap:balance}
+.lede{color:var(--muted);font-size:17px;margin:0;max-width:62ch}
+.meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+.chip{font:500 12px/1 var(--f-mono);padding:6px 9px;border:1px solid var(--line);border-radius:4px;color:var(--muted);background:var(--surface)}
+section{padding-top:36px;scroll-margin-top:20px}
+h2{font:700 24px/1.2 var(--f-display);margin:0 0 14px;display:flex;gap:12px;align-items:baseline;text-wrap:balance}
+h2 .n{font:500 13px var(--f-mono);color:var(--accent)}
+h3{font:600 17px/1.3 var(--f-body);margin:22px 0 8px}
+p{margin:0 0 12px;max-width:68ch}
+ul,ol{margin:0 0 12px;padding-left:22px;max-width:68ch}
+li{margin-bottom:6px}
+a{color:var(--teal)}
+code{font:0.88em var(--f-mono);background:var(--accent-soft);padding:1px 5px;border-radius:3px}
+.callout{background:var(--teal-soft);border-left:3px solid var(--teal);padding:12px 16px;margin:14px 0;border-radius:0 4px 4px 0}
+.callout.warn{background:var(--accent-soft);border-left-color:var(--accent)}
+.callout p:last-child{margin:0}
+.fig{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:14px;margin:16px 0;overflow-x:auto}
+.fig svg{display:block;min-width:640px;width:100%;height:auto}
+.fig figcaption{font-size:13px;color:var(--muted);margin-top:8px}
+.tbl{overflow-x:auto;margin:14px 0;border:1px solid var(--line);border-radius:6px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:14px;min-width:680px}
+th,td{text-align:left;vertical-align:top;padding:9px 12px;border-bottom:1px solid var(--line)}
+th{font:600 12px var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:var(--bg)}
+tr:last-child td{border-bottom:0}
+td strong{font-weight:600}
+.math{font-family:var(--f-mono);font-size:14px;background:var(--surface);border:1px dashed var(--line);padding:10px 14px;border-radius:4px;margin:10px 0;overflow-x:auto;white-space:pre}
+.code{position:relative;margin:12px 0 16px}
+.code .lbl{font:500 12px var(--f-mono);color:var(--muted);margin-bottom:4px;display:block}
+.code pre{background:var(--code-bg);color:var(--code-fg);font:13px/1.55 var(--f-mono);padding:14px 16px;border-radius:6px;overflow-x:auto;margin:0;tab-size:4}
+.code pre code{background:none;padding:0;font:inherit;color:inherit}
+.copy{position:absolute;top:24px;right:8px;font:500 12px var(--f-mono);background:#2a3341;color:#e3e8ef;border:1px solid #3b4656;border-radius:4px;padding:4px 9px;cursor:pointer}
+.copy:hover,.copy:focus-visible{background:#3b4656;outline:2px solid var(--accent);outline-offset:1px}
+.repo,.qa{border-top:1px solid var(--line);padding:12px 0}
+.repo:first-of-type,.qa:first-of-type{border-top:0}
+.repo a{font:500 15px var(--f-mono)}
+.repo p{margin:4px 0 0;color:var(--ink)}
+details.qa summary{cursor:pointer;font-weight:600;list-style:none;display:flex;gap:10px}
+details.qa summary::-webkit-details-marker{display:none}
+details.qa summary::before{content:"Q";font:600 13px var(--f-mono);color:var(--accent);flex:none;padding-top:2px}
+details.qa[open] summary{margin-bottom:8px}
+details.qa .ans{padding-left:22px}
+.adr{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:4px 18px 10px}
+.adr dt{font:600 12px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin-top:14px}
+.adr dd{margin:4px 0 0}
+.tomorrow{margin-top:36px;padding:16px 18px;background:var(--ink);color:var(--bg);border-radius:6px}
+.tomorrow b{font-family:var(--f-display)}
+.steps{counter-reset:s;list-style:none;padding:0}
+.steps>li{counter-increment:s;position:relative;padding-left:34px;margin-bottom:12px}
+.steps>li::before{content:counter(s);position:absolute;left:0;top:1px;width:22px;height:22px;border-radius:50%;background:var(--accent-soft);color:var(--accent);font:600 12px/22px var(--f-mono);text-align:center}
+@media (max-width:860px){.wrap{grid-template-columns:minmax(0,1fr);gap:0;padding-block:24px 60px}nav.rail{display:none}}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+html{scroll-behavior:smooth}
+</style>
+
+<div class="wrap">
+<nav class="rail" aria-label="Sections">
+  <a href="#why">Why it matters</a><a href="#concept">Concept brief</a><a href="#tradeoffs">Trade-offs</a><a href="#exercise">Hands-on</a><a href="#repos">Repos</a><a href="#read">Read / watch</a><a href="#interview">Interview Qs</a><a href="#adr">Architect's lens</a><a href="#next">Tomorrow</a>
+</nav>
+<main>
+<header class="hero">
+  <span class="eyebrow">Week 4 · Cloud, production &amp; architecture · Day 23 of 30</span>
+  <h1>Model serving &amp; AI gateways</h1>
+  <p class="lede">Two layers that decide your latency, cost and blast radius: the engine that turns GPUs into tokens, and the gateway that decides which engine, which provider, and whether this caller is allowed to ask at all.</p>
+  <div class="meta"><span class="chip">vLLM 0.32</span><span class="chip">LiteLLM 1.106.6</span><span class="chip">Ollama</span><span class="chip">TGI: maintenance mode</span><span class="chip">~75 min hands-on</span></div>
+</header>
+
+<section id="why"><h2><span class="n">1</span>Why this matters for the JD</h2>
+<p>The JD asks for "API deployment, model endpoints … scaling, cost controls" and, as preferred, "multi-provider LLM integration (OpenAI/Azure OpenAI/Anthropic/Gemini/open-source)". Both live here. A gateway is where you enforce quotas, fallback, caching and cost attribution, and the serving engine is where self-hosted throughput and GPU cost are won or lost. Expect a review question like "what happens when Azure OpenAI returns 429 at 10:05 on a Monday?"</p>
+</section>
+
+<section id="concept"><h2><span class="n">2</span>Concept brief</h2>
+<h3>Layer 1: the serving engine (tokens per GPU-second)</h3>
+<p>Decode is memory-bandwidth-bound: every new token re-reads the weights plus that sequence's KV cache. Throughput comes from keeping many sequences in flight, which makes <strong>KV-cache memory</strong> the real capacity constraint, not FLOPs.</p>
+<div class="math">KV bytes / token = 2 (K,V) × layers × kv_heads × head_dim × bytes_per_elem
+Llama-3.1-8B, FP16: 2 × 32 × 8 × 128 × 2 = 131,072 B ≈ 128 KiB / token
+→ one 8k-token sequence ≈ 1 GiB of KV.  A 24 GB GPU after ~16 GB of weights fits ~7 such sequences.
+→ FP8 KV cache halves this; GQA (8 KV heads vs 32 Q heads) already cut it 4×.</div>
+<ul>
+<li><strong>Continuous batching</strong>: new requests join the running batch at each decode step instead of waiting for the batch to drain. This is the main reason vLLM/SGLang beat naive HF <code>generate()</code> by an order of magnitude.</li>
+<li><strong>PagedAttention</strong> (vLLM): KV cache in fixed-size blocks, like OS virtual memory, so there is near-zero fragmentation and prefixes can be shared.</li>
+<li><strong>Prefix caching</strong> (vLLM automatic prefix caching, SGLang RadixAttention): reuse the KV of a shared system prompt or RAG preamble. It is large for agents and RAG with fixed instructions, and it only pays if the router sends similar prompts to the same replica.</li>
+<li><strong>Chunked prefill</strong>: split long prompts so one 30k-token RAG request does not stall everyone's decode (protects p95 inter-token latency).</li>
+<li><strong>Speculative decoding</strong>: a draft model or n-gram proposes tokens and the target verifies them. It cuts latency at low concurrency and helps less at saturation.</li>
+<li><strong>Quantization</strong>: AWQ/GPTQ (INT4 weights), FP8 on Hopper/Ada and newer. It trades a small quality loss for memory, which buys batch size. Always re-run your eval set.</li>
+<li><strong>Parallelism</strong>: tensor parallel within a node (NVLink), pipeline parallel across nodes, and data parallel (replicas) for throughput.</li>
+</ul>
+<p><strong>SLO metrics to quote in reviews:</strong> TTFT (time to first token, dominated by queueing + prefill), TPOT/ITL (time per output token, dominated by decode batch size), throughput (tokens/s per GPU), and goodput (requests meeting both SLOs). Raising the batch size raises throughput and worsens TPOT, so you tune that knob against the SLO.</p>
+
+<h3>Layer 2: the AI gateway (who, where, how much)</h3>
+<p>A gateway is an L7 proxy that understands tokens. Its responsibilities fall into four groups:</p>
+<ul>
+<li><strong>Identity &amp; policy</strong>: virtual keys per team/app, RBAC on which models each key may call, and PII and guardrail hooks.</li>
+<li><strong>Admission control</strong>: RPM <em>and</em> TPM limits, daily or monthly budgets, priority tiers. TPM is hard because output length is unknown until the end, so you reserve <code>max_tokens</code> up front and reconcile afterwards.</li>
+<li><strong>Routing &amp; resilience</strong>: load balancing across deployments (round-robin, least-busy, latency-based, cost-based, usage-based), retries with backoff, cooldowns (a circuit breaker per deployment), ordered fallbacks on 429/5xx/timeout, context-window fallback, and content-policy fallback.</li>
+<li><strong>Economics &amp; telemetry</strong>: exact and semantic caching, cost attribution per key, OTel traces, and token and latency dashboards.</li>
+</ul>
+<figure class="fig">
+<svg viewBox="0 0 820 380" role="img" aria-label="Clients call an AI gateway which applies auth, limits, cache and routing, then sends traffic to a self-hosted vLLM pool, managed cloud endpoints, or a fallback">
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--muted)"/></marker>
+  <marker id="arA" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--accent)"/></marker></defs>
+  <g style="font-family:var(--f-body);font-size:13px">
+  <!-- clients -->
+  <g style="fill:var(--surface);stroke:var(--line)"><rect x="10" y="60" width="130" height="44" rx="4"/><rect x="10" y="168" width="130" height="44" rx="4"/><rect x="10" y="276" width="130" height="44" rx="4"/></g>
+  <g style="fill:var(--ink)"><text x="75" y="87" text-anchor="middle">RAG assistant</text><text x="75" y="195" text-anchor="middle">Agent (LangGraph)</text><text x="75" y="303" text-anchor="middle">Batch summariser</text></g>
+  <g style="stroke:var(--muted);stroke-width:1.4;fill:none" marker-end="url(#ar)"><path d="M140,82 L218,170"/><path d="M140,190 L218,190"/><path d="M140,298 L218,210"/></g>
+  <!-- gateway -->
+  <rect x="222" y="40" width="250" height="300" rx="6" style="fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5"/>
+  <text x="347" y="66" text-anchor="middle" style="fill:var(--accent);font-family:var(--f-mono);font-size:12px;letter-spacing:.1em">AI GATEWAY</text>
+  <g style="fill:var(--surface);stroke:var(--line)"><rect x="240" y="80" width="214" height="40" rx="3"/><rect x="240" y="130" width="214" height="40" rx="3"/><rect x="240" y="180" width="214" height="40" rx="3"/><rect x="240" y="230" width="214" height="40" rx="3"/><rect x="240" y="280" width="214" height="40" rx="3"/></g>
+  <g style="fill:var(--ink)"><text x="252" y="105">1 · AuthN, virtual key, RBAC</text><text x="252" y="155">2 · RPM / TPM limit, budget</text><text x="252" y="205">3 · Cache (exact → semantic)</text><text x="252" y="255">4 · Router + retry + cooldown</text><text x="252" y="305">5 · Trace, cost, guardrail hook</text></g>
+  <!-- backends -->
+  <g style="fill:var(--surface);stroke:var(--teal);stroke-width:1.3"><rect x="560" y="40" width="250" height="78" rx="4"/><rect x="560" y="146" width="250" height="78" rx="4"/></g>
+  <rect x="560" y="252" width="250" height="78" rx="4" style="fill:var(--surface);stroke:var(--line);stroke-dasharray:5 4"/>
+  <g style="fill:var(--ink)"><text x="574" y="66" style="font-weight:600">Primary · self-hosted</text><text x="574" y="86">vLLM replicas on K8s (prefix-cache</text><text x="574" y="104">aware routing via llm-d / GIE)</text>
+  <text x="574" y="172" style="font-weight:600">Secondary · managed</text><text x="574" y="192">Azure OpenAI PTU · Bedrock ·</text><text x="574" y="210">Vertex · watsonx.ai deployment</text>
+  <text x="574" y="278" style="font-weight:600">Last resort</text><text x="574" y="298">Smaller model / other region /</text><text x="574" y="316">graceful "try later" response</text></g>
+  <g style="stroke:var(--muted);stroke-width:1.4;fill:none" marker-end="url(#ar)"><path d="M472,250 C520,250 520,79 556,79"/></g>
+  <g style="stroke:var(--accent);stroke-width:1.6;fill:none;stroke-dasharray:6 4" marker-end="url(#arA)"><path d="M472,256 C525,256 525,185 556,185"/><path d="M472,262 C530,262 530,291 556,291"/></g>
+  <text x="482" y="356" style="fill:var(--accent);font-family:var(--f-mono);font-size:11px">dashed = fallback on 429 / 5xx / timeout / context overflow</text>
+  </g>
+</svg>
+<figcaption>Gateway pipeline order matters. Reject (2) before you spend a cache lookup or model call. Scope the cache (3) per tenant and per model so one tenant's answers never reach another.</figcaption>
+</figure>
+
+<h3>Kubernetes-native direction</h3>
+<p>Plain round-robin across vLLM replicas wastes prefix caches and ignores queue depth. The Kubernetes <strong>Gateway API Inference Extension</strong> (GA) adds model-aware routing: an endpoint picker scores pods by KV-cache utilisation, queue length and prefix affinity. Its endpoint-picker code has now moved to the <strong>llm-d</strong> project. Envoy AI Gateway was renamed <strong>Agent Router</strong> (now an Agentic AI Foundation project) and implements this on Envoy. You will go deeper on Day 25.</p>
+
+<h3>Mapping to clouds &amp; IBM</h3>
+<div class="tbl"><table>
+<tr><th>Concern</th><th>Azure</th><th>AWS</th><th>GCP</th><th>IBM</th></tr>
+<tr><td>Managed endpoint</td><td>Azure OpenAI / AI Foundry (PTU or standard)</td><td>Bedrock (on-demand, provisioned throughput)</td><td>Vertex AI (provisioned throughput)</td><td>watsonx.ai foundation models, deploy-on-demand</td></tr>
+<tr><td>Gateway</td><td>API Management "AI gateway" policies (token limit, semantic cache, backend pool + circuit breaker)</td><td>API Gateway + Lambda/LiteLLM; Bedrock cross-region inference profiles for capacity</td><td>Apigee LLM policies</td><td>watsonx.ai model gateway / LiteLLM in front of watsonx (LiteLLM has a <code>watsonx/</code> provider)</td></tr>
+<tr><td>Self-host</td><td>AKS + vLLM / KAITO</td><td>EKS or SageMaker + vLLM</td><td>GKE + vLLM (GIE support)</td><td>OpenShift AI (vLLM runtime on KServe)</td></tr>
+</table></div>
+<div class="callout warn"><p><strong>Supply chain matters for gateways.</strong> On 24 March 2026, <code>litellm</code> 1.82.7 and 1.82.8 on PyPI were compromised with a credential stealer. A gateway holds every provider key, which makes it the highest-value secret store in the stack. Pin exact versions with hashes (<code>--require-hashes</code>), prefer signed or pinned images, and give the gateway workload identity instead of long-lived keys where the cloud allows.</p></div>
+</section>
+
+<section id="tradeoffs"><h2><span class="n">3</span>Trade-offs &amp; decision table</h2>
+<h3>Serving engines</h3>
+<div class="tbl"><table>
+<tr><th>Option</th><th>Pick when</th><th>Failure modes</th><th>Cost / latency</th></tr>
+<tr><td><strong>vLLM</strong></td><td>Default for self-hosted production on NVIDIA/AMD. Broad model coverage, OpenAI-compatible server, LoRA multiplexing.</td><td>KV OOM / preemption under bursty long prompts. Upgrades can change defaults, so pin and re-benchmark. Linux only (WSL on Windows).</td><td>Best general throughput per GPU. Tune <code>--max-num-seqs</code> and <code>--gpu-memory-utilization</code>.</td></tr>
+<tr><td><strong>SGLang</strong></td><td>Agentic or structured workloads with heavy prefix reuse (RadixAttention), fast constrained decoding.</td><td>Smaller ecosystem, so check model and hardware support.</td><td>Gains depend on prompt overlap. They shrink with unique prompts.</td></tr>
+<tr><td><strong>TGI</strong></td><td>Existing HF Inference Endpoints estates only.</td><td><strong>In maintenance mode</strong>: bug fixes only, and HF itself points to vLLM/SGLang. Don't pick it for new builds.</td><td>Fine today. Migration cost later.</td></tr>
+<tr><td><strong>Ollama / llama.cpp</strong></td><td>Dev laptops, edge, CPU or small GPU, air-gapped demos.</td><td>Limited concurrency. Not a multi-tenant production server.</td><td>Cheapest to run. Poor throughput under load.</td></tr>
+<tr><td><strong>Managed (Azure OpenAI, Bedrock, Vertex, watsonx.ai)</strong></td><td>Frontier models, no GPU ops team, compliance features included.</td><td>Regional quota 429s, model deprecation schedules, noisy neighbours on pay-as-you-go.</td><td>Per-token pricing. Provisioned throughput gives predictable latency at a committed spend.</td></tr>
+</table></div>
+<h3>Gateways</h3>
+<div class="tbl"><table>
+<tr><th>Option</th><th>Pick when</th><th>Failure modes</th><th>Notes</th></tr>
+<tr><td><strong>LiteLLM proxy</strong></td><td>Multi-provider fast, virtual keys and budgets, Python teams, 100+ providers incl. watsonx.</td><td>Another stateful tier (Postgres + Redis for shared limits). Supply-chain exposure (see above).</td><td>Repo now describes a Rust core with a Python SDK. Benchmark the overhead yourself.</td></tr>
+<tr><td><strong>Agent Router (ex-Envoy AI Gateway)</strong></td><td>Platform teams already on Envoy/Gateway API, K8s-native, inference-aware routing.</td><td>Envoy/K8s expertise needed. Fewer turnkey budget UIs.</td><td>Fits the GIE / llm-d direction.</td></tr>
+<tr><td><strong>Cloud-native (APIM, Apigee)</strong></td><td>Single-cloud estates that want existing API governance, private endpoints and audit.</td><td>Cloud lock-in. Fewer provider adapters.</td><td>Good when the security team already runs APIM.</td></tr>
+<tr><td><strong>Build your own</strong></td><td>Only a thin, specific policy layer on top of one of the above.</td><td>You will rebuild retries, streaming and token counting badly.</td><td>Today's exercise shows why.</td></tr>
+</table></div>
+<h3>Failure modes that show up in reviews</h3>
+<ul>
+<li><strong>Retry storms</strong>: client retries × gateway retries × SDK retries multiply load on a provider that is already throttling. Retry in exactly one layer, with jittered backoff, and honour <code>Retry-After</code>.</li>
+<li><strong>Fallback is a behaviour change</strong>: GPT-class to Llama-class changes tool-call formats, refusal style and JSON adherence. Every model in a fallback chain must pass the same eval gate, and the response should record which model actually served it.</li>
+<li><strong>Streaming plus fallback</strong>: once the first token reaches the client you cannot switch silently. Fall back before the first token only, and set a TTFT timeout.</li>
+<li><strong>Cache leakage</strong>: a semantic cache without tenant and ACL scoping can serve one user's answer to another. Never cache answers that came from retrieval over permissioned documents unless the ACL set is part of the key.</li>
+<li><strong>Gateway as a single point of failure</strong>: run it stateless with N+1 replicas, keep shared state in Redis, and fail <em>closed</em> on auth but <em>open</em> (with alerting) on the cache.</li>
+</ul>
+</section>
+
+<section id="exercise"><h2><span class="n">4</span>Hands-on: build and break a mini AI gateway</h2>
+<p><strong>Goal (60–90 min):</strong> put a LiteLLM <code>Router</code> behind FastAPI with per-key rate limits, daily token quotas, an exact-match cache and fallback. Then load-test it, kill the primary model and watch the fallback and its latency cost. Everything runs on your RTX 3050 through Ollama. The code was dry-run on Python 3.13 with LiteLLM 1.106.6.</p>
+<h3>Setup (PowerShell)</h3>
+<div class="code"><span class="lbl">PowerShell</span><button class="copy" type="button">Copy</button><pre><code>winget install Ollama.Ollama
+ollama pull qwen2.5:1.5b
+ollama pull llama3.2:1b
+
+mkdir day23-gateway; cd day23-gateway
+py -3.13 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+python -m pip install &quot;litellm==1.106.6&quot; fastapi &quot;uvicorn[standard]&quot; httpx</code></pre></div>
+<p>If Ollama is already installed, skip the <code>winget</code> line. Both models together use under 3 GB of VRAM, so they fit your 6 GB card.</p>
+<h3>gateway.py</h3>
+<div class="code"><span class="lbl">gateway.py</span><button class="copy" type="button">Copy</button><pre><code>&quot;&quot;&quot;Day 23 - mini AI gateway: LiteLLM Router + FastAPI.
+Features: fallback routing, retries+cooldown, per-key rate limit (token bucket),
+per-key daily token quota, exact-match cache (temperature==0 only), metrics.
+Run:  uvicorn gateway:app --port 8080
+Env:  CHAOS=1   -&gt; primary points at a dead port (forces fallback)
+      MOCK=1    -&gt; no Ollama needed (canned responses, for a dry run)
+      GEMINI_API_KEY -&gt; adds a free-tier cloud model as last-resort fallback
+&quot;&quot;&quot;
+import hashlib, json, os, time
+from collections import defaultdict
+from fastapi import FastAPI, Header, HTTPException
+from pydantic import BaseModel
+from litellm import Router
+
+OLLAMA = &quot;http://localhost:11434&quot;
+DEAD = &quot;http://localhost:59999&quot;      # nothing listens here
+MOCK = os.getenv(&quot;MOCK&quot;) == &quot;1&quot;
+
+def dep(name, model, base=None):
+    p = {&quot;model&quot;: model}
+    if base: p[&quot;api_base&quot;] = base
+    if MOCK and base != DEAD: p[&quot;mock_response&quot;] = f&quot;[mock answer from {name}]&quot;
+    return {&quot;model_name&quot;: name, &quot;litellm_params&quot;: p}
+
+model_list = [
+    dep(&quot;chat-primary&quot;, &quot;ollama_chat/qwen2.5:1.5b&quot;, DEAD if os.getenv(&quot;CHAOS&quot;) == &quot;1&quot; else OLLAMA),
+    dep(&quot;chat-backup&quot;,  &quot;ollama_chat/llama3.2:1b&quot;, OLLAMA),
+]
+chain = [&quot;chat-backup&quot;]
+if os.getenv(&quot;GEMINI_API_KEY&quot;):
+    model_list.append(dep(&quot;chat-cloud&quot;, &quot;gemini/gemini-2.5-flash&quot;))
+    chain.append(&quot;chat-cloud&quot;)
+
+router = Router(
+    model_list=model_list,
+    fallbacks=[{&quot;chat-primary&quot;: chain}],
+    num_retries=1,          # retry same group once before falling back
+    allowed_fails=2,        # failures/min before a deployment is cooled down
+    cooldown_time=30,       # seconds a failing deployment is skipped
+    timeout=60,
+)
+
+# ---- per-key policy (in prod: Redis + a config/DB, never in-process) ----
+KEYS = {&quot;team-a&quot;: {&quot;rpm&quot;: 10, &quot;daily_tokens&quot;: 20_000},
+        &quot;team-b&quot;: {&quot;rpm&quot;: 3,  &quot;daily_tokens&quot;: 2_000}}
+buckets = {k: {&quot;tokens&quot;: v[&quot;rpm&quot;], &quot;ts&quot;: time.monotonic()} for k, v in KEYS.items()}
+used_tokens = defaultdict(int)
+cache: dict[str, dict] = {}
+metrics = defaultdict(int)
+
+def take_token(key: str) -&gt; bool:
+    b, rpm = buckets[key], KEYS[key][&quot;rpm&quot;]
+    now = time.monotonic()
+    b[&quot;tokens&quot;] = min(rpm, b[&quot;tokens&quot;] + (now - b[&quot;ts&quot;]) * rpm / 60)
+    b[&quot;ts&quot;] = now
+    if b[&quot;tokens&quot;] &gt;= 1:
+        b[&quot;tokens&quot;] -= 1
+        return True
+    return False
+
+class ChatIn(BaseModel):
+    messages: list[dict]
+    temperature: float = 0.0
+    max_tokens: int = 256
+
+app = FastAPI(title=&quot;mini-ai-gateway&quot;)
+
+@app.post(&quot;/v1/chat&quot;)
+async def chat(body: ChatIn, x_api_key: str = Header(...)):
+    if x_api_key not in KEYS:
+        raise HTTPException(401, &quot;unknown key&quot;)
+    if not take_token(x_api_key):
+        metrics[&quot;rate_limited&quot;] += 1
+        raise HTTPException(429, &quot;rate limit exceeded&quot;, headers={&quot;Retry-After&quot;: &quot;6&quot;})
+    if used_tokens[x_api_key] + body.max_tokens &gt; KEYS[x_api_key][&quot;daily_tokens&quot;]:
+        metrics[&quot;quota_exceeded&quot;] += 1
+        raise HTTPException(429, &quot;daily token quota exhausted&quot;)
+
+    ck = None
+    if body.temperature == 0:      # only deterministic requests are cacheable
+        ck = hashlib.sha256(json.dumps([body.messages, body.max_tokens], sort_keys=True).encode()).hexdigest()
+        if ck in cache:
+            metrics[&quot;cache_hits&quot;] += 1
+            return {**cache[ck], &quot;cache&quot;: &quot;hit&quot;, &quot;latency_ms&quot;: 0}
+
+    t0 = time.perf_counter()
+    try:
+        r = await router.acompletion(model=&quot;chat-primary&quot;, messages=body.messages,
+                                     temperature=body.temperature, max_tokens=body.max_tokens)
+    except Exception as e:
+        metrics[&quot;upstream_errors&quot;] += 1
+        raise HTTPException(503, f&quot;all deployments failed: {type(e).__name__}&quot;)
+    ms = int((time.perf_counter() - t0) * 1000)
+    tokens = r.usage.total_tokens if r.usage else 0
+    used_tokens[x_api_key] += tokens
+    served_by = r.model or &quot;?&quot;
+    metrics[f&quot;served_by:{served_by}&quot;] += 1
+    out = {&quot;answer&quot;: r.choices[0].message.content, &quot;served_by&quot;: served_by, &quot;tokens&quot;: tokens}
+    if ck: cache[ck] = out
+    return {**out, &quot;cache&quot;: &quot;miss&quot;, &quot;latency_ms&quot;: ms}
+
+@app.get(&quot;/metrics&quot;)
+def get_metrics():
+    return {&quot;counters&quot;: dict(metrics), &quot;tokens_used&quot;: dict(used_tokens)}</code></pre></div>
+<h3>loadtest.py</h3>
+<div class="code"><span class="lbl">loadtest.py</span><button class="copy" type="button">Copy</button><pre><code>&quot;&quot;&quot;Fire concurrent requests at the gateway and summarise outcomes.&quot;&quot;&quot;
+import asyncio, statistics, sys, time
+import httpx
+
+URL = &quot;http://localhost:8080/v1/chat&quot;
+
+async def one(c, i, key):
+    body = {&quot;messages&quot;: [{&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: f&quot;In one sentence, what is a KV cache? (#{i % 4})&quot;}],
+            &quot;temperature&quot;: 0, &quot;max_tokens&quot;: 64}
+    t = time.perf_counter()
+    r = await c.post(URL, json=body, headers={&quot;X-API-Key&quot;: key})
+    return r.status_code, (time.perf_counter() - t) * 1000, r.json()
+
+async def main(n=12, key=&quot;team-a&quot;):
+    async with httpx.AsyncClient(timeout=120) as c:
+        res = await asyncio.gather(*(one(c, i, key) for i in range(n)))
+    ok = [r for r in res if r[0] == 200]
+    lat = sorted(r[1] for r in ok)
+    print(f&quot;key={key} sent={n} ok={len(ok)} 429={sum(r[0]==429 for r in res)} 503={sum(r[0]==503 for r in res)}&quot;)
+    if lat:
+        print(f&quot;p50={statistics.median(lat):.0f}ms  p95={lat[int(0.95*(len(lat)-1))]:.0f}ms&quot;)
+    print(&quot;served_by:&quot;, {r[2][&#x27;served_by&#x27;] for r in ok}, &quot; cache hits:&quot;, sum(r[2][&#x27;cache&#x27;]==&#x27;hit&#x27; for r in ok))
+
+if __name__ == &quot;__main__&quot;:
+    asyncio.run(main(int(sys.argv[1]) if len(sys.argv) &gt; 1 else 12, sys.argv[2] if len(sys.argv) &gt; 2 else &quot;team-a&quot;))</code></pre></div>
+<h3>Run it</h3>
+<ol class="steps">
+<li>Terminal 1: start the gateway. <div class="code"><span class="lbl">Terminal 1</span><button class="copy" type="button">Copy</button><pre><code>uvicorn gateway:app --port 8080</code></pre></div></li>
+<li>Terminal 2: hit it with a burst from each team. <div class="code"><span class="lbl">Terminal 2</span><button class="copy" type="button">Copy</button><pre><code>.\.venv\Scripts\Activate.ps1
+python loadtest.py 12 team-a
+python loadtest.py 6 team-b
+curl.exe -s http://localhost:8080/metrics</code></pre></div></li>
+<li>Stop the gateway (Ctrl+C), then restart it with the primary pointed at a dead port. <div class="code"><span class="lbl">Terminal 1 (chaos mode)</span><button class="copy" type="button">Copy</button><pre><code>$env:CHAOS=&quot;1&quot;; uvicorn gateway:app --port 8080
+# afterwards: Remove-Item Env:CHAOS</code></pre></div></li>
+<li>Re-run <code>python loadtest.py 4 team-a</code> and compare <code>served_by</code> and latency with step 2.</li>
+</ol>
+<h3>Expected output (shape; your latencies will differ)</h3>
+<div class="code"><span class="lbl">Console</span><button class="copy" type="button">Copy</button><pre><code>key=team-a sent=12 ok=10 429=2 503=0
+p50=1850ms  p95=4200ms
+served_by: {&#x27;qwen2.5:1.5b&#x27;}  cache hits: 0
+key=team-b sent=6 ok=3 429=3 503=0
+p50=9ms  p95=9ms                      &lt;- same prompts as before: all cache hits
+served_by: {&#x27;qwen2.5:1.5b&#x27;}  cache hits: 3
+{&quot;counters&quot;:{&quot;rate_limited&quot;:5,&quot;served_by:qwen2.5:1.5b&quot;:10,&quot;cache_hits&quot;:3},&quot;tokens_used&quot;:{&quot;team-a&quot;:...,&quot;team-b&quot;:0}}
+
+# chaos run (CHAOS=1)
+key=team-a sent=4 ok=4 429=0 503=0
+p50=~+2000ms over normal
+served_by: {&#x27;llama3.2:1b&#x27;}  cache hits: 0</code></pre></div>
+<div class="callout"><p><strong>What to notice.</strong> (a) team-b's 3 RPM bucket rejects the burst with 429s and a <code>Retry-After</code> header. (b) In the concurrent burst, identical prompts all <em>miss</em> the cache because they arrive before the first one completes. That is a cache stampede, and it is why real gateways add request coalescing. (c) In chaos mode every request is served by <code>llama3.2:1b</code> and pays roughly 2 s extra for the failed attempt and retry before the fallback. That is the cost of <code>num_retries</code>. After <code>allowed_fails</code> the primary is cooled down and later calls skip it. Write down what TTFT SLO you would set and whether you would keep the retry. (d) team-b's hits were answers cached by team-a. That is the cross-tenant leakage from section 3. Fix it by adding <code>x_api_key</code> (in production: tenant + prompt version + ACL group) to the cache key.</p></div>
+<p><strong>No GPU free right now?</strong> Set <code>$env:MOCK="1"</code> before starting the gateway to dry-run all the policy logic with canned answers.</p>
+<h3>Stretch goals</h3>
+<ol>
+<li><strong>Streaming + TTFT-aware fallback.</strong> Add <code>/v1/chat/stream</code> using <code>router.acompletion(..., stream=True)</code> and return SSE. Measure TTFT. Implement "fall back only if no token within 3 s" with <code>asyncio.wait_for</code> on the first chunk, and add single-flight coalescing (an <code>asyncio.Future</code> per cache key) to fix the stampede.</li>
+<li><strong>Swap in production parts.</strong> Replace your hand-rolled gateway with the LiteLLM <em>proxy</em> (<code>config.yaml</code> with <code>router_settings</code>, virtual keys, budgets), using Docker Desktop with Postgres and Redis. Then, in <strong>WSL2</strong>, run <code>vllm serve Qwen/Qwen2.5-0.5B-Instruct --gpu-memory-utilization 0.8 --max-model-len 4096</code> and register it as the primary. vLLM has no native Windows support, so this step needs WSL2 with CUDA. Compare p95 against Ollama at a concurrency of 8.</li>
+</ol>
+</section>
+
+<section id="repos"><h2><span class="n">5</span>GitHub repos to study</h2>
+<div class="repo"><a href="https://github.com/vllm-project/vllm">vllm-project/vllm</a><p>Read <code>vllm/v1/core/sched/</code> (the scheduler: continuous batching, preemption, chunked prefill) and the KV cache manager. This is where your capacity maths becomes code.</p></div>
+<div class="repo"><a href="https://github.com/BerriAI/litellm">BerriAI/litellm</a><p>Read <code>litellm/router.py</code> for how fallbacks, cooldowns and retry policies interact, then the proxy's budget and rate-limit hooks. These are the parts you would defend in a design review.</p></div>
+<div class="repo"><a href="https://github.com/vllm-project/production-stack">vllm-project/production-stack</a><p>A Helm reference stack: vLLM engines, a prefix-aware request router, LMCache KV offload, and Prometheus/Grafana dashboards. Study its router and its dashboard metrics.</p></div>
+<div class="repo"><a href="https://github.com/theagentrouter/agent-router">theagentrouter/agent-router</a><p>Formerly Envoy AI Gateway (old links redirect). Read the CRDs for backend security policies, token-based rate limiting and provider fallback to see how a K8s-native gateway models these concepts.</p></div>
+</section>
+
+<section id="read"><h2><span class="n">6</span>Read / watch</h2>
+<ul>
+<li><a href="https://arxiv.org/abs/2309.06180">Efficient Memory Management for LLM Serving with PagedAttention</a> (Kwon et al., SOSP 2023). Read sections 3–4. It is the foundation of every modern engine.</li>
+<li><a href="https://docs.litellm.ai/docs/proxy/reliability">LiteLLM: Fallbacks (provider failover)</a> and <a href="https://docs.litellm.ai/docs/routing">Router: load balancing</a>. These cover <code>fallbacks</code>, <code>context_window_fallbacks</code>, <code>content_policy_fallbacks</code>, <code>allowed_fails</code>, <code>cooldown_time</code> and the routing strategies. Note that the <code>mock_testing_*</code> flags only work on the Router SDK, not on the proxy since v1.85.</li>
+<li><a href="https://github.com/kubernetes-sigs/gateway-api-inference-extension">Gateway API Inference Extension</a> README. Read it for the model-aware routing model, and note that its endpoint picker has moved to llm-d.</li>
+</ul>
+</section>
+
+<section id="interview"><h2><span class="n">7</span>Interview questions</h2>
+<details class="qa" open><summary>A self-hosted 8B model meets its p50 but p95 TTFT spikes to 6 s at peak. Walk me through diagnosis.</summary><div class="ans"><p>TTFT is queueing plus prefill. Check the engine's waiting-queue depth and KV-cache utilisation. If KV is near 100%, requests are being preempted or queued: cap <code>max_model_len</code>, use an FP8 KV cache, or add replicas. If a few very long RAG prompts dominate, enable chunked prefill so they stop blocking others, and consider routing long-context traffic to a separate pool. If the load balancer is round-robin, switch to prefix- and queue-aware routing. Autoscale on queue depth or KV utilisation, not CPU.</p></div></details>
+<details class="qa"><summary>Why do you need TPM limits as well as RPM, and how do you enforce TPM before you know the output length?</summary><div class="ans"><p>Providers meter tokens, and one 100k-token request can cost as much as 500 small ones, so RPM alone lets a single caller exhaust the shared quota. Enforce TPM by counting prompt tokens exactly, reserving <code>max_tokens</code> for output at admission, and refunding the unused part when the response completes. Keep the counters in Redis with sliding windows so every gateway replica sees the same state. Cap <code>max_tokens</code> per key so reservations stay honest.</p></div></details>
+<details class="qa"><summary>Design the fallback chain for a customer-support copilot whose primary is Azure OpenAI.</summary><div class="ans"><p>Primary: the same model in a second Azure region or deployment, which keeps behaviour identical (PTU in the home region, pay-as-you-go spillover). Next, a different provider's comparable model that has passed the same eval suite and uses prompt variants kept in the prompt registry. Last, a smaller self-hosted model limited to low-risk intents, or a graceful degradation message. Fall back on 429, 5xx, timeouts and context-length errors, and never on 4xx auth or validation errors. Log the serving model on every response, check data residency for each hop, and pre-first-token fallback only for streaming.</p></div></details>
+<details class="qa"><summary>When would you <em>not</em> put a central AI gateway in front of model calls?</summary><div class="ans"><p>When a single team uses a single provider at low volume, it adds a hop, a stateful tier and a secret store without paying for itself. A thin SDK wrapper with retries is enough. The same goes for latency-critical on-device or edge inference. The case for a gateway arrives with the second team or the second provider, or with a requirement for chargeback, central guardrails or key rotation.</p></div></details>
+<details class="qa"><summary>Semantic caching: where does it help, and what can go wrong?</summary><div class="ans"><p>It helps with repetitive FAQ-style traffic (support, HR policy) and can deflect a meaningful share of calls. Risks: false hits from a threshold that is too loose ("cancel my order" vs "cancel my subscription"), stale answers after source documents change, and cross-tenant or ACL leakage. Mitigations: scope keys by tenant, model, prompt version and ACL group, apply a TTL plus invalidation on reindex, set a conservative threshold tuned on a labelled set, and leave out personalised or tool-using turns. Prefer provider prompt caching and engine prefix caching first, because they are exact and safe.</p></div></details>
+</section>
+
+<section id="adr"><h2><span class="n">8</span>Architect's lens: ADR-023</h2>
+<dl class="adr">
+<dt>Title</dt><dd>Centralise all LLM access through a self-hosted AI gateway</dd>
+<dt>Context</dt><dd>Six product teams call Azure OpenAI, watsonx.ai and a self-hosted vLLM pool directly with their own keys. There is no chargeback, keys sit in app configs, 429 incidents cascade, and every team writes its own retry logic.</dd>
+<dt>Options</dt><dd>(A) Shared SDK wrapper library. (B) Cloud-native APIM AI-gateway policies. (C) LiteLLM proxy (self-hosted, HA, Postgres + Redis). (D) Agent Router on the existing Envoy/K8s platform.</dd>
+<dt>Decision</dt><dd><strong>C now, with D re-evaluated in 2 quarters.</strong> LiteLLM covers every provider in the estate including watsonx, ships virtual keys, budgets and fallbacks today, and keeps the OpenAI-compatible contract, so apps stay portable. Deploy it as 3+ stateless replicas behind an internal load balancer on private endpoints. Pin the image digest and verify hashes. Provider keys live only in Key Vault or Secrets Manager, accessed via workload identity.</dd>
+<dt>Consequences</dt><dd>+ Central quotas, chargeback, one place for guardrails and OTel. + Provider swaps become config. − A new tier-1 dependency (needs an SLO, on-call and DR), 5–20 ms added latency to verify in load tests, and a concentrated supply-chain and secret risk. − Fallback models must pass the same eval gate in CI (Day 26). Revisit if self-hosted traffic exceeds 50% and needs inference-aware K8s routing.</dd>
+</dl>
+</section>
+
+<div id="next" class="tomorrow"><b>Tomorrow · Day 24</b> — Containerizing GenAI services: FastAPI + streaming + Docker best practices (multi-stage builds, secrets, health checks). Today's gateway becomes the thing you containerize.</div>
+</main>
+</div>
+
+<script>
+document.querySelectorAll('.code').forEach(function(box){
+  var btn=box.querySelector('.copy'), pre=box.querySelector('pre');
+  btn.addEventListener('click',function(){
+    var text=pre.innerText;
+    var done=function(){btn.textContent='Copied';setTimeout(function(){btn.textContent='Copy'},1500)};
+    var fallback=function(){var r=document.createRange();r.selectNodeContents(pre);var s=getSelection();s.removeAllRanges();s.addRange(r);btn.textContent='Selected — Ctrl+C';};
+    try{navigator.clipboard.writeText(text).then(done,fallback)}catch(e){fallback()}
+  });
+});
+</script>
+
+</body></html>

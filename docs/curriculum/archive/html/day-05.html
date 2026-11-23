@@ -1,0 +1,686 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>GenAI Prep · Day 5 — Embeddings Deep Dive</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+<style>
+/* Layout: same series system as Days 1–4. Single reading column (~72ch) with a sticky section index on wide screens; wide blocks scroll in their own frames. */
+:root{
+  --bg:#f5f7f8; --surface:#ffffff; --fg:#17212b; --muted:#5a6774; --line:#d9e0e5;
+  --accent:#0f7a6c; --accent-soft:#e1f2ef;
+  --warn:#b4540a; --warn-soft:#fbeee2;
+  --bad:#b3261e; --bad-soft:#fbe7e5;
+  --code-bg:#eef2f4;
+  --f-display:"IBM Plex Sans Condensed","Arial Narrow",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f1519; --surface:#161e24; --fg:#e3e9ed; --muted:#93a1ad; --line:#2a353e;
+  --accent:#4cc3b0; --accent-soft:#143430; --warn:#f0a35c; --warn-soft:#3a2816; --bad:#f2827a; --bad-soft:#3d1c1a;
+  --code-bg:#11191e; color-scheme:dark;}}
+:root[data-theme="dark"]{
+  --bg:#0f1519; --surface:#161e24; --fg:#e3e9ed; --muted:#93a1ad; --line:#2a353e;
+  --accent:#4cc3b0; --accent-soft:#143430; --warn:#f0a35c; --warn-soft:#3a2816; --bad:#f2827a; --bad-soft:#3d1c1a;
+  --code-bg:#11191e; color-scheme:dark;}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font:16px/1.65 var(--f-body);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 64px}
+.wrap{max-width:1120px;margin:0 auto;display:grid;grid-template-columns:200px minmax(0,1fr);gap:48px}
+@media (max-width:900px){.wrap{grid-template-columns:minmax(0,1fr)}nav.toc{display:none}}
+nav.toc{position:sticky;top:calc(env(safe-area-inset-top,0px) + 24px);align-self:start;padding-top:40px;font-size:13px}
+nav.toc ol{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+nav.toc a{color:var(--muted);text-decoration:none}
+nav.toc a:hover,nav.toc a:focus-visible{color:var(--accent)}
+main{min-width:0;max-width:760px}
+header.hero{padding-block:40px 24px;border-bottom:1px solid var(--line)}
+.eyebrow{font:600 12px/1 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+h1{font:700 clamp(30px,5vw,44px)/1.1 var(--f-display);margin:12px 0;text-wrap:balance;letter-spacing:-.01em}
+.lede{color:var(--muted);font-size:17px;margin:0;max-width:62ch}
+.meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
+.chip{font:500 12px/1 var(--f-mono);padding:6px 9px;border:1px solid var(--line);border-radius:4px;color:var(--muted);background:var(--surface)}
+section{padding-block:36px 8px}
+h2{font:600 24px/1.2 var(--f-display);margin:0 0 14px;display:flex;gap:12px;align-items:baseline;text-wrap:balance}
+h2 .n{font:500 13px var(--f-mono);color:var(--accent)}
+h3{font:600 17px/1.3 var(--f-display);margin:26px 0 8px;letter-spacing:.01em;text-wrap:balance}
+p,li{max-width:68ch}
+ul,ol{padding-left:1.2em}
+li{margin-block:4px}
+a{color:var(--accent);text-underline-offset:2px}
+a:focus-visible,button:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+code{font:0.88em var(--f-mono);background:var(--code-bg);padding:1px 5px;border-radius:3px}
+strong{font-weight:600}
+.callout{border:1px solid var(--line);background:var(--surface);border-radius:6px;padding:14px 18px;margin:18px 0}
+.callout.key{border-left:3px solid var(--accent)}
+.callout p{margin:6px 0}
+.figure{margin:22px 0;background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:16px;overflow-x:auto}
+.figure svg{display:block;min-width:660px;width:100%;height:auto}
+.figure figcaption{font-size:13px;color:var(--muted);margin-top:8px}
+svg .box{fill:var(--surface);stroke:var(--line);stroke-width:1.5}
+svg .box.g{fill:var(--accent-soft);stroke:var(--accent)}
+svg .box.w{fill:var(--warn-soft);stroke:var(--warn)}
+svg .t{fill:var(--fg);font:600 13px var(--f-display)}
+svg .s{fill:var(--muted);font:11.5px var(--f-body)}
+svg .lbl{fill:var(--accent);font:500 11px var(--f-mono)}
+svg .lblw{fill:var(--warn);font:500 11px var(--f-mono)}
+svg .ln{stroke:var(--muted);stroke-width:1.5;fill:none}
+svg .ah{fill:var(--muted)}
+svg .bar{fill:var(--accent)} svg .bar.w{fill:var(--warn)} svg .bar.m{fill:var(--muted)}
+svg .grid{stroke:var(--line);stroke-width:1}
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:6px;margin:18px 0;background:var(--surface)}
+table{border-collapse:collapse;width:100%;min-width:760px;font-size:14px;line-height:1.5}
+table.small{min-width:520px}
+th,td{text-align:left;vertical-align:top;padding:10px 12px;border-bottom:1px solid var(--line)}
+th{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);background:var(--bg)}
+tr:last-child td{border-bottom:0}
+td:first-child{font-weight:600}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;font-family:var(--f-mono);font-size:13px}
+.tag{display:inline-block;font:500 11px var(--f-mono);padding:2px 6px;border-radius:3px;white-space:nowrap}
+.tag.g{background:var(--accent-soft);color:var(--accent)}
+.tag.w{background:var(--warn-soft);color:var(--warn)}
+.tag.b{background:var(--bad-soft);color:var(--bad)}
+.code{position:relative;margin:14px 0;border:1px solid var(--line);border-radius:6px;background:var(--code-bg)}
+.code .bar{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:6px 10px;border-bottom:1px solid var(--line);font:500 12px var(--f-mono);color:var(--muted)}
+.code button{font:500 12px var(--f-mono);color:var(--fg);background:var(--surface);border:1px solid var(--line);border-radius:4px;padding:4px 10px;cursor:pointer}
+.code button:hover{border-color:var(--accent);color:var(--accent)}
+.code pre{margin:0;padding:14px;overflow-x:auto;font:13px/1.55 var(--f-mono);tab-size:4}
+.steps{counter-reset:st;list-style:none;padding:0}
+.steps>li{counter-increment:st;position:relative;padding-left:34px;margin-block:10px}
+.steps>li::before{content:counter(st);position:absolute;left:0;top:1px;width:22px;height:22px;border-radius:50%;background:var(--accent-soft);color:var(--accent);font:600 12px/22px var(--f-mono);text-align:center}
+.repos{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr))}
+.repo{border:1px solid var(--line);border-radius:6px;padding:14px 16px;background:var(--surface);min-width:0}
+.repo a{font:500 14px var(--f-mono);word-break:break-word}
+.repo p{margin:6px 0 0;font-size:14.5px}
+.repo .m{font:12px var(--f-mono);color:var(--muted);margin-top:6px}
+.qs{counter-reset:q}
+details.qa{border-top:1px solid var(--line);padding-block:12px}
+details.qa:last-of-type{border-bottom:1px solid var(--line)}
+details.qa summary{cursor:pointer;font-weight:600;list-style:none;display:flex;gap:10px}
+details.qa summary::-webkit-details-marker{display:none}
+details.qa summary::before{content:"Q" counter(q);counter-increment:q;font:500 12px/1.9 var(--f-mono);color:var(--accent);min-width:24px}
+details.qa .a{padding-left:34px;margin-top:6px}
+details.qa .a p{margin:6px 0}
+.adr dl{display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px 18px;margin:0}
+@media (max-width:560px){.adr dl{grid-template-columns:minmax(0,1fr)}.adr dt{margin-top:8px}}
+.adr dt{font:600 12px/1.8 var(--f-mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.adr dd{margin:0}
+.next{margin-top:28px;padding:16px 18px;border:1px dashed var(--accent);border-radius:6px}
+.sources{font-size:13.5px;color:var(--muted)}
+.sources a{word-break:break-all}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+<nav class="toc" aria-label="Sections">
+  <ol>
+    <li><a href="#why">1 · Why it matters</a></li>
+    <li><a href="#concept">2 · Concept brief</a></li>
+    <li><a href="#tradeoffs">3 · Trade-offs</a></li>
+    <li><a href="#exercise">4 · Hands-on</a></li>
+    <li><a href="#repos">5 · Repos</a></li>
+    <li><a href="#read">6 · Read</a></li>
+    <li><a href="#interview">7 · Interview</a></li>
+    <li><a href="#adr">8 · ADR</a></li>
+    <li><a href="#tomorrow">9 · Tomorrow</a></li>
+  </ol>
+</nav>
+
+<main>
+<header class="hero">
+  <div class="eyebrow">Week 1 · LLM &amp; retrieval foundations · Day 5 of 30</div>
+  <h1>Embeddings deep dive</h1>
+  <p class="lede">How to choose an embedding model with MTEB and your own data, how dimension and precision drive index cost, how Matryoshka truncation and quantization buy that cost back, and when to adapt an embedder to your domain.</p>
+  <div class="meta">
+    <span class="chip">Wed 14 Oct 2026</span>
+    <span class="chip">~25 min read · 75–90 min lab</span>
+    <span class="chip">Runs on RTX 3050 6 GB</span>
+    <span class="chip">sentence-transformers 6.1</span>
+  </div>
+</header>
+
+<section id="why">
+  <h2><span class="n">01</span>Why this matters for the JD</h2>
+  <p>The JD names <strong>embeddings</strong> twice: under LLM concepts and under vector DBs &amp; retrieval (indexing, ANN, metadata filtering). It also asks for <strong>cost controls</strong> and <strong>RAG optimization</strong>. The embedding model is the one RAG component you can't swap cheaply. Changing it means re-embedding the whole corpus, and its dimension and precision set your vector-store bill. Yesterday's retrieval floor only works if the embedder separates relevant from irrelevant chunks well enough to put a threshold between them.</p>
+</section>
+
+<section id="concept">
+  <h2><span class="n">02</span>Concept brief</h2>
+
+  <h3>What you're actually choosing</h3>
+  <p>A retrieval embedder is a <strong>bi-encoder</strong>: query and document are encoded independently, so documents can be embedded once and indexed. It's trained contrastively (InfoNCE with in-batch and hard negatives) to pull a query towards its relevant passage. Picking a model means picking six things at once:</p>
+  <ul>
+    <li><strong>Pooling.</strong> CLS (Granite R2, BGE), mean (MiniLM, E5), or last-token (Qwen3-Embedding and other decoder-based embedders). sentence-transformers reads this from the model config. If you hand-roll inference with <code>transformers</code>, getting pooling wrong silently degrades quality.</li>
+    <li><strong>Asymmetry.</strong> Many models expect different inputs for queries and documents. Qwen3 uses <code>Instruct: {task}\nQuery:{q}</code> for queries only; E5 uses <code>query:</code> / <code>passage:</code>; Nomic uses <code>search_query:</code> / <code>search_document:</code>. Granite R2 needs no prefix. Forgetting the prefix typically costs a few points of nDCG and nothing errors. sentence-transformers 5+ handles this with <code>encode_query()</code> / <code>encode_document()</code>.</li>
+    <li><strong>Max sequence length.</strong> 512 tokens (watsonx-hosted slate and granite-278m), 8,192 (Granite English R2), 32,768 (Granite multilingual R2, Qwen3). Anything beyond the limit is truncated without warning, so this caps your chunk size (Day 6).</li>
+    <li><strong>Dimension</strong> (384 to 4,096) and whether the model is <strong>Matryoshka-trained</strong>.</li>
+    <li><strong>Normalisation.</strong> Granite R2 returns unnormalised vectors. Normalise them yourself if your index uses inner product.</li>
+    <li><strong>License, languages and hosting.</strong> Apache-2.0 open weights, API-only, or non-commercial (for example, NVIDIA's llama-embed-nemotron-8b sits near the top of MTEB but is non-commercial).</li>
+  </ul>
+
+  <h3>Reading MTEB like an architect</h3>
+  <p>MTEB (now MMTEB: 500+ tasks, 250+ languages) is a shortlist tool, not a decision. Five rules:</p>
+  <ol>
+    <li><strong>Look at the Retrieval column, not the overall mean.</strong> The mean blends in classification, clustering and STS. A model tuned for retrieval can rank lower overall and still be the best choice for RAG.</li>
+    <li><strong>Filter on your constraints first</strong>: languages, max tokens, parameter count (it drives latency and GPU cost), license.</li>
+    <li><strong>Check zero-shot status.</strong> Some models trained on the train splits of MTEB datasets. The leaderboard flags this; treat those scores as optimistic.</li>
+    <li><strong>Expect 1–2 point gaps between neighbours to vanish on your data.</strong> Rankings reshuffle monthly.</li>
+    <li><strong>Run a bake-off on a golden set of 100–300 real queries</strong> with nDCG@10 and Recall@k. That's today's lab.</li>
+  </ol>
+
+  <h3>Similarity metrics: mostly a non-decision, with two traps</h3>
+  <p>For L2-normalised vectors, cosine, dot product and Euclidean give <strong>identical rankings</strong>, because ‖a−b‖² = 2 − 2·a·b. So normalise and use inner product, which is the fastest kernel in FAISS, HNSW libraries and most vector DBs. The traps:</p>
+  <ul>
+    <li><strong>A model trained for unnormalised dot product</strong> (rare in modern retrievers) encodes signal in the vector norm. Follow the model card.</li>
+    <li><strong>Index/model metric mismatch</strong>: building <code>IndexFlatIP</code> on unnormalised Granite vectors gives you dot-product ranking biased toward long or high-norm passages. It runs fine and is quietly wrong.</li>
+  </ul>
+
+  <h3>Index cost is dimension × precision × count</h3>
+  <p>Raw vector bytes = N × d × bytes-per-dimension. ANN graph overhead (HNSW links, Day 7) comes on top. For a 10M-chunk corpus:</p>
+  <div class="tbl"><table class="small">
+    <thead><tr><th>Representation</th><th class="num">Bytes / vector</th><th class="num">10M vectors</th><th>Typical retrieval retained</th></tr></thead>
+    <tbody>
+      <tr><td>1024-d float32</td><td class="num">4,096</td><td class="num">38.1 GiB</td><td>100% (baseline)</td></tr>
+      <tr><td>1024-d int8 (scalar)</td><td class="num">1,024</td><td class="num">9.5 GiB</td><td>~99% with rescoring</td></tr>
+      <tr><td>256-d float32 (MRL)</td><td class="num">1,024</td><td class="num">9.5 GiB</td><td>model-dependent, often 95–99%</td></tr>
+      <tr><td>256-d int8 (MRL + scalar)</td><td class="num">256</td><td class="num">2.4 GiB</td><td>measure it</td></tr>
+      <tr><td>1024-d binary</td><td class="num">128</td><td class="num">1.2 GiB</td><td>~92.5% raw, ~96% with rescoring</td></tr>
+    </tbody>
+  </table></div>
+  <p>The int8 and binary retention figures come from the Hugging Face / sentence-transformers quantization study (mxbai-embed-large-v1 on MTEB Retrieval). Treat them as priors and confirm them on your own model.</p>
+
+  <h3>Matryoshka (MRL): one model, many sizes</h3>
+  <p>Matryoshka Representation Learning adds the contrastive loss at several prefix lengths (for example 768, 512, 256, 128) during training. The first 256 dimensions then form a usable embedding by themselves. At inference you <strong>truncate and re-normalise</strong>. It only works if the model was trained this way: truncating a non-MRL model like granite-embedding-small-english-r2 throws away information unevenly, and quality falls off sharply. Your lab measures that directly.</p>
+  <p>MRL-trained models you can use today: Qwen3-Embedding (32–1024/2560/4096), granite-embedding-311m-multilingual-r2 (768/512/384/256/128), EmbeddingGemma, Nomic v1.5. On the API side, OpenAI's text-embedding-3 models expose a <code>dimensions</code> parameter that does the same thing server-side.</p>
+
+  <h3>The funnel pattern: cheap first stage, exact rescoring</h3>
+  <figure class="figure">
+    <svg viewBox="0 0 880 270" role="img" aria-labelledby="fn-t">
+      <title id="fn-t">Two-stage funnel retrieval: binary or truncated vectors in RAM shortlist candidates, full-precision vectors on SSD rescore them, then a reranker orders the final top-k</title>
+      <defs>
+        <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path class="ah" d="M0,0L10,5L0,10z"/></marker>
+      </defs>
+      <text class="s" x="10" y="20">ONLINE QUERY PATH · 10M chunks · 1024-d MRL model</text>
+
+      <rect class="box" x="10" y="44" width="130" height="80" rx="6"/>
+      <text class="t" x="75" y="72" text-anchor="middle">Query</text>
+      <text class="s" x="75" y="92" text-anchor="middle">encode_query()</text>
+      <text class="s" x="75" y="108" text-anchor="middle">1 vector, ~5–20 ms</text>
+
+      <rect class="box g" x="180" y="44" width="190" height="80" rx="6"/>
+      <text class="t" x="275" y="68" text-anchor="middle">Stage 1 · shortlist</text>
+      <text class="s" x="275" y="88" text-anchor="middle">binary 1024-d or int8 256-d</text>
+      <text class="s" x="275" y="104" text-anchor="middle">ANN over all 10M in RAM</text>
+
+      <rect class="box" x="410" y="44" width="190" height="80" rx="6"/>
+      <text class="t" x="505" y="68" text-anchor="middle">Stage 2 · rescore</text>
+      <text class="s" x="505" y="88" text-anchor="middle">fp32 1024-d, candidates only</text>
+      <text class="s" x="505" y="104" text-anchor="middle">fetched from SSD / object store</text>
+
+      <rect class="box" x="640" y="44" width="230" height="80" rx="6"/>
+      <text class="t" x="755" y="68" text-anchor="middle">Stage 3 · rerank (Day 9)</text>
+      <text class="s" x="755" y="88" text-anchor="middle">cross-encoder on top ~50</text>
+      <text class="s" x="755" y="104" text-anchor="middle">→ top-k to the LLM</text>
+
+      <path class="ln" d="M140 84H176" marker-end="url(#ar)"/>
+      <path class="ln" d="M370 84H406" marker-end="url(#ar)"/>
+      <path class="ln" d="M600 84H636" marker-end="url(#ar)"/>
+      <text class="lbl" x="374" y="76">~200–400</text>
+      <text class="lbl" x="604" y="76">~50</text>
+
+      <text class="s" x="10" y="168">RAM NEEDED FOR STAGE 1 (raw vectors, before ANN overhead)</text>
+      <line class="grid" x1="180" y1="180" x2="180" y2="258"/>
+      <text class="s" x="10" y="196">fp32 1024-d</text>
+      <rect class="bar m" x="180" y="185" width="640" height="14" rx="2"/>
+      <text class="s" x="826" y="196">38.1 GiB</text>
+      <text class="s" x="10" y="220">int8 256-d</text>
+      <rect class="bar" x="180" y="209" width="40" height="14" rx="2"/>
+      <text class="s" x="226" y="220">2.4 GiB</text>
+      <text class="s" x="10" y="244">binary 1024-d</text>
+      <rect class="bar" x="180" y="233" width="20" height="14" rx="2"/>
+      <text class="s" x="206" y="244">1.2 GiB</text>
+    </svg>
+    <figcaption>Bars are to scale. The shortlist lives in RAM at 1/16 to 1/32 of the fp32 footprint; full-precision vectors are touched only for a few hundred candidates per query. Most managed vector DBs now expose some version of this (binary or int8 quantization with oversampling and rescoring).</figcaption>
+  </figure>
+
+  <h3>Domain adaptation ladder (cheapest first)</h3>
+  <ol>
+    <li><strong>Use the model's instruction or prefix properly</strong>, and write a task-specific instruction for instruction-aware models (Qwen3 reports 1–5% gains).</li>
+    <li><strong>Add BM25 alongside dense retrieval</strong> (Day 9). Product codes, ticket IDs and table names are lexical problems, and no embedder fixes them reliably.</li>
+    <li><strong>Add a reranker</strong> (Day 9). It's usually a larger gain than switching embedders, and you don't need to re-index.</li>
+    <li><strong>Train a query-side adapter</strong>: a small linear map applied only to query vectors, learned from (query, positive) pairs. The corpus index stays untouched.</li>
+    <li><strong>Fine-tune the embedder</strong> with <code>MultipleNegativesRankingLoss</code> (wrapped in <code>MatryoshkaLoss</code> to keep MRL) on synthetic LLM-generated queries plus mined hard negatives. A few thousand pairs is often enough for jargon-heavy corpora. The cost: a full re-index, plus a model you now own and must re-evaluate on every upgrade.</li>
+  </ol>
+
+  <h3>Provider and platform map</h3>
+  <ul>
+    <li><strong>IBM watsonx.ai</strong> hosts slate-30m/125m-english-rtrvr-v2, granite-embedding-278m-multilingual, multilingual-e5-large and all-minilm-l6-v2, all with 512-token limits, plus an ms-marco MiniLM reranker. The newer Granite R2 models (8K/32K context, Apache-2.0) are open weights on Hugging Face, so you can self-host them on OpenShift AI / vLLM or check whether your watsonx region has added them.</li>
+    <li><strong>Azure</strong>: text-embedding-3-small/large via Azure OpenAI or AI Foundry. <strong>AWS</strong>: Bedrock embedding models (Titan, Cohere). <strong>GCP</strong>: Vertex AI Gemini embeddings. All charge per input token. That's cheap for queries; the full corpus re-embed is where the bill shows up.</li>
+    <li><strong>Local</strong>: Ollama ships embeddinggemma, qwen3-embedding, granite-embedding, nomic-embed-text, bge-m3 and others. GGUF quantization produces slightly different vectors from the Hugging Face build, which is stretch goal 1.</li>
+  </ul>
+
+  <div class="callout key">
+    <p><strong>The review-ready sentence.</strong> "We shortlisted embedders from the MTEB retrieval tab under our language, context-length and license constraints, then picked one on a 300-query golden set by nDCG@10 and p95 latency. We store a Matryoshka-truncated int8 vector for first-stage search and keep fp32 for rescoring. Every vector is tagged with model ID, version, dimension and prompt, so a model change is a planned re-index behind an eval gate, never a mixed index."</p>
+  </div>
+</section>
+
+<section id="tradeoffs">
+  <h2><span class="n">03</span>Trade-offs &amp; decision table</h2>
+  <div class="tbl">
+  <table>
+    <thead><tr><th>Option</th><th>Pick when</th><th>Cost / latency</th><th>Failure modes</th></tr></thead>
+    <tbody>
+      <tr><td>Managed API embedder (OpenAI / Azure, Bedrock, Vertex, watsonx)</td><td>Fast start, no GPU ops, data allowed to leave the boundary (or a private endpoint exists)</td><td><span class="tag w">per-token fee</span> + network hop of 30–150 ms per query</td><td>Model deprecation forces a re-index on the vendor's timeline; regional availability; rate limits during bulk re-embeds</td></tr>
+      <tr><td>Small open encoder (granite-small-r2 47M, bge-small)</td><td>CPU serving, high QPS, English, tight latency</td><td><span class="tag g">~1–5 ms/query on GPU</span>, cheap re-index</td><td>Lower ceiling on complex queries; usually not MRL, so no truncation</td></tr>
+      <tr><td>Mid open encoder with MRL (granite-311m-r2, EmbeddingGemma 300M, Qwen3-0.6B)</td><td>Default for self-hosted enterprise RAG; multilingual; long context</td><td><span class="tag g">Single small GPU</span>; flexible storage through MRL</td><td>Long-context models tempt you into oversized chunks; Qwen3 needs the query instruction</td></tr>
+      <tr><td>LLM-sized embedder (Qwen3-8B, Nemotron-8B)</td><td>Top quality matters more than cost; complex or multilingual queries; offline batch</td><td><span class="tag b">GPU per replica</span>, 4096-d vectors (16 KB each in fp32)</td><td>Re-indexing 100M chunks takes days; license traps (Nemotron is non-commercial)</td></tr>
+      <tr><td>MRL truncation (e.g. 1024 → 256)</td><td>Storage or RAM-bound; first stage of a funnel</td><td><span class="tag g">4× smaller</span>, faster ANN</td><td>Big quality drop on non-MRL models; truncating without re-normalising breaks cosine</td></tr>
+      <tr><td>int8 scalar quantization</td><td>Almost always worth it at scale</td><td><span class="tag g">4× smaller</span>, ~3.7× faster search</td><td>Needs calibration data for ranges; distribution drift after corpus changes</td></tr>
+      <tr><td>Binary + rescoring</td><td>Very large corpora (tens of millions of chunks and up), RAM-bound</td><td><span class="tag g">32× smaller</span>, Hamming search is very fast</td><td>Weak on low-dimensional vectors; needs fp32 or int8 copies for rescoring</td></tr>
+      <tr><td>Fine-tuned domain embedder</td><td>Jargon-heavy corpus where hybrid search + reranker still miss</td><td><span class="tag w">Training + full re-index</span></td><td>Overfits to synthetic queries; you own regression testing on every base-model upgrade</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p><strong>Cost math to quote:</strong> re-embedding 10M chunks of about 400 tokens is 4B tokens. At OpenAI's list prices of USD 0.02 (text-embedding-3-small) to 0.13 (text-embedding-3-large) per million tokens, that's about USD 80–520, which is small. The real costs of a model change are the re-index pipeline time, the dual-running period, and the re-tuning of every threshold that depended on the old score distribution (yesterday's retrieval floor, for instance).</p>
+</section>
+
+<section id="exercise">
+  <h2><span class="n">04</span>Hands-on: embedding bake-off on BEIR SciFact</h2>
+  <p><strong>Goal (75–90 min):</strong> compare two IBM Granite R2 embedders, one Matryoshka-trained and one not, optionally with Qwen3-Embedding-0.6B. Measure nDCG@10, Recall@10 and MRR@10 across dimensions (full → 64) and precisions (fp32, int8, binary, binary + rescore), along with query latency and index MB per million documents. The dataset is SciFact (5,183 abstracts, 300 test queries with labelled relevant documents), small enough to embed in a few minutes on your 3050.</p>
+
+  <h3>Setup (PowerShell, Windows 11)</h3>
+  <ol class="steps">
+    <li>Create the venv. On Windows, <code>pip install torch</code> from PyPI gives a <strong>CPU-only</strong> build. For the GPU, install torch first using the command from the <a href="https://pytorch.org/get-started/locally/">PyTorch selector</a> (Stable · Windows · Pip · newest CUDA). The script still runs on CPU, just more slowly.</li>
+    <li>Install sentence-transformers 6.x. It requires transformers 5 and torch ≥ 2.2. No WSL2 or Docker needed.</li>
+    <li>First run downloads about 1.5 GB of models plus the dataset to <code>%USERPROFILE%\.cache\huggingface</code>. A symlink warning on Windows is harmless; enabling Developer Mode silences it.</li>
+  </ol>
+  <div class="code"><div class="bar"><span>PowerShell</span><button type="button" data-copy="c-setup">Copy</button></div>
+<pre id="c-setup">mkdir day05; cd day05
+py -3.13 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+# 1) GPU torch: paste the command from pytorch.org/get-started/locally (Windows, Pip, CUDA) here
+# 2) the rest
+python -m pip install "sentence-transformers>=6.1" datasets numpy
+python -c "import torch, sentence_transformers as st; print(st.__version__, torch.cuda.is_available())"</pre></div>
+  <p>If <code>Activate.ps1</code> is blocked, run <code>Set-ExecutionPolicy -Scope CurrentUser RemoteSigned</code> once.</p>
+
+  <h3>Starter code: <code>embed_bakeoff.py</code></h3>
+  <div class="code"><div class="bar"><span>embed_bakeoff.py</span><button type="button" data-copy="c-main">Copy</button></div>
+<pre id="c-main">&quot;&quot;&quot;
+Day 5 - Embedding bake-off: model choice x Matryoshka dimension x quantization.
+
+Evaluates embedding models on BEIR SciFact (5,183 docs, 300 test queries) and reports
+nDCG@10 / Recall@10 / MRR@10, index size and query-encode latency for each
+(model, dimension, precision) combination.
+
+Run:  python embed_bakeoff.py                      # default models
+      python embed_bakeoff.py --models granite-small qwen3-0.6b --max-docs 2000
+&quot;&quot;&quot;
+from __future__ import annotations
+
+import argparse
+import csv
+import time
+from pathlib import Path
+
+import numpy as np
+import torch
+from datasets import load_dataset
+from sentence_transformers import SentenceTransformer
+from sentence_transformers.quantization import quantize_embeddings
+
+# alias -&gt; (HF model id, is_matryoshka_trained, extra kwargs)
+MODELS = {
+    # IBM Granite R2 English small: 47M params, 384-d, NOT Matryoshka-trained (control group)
+    &quot;granite-small&quot;: (&quot;ibm-granite/granite-embedding-small-english-r2&quot;, False, {}),
+    # IBM Granite R2 multilingual: 311M params, 768-d, Matryoshka 768/512/384/256/128
+    &quot;granite-311m&quot;: (&quot;ibm-granite/granite-embedding-311m-multilingual-r2&quot;, True, {}),
+    # Qwen3 0.6B: 1024-d, MRL, instruction-aware queries (needs ~1.5 GB VRAM in fp16)
+    &quot;qwen3-0.6b&quot;: (&quot;Qwen/Qwen3-Embedding-0.6B&quot;, True, {&quot;processor_kwargs&quot;: {&quot;padding_side&quot;: &quot;left&quot;}}),
+}
+DIMS = [1024, 768, 512, 384, 256, 128, 64]
+K = 10
+CACHE = Path(&quot;.emb_cache&quot;)
+
+
+# ---------------------------------------------------------------- data
+def _first_split(ds):
+    return ds[next(iter(ds.keys()))]
+
+
+def load_scifact(max_docs: int | None):
+    corpus = _first_split(load_dataset(&quot;mteb/scifact&quot;, &quot;corpus&quot;))
+    queries = _first_split(load_dataset(&quot;mteb/scifact&quot;, &quot;queries&quot;))
+    qrels = load_dataset(&quot;mteb/scifact&quot;, &quot;default&quot;)[&quot;test&quot;]
+
+    relevant: dict[str, set[str]] = {}
+    for r in qrels:
+        if r[&quot;score&quot;] &gt; 0:
+            relevant.setdefault(str(r[&quot;query-id&quot;]), set()).add(str(r[&quot;corpus-id&quot;]))
+
+    doc_ids = [str(x) for x in corpus[&quot;_id&quot;]]
+    doc_texts = [f&quot;{t}\n{x}&quot;.strip() for t, x in zip(corpus[&quot;title&quot;], corpus[&quot;text&quot;])]
+    if max_docs:  # keep every relevant doc, then pad with others -&gt; eval stays honest
+        must = set().union(*relevant.values())
+        keep = [i for i, d in enumerate(doc_ids) if d in must]
+        keep += [i for i, d in enumerate(doc_ids) if d not in must][: max(0, max_docs - len(keep))]
+        doc_ids = [doc_ids[i] for i in keep]
+        doc_texts = [doc_texts[i] for i in keep]
+
+    qmap = {str(i): t for i, t in zip(queries[&quot;_id&quot;], queries[&quot;text&quot;])}
+    q_ids = [q for q in relevant if q in qmap]
+    q_texts = [qmap[q] for q in q_ids]
+    return doc_ids, doc_texts, q_ids, q_texts, relevant
+
+
+# ---------------------------------------------------------------- metrics
+def evaluate(scores: np.ndarray, doc_ids, q_ids, relevant, k: int = K) -&gt; dict[str, float]:
+    top = np.argsort(-scores, axis=1)[:, :k]
+    ndcg = rec = mrr = 0.0
+    for qi, qid in enumerate(q_ids):
+        rel = relevant[qid]
+        hits = [1.0 if doc_ids[j] in rel else 0.0 for j in top[qi]]
+        dcg = sum(h / np.log2(r + 2) for r, h in enumerate(hits))
+        idcg = sum(1.0 / np.log2(r + 2) for r in range(min(len(rel), k)))
+        ndcg += dcg / idcg
+        rec += sum(hits) / len(rel)
+        mrr += next((1.0 / (r + 1) for r, h in enumerate(hits) if h), 0.0)
+    n = len(q_ids)
+    return {&quot;ndcg@10&quot;: ndcg / n, &quot;recall@10&quot;: rec / n, &quot;mrr@10&quot;: mrr / n}
+
+
+def l2norm(x: np.ndarray) -&gt; np.ndarray:
+    return x / np.clip(np.linalg.norm(x, axis=1, keepdims=True), 1e-12, None)
+
+
+# ---------------------------------------------------------------- encode (cached)
+def encode_all(alias: str, doc_texts, q_texts, batch_size: int, max_seq_len: int):
+    model_id, _, kwargs = MODELS[alias]
+    CACHE.mkdir(exist_ok=True)
+    dpath, qpath = CACHE / f&quot;{alias}_{len(doc_texts)}_docs.npy&quot;, CACHE / f&quot;{alias}_q.npy&quot;
+    device = &quot;cuda&quot; if torch.cuda.is_available() else &quot;cpu&quot;
+    if device == &quot;cuda&quot;:  # fp16 halves VRAM; keeps Qwen3-0.6B well inside 6 GB
+        kwargs = {**kwargs, &quot;model_kwargs&quot;: {&quot;dtype&quot;: torch.float16}}
+    model = SentenceTransformer(model_id, device=device, **kwargs)
+    model.max_seq_length = min(model.max_seq_length or max_seq_len, max_seq_len)
+
+    if dpath.exists():
+        D = np.load(dpath)
+        dps = float(&quot;nan&quot;)
+    else:
+        t0 = time.perf_counter()
+        # encode_document / encode_query apply the model&#x27;s own prompts (e.g. Qwen3 &quot;Instruct: ...&quot;)
+        D = model.encode_document(doc_texts, batch_size=batch_size, convert_to_numpy=True,
+                                  normalize_embeddings=True, show_progress_bar=True)
+        dps = len(doc_texts) / (time.perf_counter() - t0)
+        np.save(dpath, D)
+
+    model.encode_query(q_texts[:8])  # warm-up
+    t0 = time.perf_counter()
+    for q in q_texts[:50]:  # single-query latency, the number your SLO cares about
+        model.encode_query([q], convert_to_numpy=True)
+    q_ms = (time.perf_counter() - t0) / min(50, len(q_texts)) * 1000
+    Q = model.encode_query(q_texts, batch_size=batch_size, convert_to_numpy=True, normalize_embeddings=True)
+    np.save(qpath, Q)
+    del model
+    if device == &quot;cuda&quot;:
+        torch.cuda.empty_cache()
+    return D.astype(np.float32), Q.astype(np.float32), dps, q_ms
+
+
+# ---------------------------------------------------------------- precision variants
+def score_variants(D: np.ndarray, Q: np.ndarray, rescore_k: int = 50):
+    &quot;&quot;&quot;Yield (precision, scores, bytes_per_vector).&quot;&quot;&quot;
+    n, d = D.shape
+    yield &quot;fp32&quot;, Q @ D.T, d * 4
+
+    # int8 scalar quantization: per-dimension ranges calibrated on the corpus
+    Di = quantize_embeddings(D, precision=&quot;int8&quot;, calibration_embeddings=D).astype(np.int32)
+    Qi = quantize_embeddings(Q, precision=&quot;int8&quot;, calibration_embeddings=D).astype(np.int32)
+    yield &quot;int8&quot;, (Qi @ Di.T).astype(np.float32), d
+
+    # binary: 1 bit/dim, Hamming search, then rescore top-k with fp32 query x fp32 docs
+    Db = quantize_embeddings(D, precision=&quot;ubinary&quot;)  # packed uint8, shape (n, d/8)
+    Qb = quantize_embeddings(Q, precision=&quot;ubinary&quot;)
+    popcount = np.unpackbits(np.arange(256, dtype=np.uint8)[:, None], axis=1).sum(1).astype(np.uint16)
+    ham = np.concatenate([popcount[Qb[i:i + 16, None, :] ^ Db[None, :, :]].sum(axis=2)
+                          for i in range(0, len(Qb), 16)])  # chunked to keep RAM &lt; 1 GB
+    yield &quot;binary&quot;, (-ham).astype(np.float32), d // 8
+
+    cand = np.argsort(ham, axis=1)[:, :rescore_k]
+    resc = np.full((Q.shape[0], n), -1e9, dtype=np.float32)
+    for qi in range(Q.shape[0]):
+        resc[qi, cand[qi]] = D[cand[qi]] @ Q[qi]
+    yield f&quot;binary+rescore@{rescore_k}&quot;, resc, d // 8  # fp32 vectors live on disk, not in RAM
+
+
+# ---------------------------------------------------------------- main
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument(&quot;--models&quot;, nargs=&quot;+&quot;, default=[&quot;granite-small&quot;, &quot;granite-311m&quot;], choices=list(MODELS))
+    ap.add_argument(&quot;--max-docs&quot;, type=int, default=None, help=&quot;subsample corpus (relevant docs always kept)&quot;)
+    ap.add_argument(&quot;--batch-size&quot;, type=int, default=32)
+    ap.add_argument(&quot;--max-seq-len&quot;, type=int, default=512)
+    args = ap.parse_args()
+
+    doc_ids, doc_texts, q_ids, q_texts, relevant = load_scifact(args.max_docs)
+    print(f&quot;corpus={len(doc_ids)} docs, queries={len(q_ids)}, device={&#x27;cuda&#x27; if torch.cuda.is_available() else &#x27;cpu&#x27;}&quot;)
+
+    rows = []
+    for alias in args.models:
+        D, Q, dps, q_ms = encode_all(alias, doc_texts, q_texts, args.batch_size, args.max_seq_len)
+        full = D.shape[1]
+        for dim in [full] + [x for x in DIMS if x &lt; full]:
+            Dd, Qd = l2norm(D[:, :dim]), l2norm(Q[:, :dim])  # Matryoshka truncation + renormalise
+            for prec, scores, bpv in score_variants(Dd, Qd):
+                if prec != &quot;fp32&quot; and dim not in (full, 256):
+                    continue  # keep the table readable
+                m = evaluate(scores, doc_ids, q_ids, relevant)
+                rows.append({&quot;model&quot;: alias, &quot;mrl&quot;: MODELS[alias][1], &quot;dim&quot;: dim, &quot;precision&quot;: prec,
+                             **{k: round(v, 4) for k, v in m.items()},
+                             &quot;index_MB_per_1M_docs&quot;: round(bpv * 1e6 / 2**20, 1),
+                             &quot;docs_per_s&quot;: round(dps, 1), &quot;query_ms&quot;: round(q_ms, 1)})
+                print(f&quot;{alias:14s} dim={dim:5d} {prec:20s} nDCG@10={m[&#x27;ndcg@10&#x27;]:.4f} &quot;
+                      f&quot;R@10={m[&#x27;recall@10&#x27;]:.4f}  {rows[-1][&#x27;index_MB_per_1M_docs&#x27;]:&gt;8} MB/1M&quot;)
+
+    with open(&quot;bakeoff_results.csv&quot;, &quot;w&quot;, newline=&quot;&quot;) as f:
+        w = csv.DictWriter(f, fieldnames=rows[0].keys())
+        w.writeheader()
+        w.writerows(rows)
+    print(&quot;\nWrote bakeoff_results.csv&quot;)
+
+
+if __name__ == &quot;__main__&quot;:
+    main()</pre></div>
+
+  <h3>Run it</h3>
+  <div class="code"><div class="bar"><span>PowerShell</span><button type="button" data-copy="c-run">Copy</button></div>
+<pre id="c-run">python embed_bakeoff.py                                    # granite-small vs granite-311m, ~10 min on a 3050
+python embed_bakeoff.py --models qwen3-0.6b --batch-size 16  # optional third contender
+python embed_bakeoff.py --max-docs 1500                    # quick pass on CPU or if VRAM is tight</pre></div>
+  <p>Document embeddings are cached in <code>.emb_cache\</code>, so re-runs only re-encode queries. Delete that folder if you change <code>--max-seq-len</code>.</p>
+
+  <h3>What you should see</h3>
+  <p>The script's logic was smoke-tested on sentence-transformers 6.1.0 with a stand-in model. The numbers below are placeholders: the real SciFact scores come from your run. Look for these patterns:</p>
+  <div class="code"><div class="bar"><span>expected output (shape, not real numbers)</span><button type="button" data-copy="c-out">Copy</button></div>
+<pre id="c-out">corpus=5183 docs, queries=300, device=cuda
+granite-small  dim=  384 fp32                 nDCG@10=0.6x  R@10=0.8x     1464.8 MB/1M
+granite-small  dim=  384 int8                 nDCG@10=0.6x  (within ~1 pt of fp32)  366.2 MB/1M
+granite-small  dim=  384 binary               nDCG@10=noticeably lower       45.8 MB/1M
+granite-small  dim=  384 binary+rescore@50    nDCG@10=most of the gap back    45.8 MB/1M
+granite-small  dim=  256 fp32                 nDCG@10=drops                   976.6 MB/1M
+granite-small  dim=   64 fp32                 nDCG@10=drops sharply  &lt;- not MRL-trained
+granite-311m   dim=  768 fp32                 nDCG@10=0.6x-0.7x              2929.7 MB/1M
+granite-311m   dim=  256 fp32                 nDCG@10=within a few pts of 768  &lt;- MRL at work
+granite-311m   dim=  256 int8                 nDCG@10=close to 256 fp32        244.1 MB/1M
+granite-311m   dim=   64 fp32                 nDCG@10=degrades, but gracefully
+
+Wrote bakeoff_results.csv</pre></div>
+  <div class="callout">
+    <p><strong>Things to write down:</strong></p>
+    <ul>
+      <li>The <strong>retention curve</strong> (nDCG at d / nDCG at full d) for the MRL model and the non-MRL model. That chart is the evidence behind "we store 256-d".</li>
+      <li>The <strong>knee</strong>: the smallest dimension and precision within 2 points of full fp32. Multiply its MB/1M by your real corpus size.</li>
+      <li><strong>Binary works much worse at low dimensions.</strong> 384 bits carries far less information than 1024 bits, which is why binary quantization pairs best with larger models.</li>
+      <li>Query latency per model on your GPU. The 311M model's extra quality costs milliseconds per query, which matters at high QPS.</li>
+    </ul>
+  </div>
+
+  <h3>Stretch goals</h3>
+  <ol>
+    <li><strong>Same model, different runtime.</strong> <code>ollama pull qwen3-embedding:0.6b</code>, then run the script below. It encodes SciFact through Ollama's GGUF build, with and without Qwen3's query instruction. Compare with the HF numbers. Note the lesson: <em>vectors from different runtimes or quantizations of the "same" model are not interchangeable</em>, so the query encoder must match the index encoder exactly.
+      <div class="code"><div class="bar"><span>ollama_stretch.py</span><button type="button" data-copy="c-oll">Copy</button></div>
+<pre id="c-oll">&quot;&quot;&quot;Stretch 1 - same model, different runtime: Ollama&#x27;s GGUF Qwen3-Embedding vs the HF build.
+
+Prereq:  ollama pull qwen3-embedding:0.6b      (639 MB)
+Run:     python ollama_stretch.py
+&quot;&quot;&quot;
+import numpy as np
+import ollama
+
+from embed_bakeoff import evaluate, l2norm, load_scifact
+
+MODEL = &quot;qwen3-embedding:0.6b&quot;
+TASK = &quot;Given a scientific claim, retrieve documents that support or refute the claim&quot;
+
+
+def embed(texts: list[str], batch: int = 32) -&gt; np.ndarray:
+    out: list[list[float]] = []
+    for i in range(0, len(texts), batch):
+        out.extend(ollama.embed(model=MODEL, input=texts[i:i + batch]).embeddings)
+    return l2norm(np.asarray(out, dtype=np.float32))
+
+
+doc_ids, docs, q_ids, qs, rel = load_scifact(max_docs=2000)
+D = embed(docs)
+print(f&quot;docs embedded: {D.shape}&quot;)
+
+# Ollama does NOT add Qwen3&#x27;s query instruction for you - the HF/sentence-transformers path does.
+variants = {
+    &quot;no instruction&quot;: qs,
+    &quot;with instruction&quot;: [f&quot;Instruct: {TASK}\nQuery:{q}&quot; for q in qs],
+}
+for label, qtexts in variants.items():
+    Q = embed(qtexts)
+    for dim in (1024, 256):
+        m = evaluate(l2norm(Q[:, :dim]) @ l2norm(D[:, :dim]).T, doc_ids, q_ids, rel)
+        print(f&quot;{label:17s} dim={dim:4d}  nDCG@10={m[&#x27;ndcg@10&#x27;]:.4f}  R@10={m[&#x27;recall@10&#x27;]:.4f}&quot;)</pre></div>
+    </li>
+    <li><strong>Domain-adapt granite-small.</strong> Fine-tune it on SciFact's <em>train</em> qrels (809 queries) with <code>MatryoshkaLoss(model, MultipleNegativesRankingLoss(model), [384, 256, 128, 64])</code> using <code>SentenceTransformerTrainer</code>. Re-run the bake-off on the test split. Did the 64-d score recover? Did full-dim nDCG move? This is the "fine-tune the embedder" rung of the ladder, measured.</li>
+  </ol>
+</section>
+
+<section id="repos">
+  <h2><span class="n">05</span>GitHub repos to study</h2>
+  <div class="repos">
+    <div class="repo"><a href="https://github.com/huggingface/sentence-transformers">huggingface/sentence-transformers</a>
+      <p>Read the <code>quantization</code> module (how int8 ranges are calibrated) and <code>MatryoshkaLoss</code>. Then read the v6.0 release notes: int8 indexes built with v5 multi-process encoding aren't bit-compatible. That's a real-world re-index trigger.</p>
+      <div class="m">~19.2k ★ · v6.1.0 on PyPI · moved from UKPLab to Hugging Face</div></div>
+    <div class="repo"><a href="https://github.com/embeddings-benchmark/mteb">embeddings-benchmark/mteb</a>
+      <p>See how a retrieval task is defined (corpus, queries, qrels), then copy that pattern to run MTEB-style evaluation on your own golden set rather than trusting the leaderboard.</p>
+      <div class="m">~3.4k ★ · mteb 2.24.x on PyPI · 4.6k commits</div></div>
+    <div class="repo"><a href="https://github.com/ibm-granite/granite-embedding-models">ibm-granite/granite-embedding-models</a>
+      <p>Read <code>whats_new_in_r2.md</code> and the Matryoshka table for the 311M multilingual model. It's the IBM-native option to put in a watsonx design, and the numbers are self-reported, so verify them in today's lab.</p>
+      <div class="m">Multilingual R2 released 29 Apr 2026 · Apache-2.0</div></div>
+    <div class="repo"><a href="https://github.com/QwenLM/Qwen3-Embedding">QwenLM/Qwen3-Embedding</a>
+      <p>Look at the <code>evaluation/</code> folder and the instruction format. It's a clear example of an instruction-aware, last-token-pooled LLM embedder with MRL from 32 dimensions up.</p>
+      <div class="m">~2.0k ★ · 0.6B / 4B / 8B · Apache-2.0</div></div>
+  </div>
+</section>
+
+<section id="read">
+  <h2><span class="n">06</span>Read / watch</h2>
+  <ul>
+    <li><a href="https://huggingface.co/blog/embedding-quantization">Hugging Face: Binary and Scalar Embedding Quantization</a>. The source for the 4× / 32× and 96% / 99% figures, the rescoring method, and the speed benchmarks. Read the "rescore multiplier" section closely.</li>
+    <li><a href="https://arxiv.org/abs/2205.13147">Kusupati et al., "Matryoshka Representation Learning"</a>. Read §3 and the adaptive retrieval results. Those results are the academic version of the funnel diagram above.</li>
+    <li><a href="https://arxiv.org/abs/2502.13595">MMTEB: Massive Multilingual Text Embedding Benchmark</a> (ICLR 2025). Explains how the current leaderboard is built, the zero-shot flag, and why the task mix matters when you read averages.</li>
+  </ul>
+</section>
+
+<section id="interview">
+  <h2><span class="n">07</span>Interview questions</h2>
+  <div class="qs">
+  <details class="qa"><summary>How do you choose an embedding model for a multilingual knowledge assistant serving 50k employees?</summary>
+    <div class="a"><p>Start with constraints: languages, data residency (can text leave the boundary?), max chunk tokens, license, and a latency/QPS budget. Shortlist 3–4 models from the MTEB retrieval tab (multilingual subset) that pass those filters, including one managed API and one self-hostable MRL model. Build a 200–300-query golden set from real search logs or SME questions across languages, and measure nDCG@10, Recall@20 (which matters for the reranker), p95 encode latency and cost per million tokens. Pick the smallest model within about 2 points of the best. Prefer MRL so storage can be tuned later without a model change.</p></div></details>
+  <details class="qa"><summary>We need to switch embedding models on a 40M-chunk production index. What's your migration plan?</summary>
+    <div class="a"><p>Treat it as a data migration. (1) Every vector already carries model ID, version, dimension and prompt metadata. (2) Build a new index in parallel by backfilling from the chunk store, not from source documents, so chunking stays fixed. Dual-write new chunks to both indexes. (3) Shadow-query the new index, compare offline metrics on the golden set, and check online agreement. (4) Recalibrate thresholds such as the retrieval floor and hybrid weights, because score distributions change. (5) Cut over behind a flag, keep the old index for rollback until a soak period passes, then delete it. Never query one model's index with another model's query vectors.</p></div></details>
+  <details class="qa"><summary>Cosine, dot product or Euclidean: does it matter?</summary>
+    <div class="a"><p>For normalised vectors, no. They produce identical rankings, since ‖a−b‖² = 2 − 2a·b. So normalise at write and query time and use inner product, the fastest kernel. It matters when the model is trained for unnormalised dot product, or when vectors aren't normalised but the index assumes cosine. The second case is a silent bug that biases results toward high-norm vectors. Also, raw scores aren't comparable across models, so any threshold has to be recalibrated per model.</p></div></details>
+  <details class="qa"><summary>Vector storage is the biggest line item in our RAG bill. What are your levers, in order?</summary>
+    <div class="a"><p>(1) Remove duplicate and boilerplate chunks; fewer vectors is the cleanest saving. (2) int8 scalar quantization: 4× smaller and about 99% retained with rescoring, so it's almost always worth doing. (3) MRL truncation if the model supports it, for example 1024 → 256 for another 4×. (4) Binary first stage with fp32 or int8 rescoring from disk: 32× smaller in RAM. (5) PQ or IVF-PQ in the ANN layer (Day 7). Then put tiering in place, with hot tenants in RAM and cold ones on disk-based indexes. Validate each step on the golden set and stop at the knee.</p></div></details>
+  <details class="qa"><summary>Retrieval misses on internal jargon and product codes. Do you fine-tune the embedder?</summary>
+    <div class="a"><p>Not first. Codes and IDs are a lexical problem, so add BM25 hybrid search and metadata filters. Then add a reranker. Check that query prefixes or instructions are correct. Only if misses persist on semantic jargon would I fine-tune, using LLM-generated queries per chunk plus mined hard negatives with MNRL wrapped in MatryoshkaLoss, evaluated on a held-out golden set. Account for the ongoing cost: a full re-index now, and re-validation every time the base model is upgraded. A query-side adapter is a cheaper middle step because it doesn't touch the index.</p></div></details>
+  </div>
+</section>
+
+<section id="adr" class="adr">
+  <h2><span class="n">08</span>Architect's lens: ADR-015 · Embedding model &amp; vector representation</h2>
+  <div class="callout">
+  <dl>
+    <dt>Status</dt><dd>Accepted · Day 5 study ADR (continues ADR-014)</dd>
+    <dt>Context</dt><dd>The same policy assistant: about 20k users, roughly 6M chunks in 9 languages, on watsonx.ai with one air-gapped region. Chunks up to about 1,000 tokens. Target p95 retrieval ≤ 150 ms. Vector-store RAM budget per region: 16 GiB.</dd>
+    <dt>Options</dt><dd><strong>A.</strong> watsonx-hosted granite-embedding-278m-multilingual (768-d, 512-token limit). <strong>B.</strong> Self-hosted granite-embedding-311m-multilingual-r2 (768-d MRL, 32K context, Apache-2.0). <strong>C.</strong> Managed API embedder (text-embedding-3-large, 3072-d). <strong>D.</strong> Qwen3-Embedding-8B self-hosted.</dd>
+    <dt>Decision</dt><dd><strong>B</strong>, storing a 256-d int8 vector for stage 1 (6M × 256 B ≈ 1.4 GiB plus HNSW overhead) and 768-d fp32 on disk for rescoring. A truncates our 1,000-token chunks. C fails the air-gapped requirement and its 3072-d vectors break the RAM budget at fp32. D needs a GPU per replica and makes re-indexing slow. B won the 300-query multilingual golden set within 1.5 nDCG points of D.</dd>
+    <dt>Consequences</dt><dd>
+      <ul>
+        <li>We operate an embedding service (GPU or CPU pool) with its own SLO.</li>
+        <li>Every vector carries <code>emb_model</code>, <code>emb_version</code>, <code>dim</code> and <code>precision</code>.</li>
+        <li>An embedder upgrade is a planned re-index with shadow evaluation and threshold recalibration (retrieval floor from ADR-014).</li>
+        <li>Re-check against watsonx's hosted catalogue each quarter. If R2 becomes hosted in-region, revisit A vs B for ops cost.</li>
+      </ul>
+    </dd>
+  </dl>
+  </div>
+</section>
+
+<section id="tomorrow">
+  <h2><span class="n">09</span>Tomorrow</h2>
+  <div class="next"><strong>Day 6: Chunking strategies.</strong> Fixed, recursive, semantic, structure-aware, parent-child and late chunking, measured on the same SciFact harness you built today.</div>
+</section>
+
+<section class="sources">
+  <h2><span class="n">—</span>Sources</h2>
+  <ul>
+    <li><a href="https://pypi.org/project/sentence-transformers/">https://pypi.org/project/sentence-transformers/</a></li>
+    <li><a href="https://newreleases.io/project/pypi/sentence-transformers/release/6.1.0">https://newreleases.io/project/pypi/sentence-transformers/release/6.1.0</a></li>
+    <li><a href="https://ecorpit.com/sentence-transformers-6-0-multivector-index-cost-dependency-floor-conflict-2026/">https://ecorpit.com/sentence-transformers-6-0-multivector-index-cost-dependency-floor-conflict-2026/</a></li>
+    <li><a href="https://sbert.net/examples/training/matryoshka/README.html">https://sbert.net/examples/training/matryoshka/README.html</a></li>
+    <li><a href="https://sbert.net/examples/applications/embedding-quantization/README.html">https://sbert.net/examples/applications/embedding-quantization/README.html</a></li>
+    <li><a href="https://huggingface.co/blog/embedding-quantization">https://huggingface.co/blog/embedding-quantization</a></li>
+    <li><a href="https://huggingface.co/spaces/mteb/leaderboard">https://huggingface.co/spaces/mteb/leaderboard</a></li>
+    <li><a href="https://modal.com/blog/mteb-leaderboard-article">https://modal.com/blog/mteb-leaderboard-article</a></li>
+    <li><a href="https://arxiv.org/abs/2205.13147">https://arxiv.org/abs/2205.13147</a></li>
+    <li><a href="https://arxiv.org/abs/2502.13595">https://arxiv.org/abs/2502.13595</a></li>
+    <li><a href="https://arxiv.org/abs/2508.21085">https://arxiv.org/abs/2508.21085</a></li>
+    <li><a href="https://huggingface.co/ibm-granite/granite-embedding-english-r2">https://huggingface.co/ibm-granite/granite-embedding-english-r2</a></li>
+    <li><a href="https://huggingface.co/ibm-granite/granite-embedding-small-english-r2">https://huggingface.co/ibm-granite/granite-embedding-small-english-r2</a></li>
+    <li><a href="https://huggingface.co/ibm-granite/granite-embedding-311m-multilingual-r2">https://huggingface.co/ibm-granite/granite-embedding-311m-multilingual-r2</a></li>
+    <li><a href="https://huggingface.co/Qwen/Qwen3-Embedding-0.6B">https://huggingface.co/Qwen/Qwen3-Embedding-0.6B</a></li>
+    <li><a href="https://huggingface.co/datasets/mteb/scifact">https://huggingface.co/datasets/mteb/scifact</a></li>
+    <li><a href="https://www.ibm.com/docs/en/SSYOK8/wsj/analyze-data/fm-models-embed.html">https://www.ibm.com/docs/en/SSYOK8/wsj/analyze-data/fm-models-embed.html</a></li>
+    <li><a href="https://ollama.com/search?c=embedding">https://ollama.com/search?c=embedding</a></li>
+    <li><a href="https://ollama.com/library/qwen3-embedding">https://ollama.com/library/qwen3-embedding</a></li>
+    <li><a href="https://pytorch.org/get-started/locally/">https://pytorch.org/get-started/locally/</a></li>
+    <li><a href="https://developers.openai.com/api/docs/models/text-embedding-3-small">https://developers.openai.com/api/docs/models/text-embedding-3-small</a></li>
+    <li><a href="https://github.com/huggingface/sentence-transformers">https://github.com/huggingface/sentence-transformers</a></li>
+    <li><a href="https://github.com/embeddings-benchmark/mteb">https://github.com/embeddings-benchmark/mteb</a></li>
+    <li><a href="https://github.com/ibm-granite/granite-embedding-models">https://github.com/ibm-granite/granite-embedding-models</a></li>
+    <li><a href="https://github.com/QwenLM/Qwen3-Embedding">https://github.com/QwenLM/Qwen3-Embedding</a></li>
+  </ul>
+</section>
+</main>
+</div>
+
+<script>
+document.querySelectorAll('button[data-copy]').forEach(function(b){
+  b.addEventListener('click',function(){
+    var el=document.getElementById(b.getAttribute('data-copy'));
+    var txt=el.innerText;
+    function done(){b.textContent='Copied';setTimeout(function(){b.textContent='Copy'},1500);}
+    function fallback(){var r=document.createRange();r.selectNodeContents(el);var s=getSelection();s.removeAllRanges();s.addRange(r);b.textContent='Selected – press Ctrl+C';setTimeout(function(){b.textContent='Copy'},2500);}
+    try{navigator.clipboard.writeText(txt).then(done,fallback);}catch(e){fallback();}
+  });
+});
+</script>
+
+</body></html>

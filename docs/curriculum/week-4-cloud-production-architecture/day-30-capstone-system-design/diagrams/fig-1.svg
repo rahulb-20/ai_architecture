@@ -1,0 +1,42 @@
+<svg font-family="IBM Plex Sans, Segoe UI, Arial, sans-serif" aria-label="Architecture: serving path, model plane, ingestion plane and observability" class="arch" role="img" style="background:#ffffff" viewbox="0 0 960 590" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<marker id="a" markerheight="7" markerwidth="7" orient="auto-start-reverse" refx="9" refy="5" viewbox="0 0 10 10"><path class="ah" d="M0 0L10 5L0 10z"></path></marker>
+<marker id="b" markerheight="7" markerwidth="7" orient="auto-start-reverse" refx="9" refy="5" viewbox="0 0 10 10"><path class="ah2" d="M0 0L10 5L0 10z"></path></marker>
+</defs>
+<rect class="band" height="112" rx="6" width="944" x="8" y="8"></rect>
+<rect class="band" height="216" rx="6" width="944" x="8" y="132"></rect>
+<rect class="band" height="112" rx="6" width="944" x="8" y="360"></rect>
+<text class="lbl" x="20" y="28">Serving path</text>
+<text class="lbl" x="20" y="152">Retrieval &amp; model plane</text>
+<text class="lbl" x="20" y="380">Ingestion plane (event-driven)</text>
+<rect class="box" height="62" rx="5" width="175" x="20" y="44"></rect><text class="t" x="32" y="68">Channels</text><text class="s" x="32" y="88">Teams · web · Orchestrate</text>
+<rect class="box" height="62" rx="5" width="190" x="215" y="44"></rect><text class="t" x="227" y="68">API gateway</text><text class="s" x="227" y="88">OIDC · rate limits · quotas</text>
+<rect class="box hot" height="62" rx="5" width="260" x="425" y="44"></rect><text class="t" x="437" y="68">Orchestrator (LangGraph)</text><text class="s" x="437" y="88">route → rewrite → retrieve → answer → verify</text>
+<rect class="box" height="62" rx="5" width="235" x="705" y="44"></rect><text class="t" x="717" y="68">Guardrails in / out</text><text class="s" x="717" y="88">injection · PII · policy · citation check</text>
+<path class="edge" d="M195 75H213" marker-end="url(#a)"></path><path class="edge" d="M405 75H423" marker-end="url(#a)"></path><path class="edge" d="M685 75H703" marker-end="url(#a)" marker-start="url(#a)"></path>
+<rect class="box" height="62" rx="5" width="285" x="20" y="168"></rect><text class="t" x="32" y="192">Identity (Entra ID / IBM Verify)</text><text class="s" x="32" y="212">user → groups, nested groups expanded</text>
+<path class="edge" d="M260 168V108" marker-end="url(#a)"></path>
+<rect class="box hot" height="62" rx="5" width="235" x="330" y="168"></rect><text class="t" x="342" y="192">Retrieval service</text><text class="s" x="342" y="212">BM25 + dense · ACL pre-filter · rerank</text>
+<rect class="box" height="62" rx="5" width="350" x="590" y="168"></rect><text class="t" x="602" y="192">AI gateway (LiteLLM / APIM)</text><text class="s" x="602" y="212">routing · fallback · budgets · semantic + prompt cache</text>
+<path class="edge" d="M475 106V166" marker-end="url(#a)"></path><path class="edge" d="M655 106V166" marker-end="url(#a)"></path>
+<path class="edge acl" d="M305 199H328" marker-end="url(#b)"></path>
+<rect class="box" height="62" rx="5" width="235" x="330" y="268"></rect><text class="t" x="342" y="292">Hybrid index (alias v1 / v2)</text><text class="s" x="342" y="312">text + int8 vectors + ACL fields</text>
+<rect class="box" height="62" rx="5" width="350" x="590" y="268"></rect><text class="t" x="602" y="292">Model providers</text><text class="s" x="602" y="312">Azure OpenAI · Bedrock · Vertex · watsonx.ai · vLLM</text>
+<path class="edge" d="M447 230V266" marker-end="url(#a)"></path><path class="edge" d="M765 230V266" marker-end="url(#a)"></path>
+<rect class="box" height="62" rx="5" width="285" x="20" y="268"></rect><text class="t" x="32" y="292">Action tools via MCP</text><text class="s" x="32" y="312">ServiceNow ticket · Workday leave</text>
+<path class="edge" d="M440 106V140H317V299H307" marker-end="url(#a)"></path>
+<rect class="box" height="60" rx="5" width="135" x="20" y="396"></rect><text class="t" x="30" y="420">Sources</text><text class="s" x="30" y="440">SharePoint · wikis</text>
+<rect class="box" height="60" rx="5" width="150" x="172" y="396"></rect><text class="t" x="182" y="420">Connectors</text><text class="s" x="182" y="440">webhooks → queue</text>
+<rect class="box" height="60" rx="5" width="130" x="339" y="396"></rect><text class="t" x="349" y="420">Parse</text><text class="s" x="349" y="440">Docling · OCR</text>
+<rect class="box" height="60" rx="5" width="140" x="486" y="396"></rect><text class="t" x="496" y="420">Chunk + mask</text><text class="s" x="496" y="440">structure-aware · PII</text>
+<rect class="box" height="60" rx="5" width="120" x="643" y="396"></rect><text class="t" x="653" y="420">Embed</text><text class="s" x="653" y="440">versioned model</text>
+<rect class="box hot" height="60" rx="5" width="160" x="780" y="396"></rect><text class="t" x="790" y="420">Index writer</text><text class="s" x="790" y="440">idempotent · tombstones</text>
+<path class="edge" d="M155 426H170" marker-end="url(#a)"></path><path class="edge" d="M322 426H337" marker-end="url(#a)"></path><path class="edge" d="M469 426H484" marker-end="url(#a)"></path><path class="edge" d="M626 426H641" marker-end="url(#a)"></path><path class="edge" d="M763 426H778" marker-end="url(#a)"></path>
+<path class="edge" d="M860 396V352H520V332" marker-end="url(#a)"></path>
+<path class="edge acl" d="M247 396V354H400V334" marker-end="url(#b)"></path>
+<text class="s" style="fill:#555" x="258" y="376">source ACL sync (fast path)</text>
+<rect class="box" height="88" rx="5" width="920" x="20" y="488"></rect>
+<text class="t" x="32" y="512">Observability &amp; governance (cross-cutting)</text>
+<text class="s" x="32" y="534">OpenTelemetry GenAI spans → Langfuse / Phoenix · prompt + model versions on every trace · cost per tenant and per feature</text>
+<text class="s" x="32" y="554">Golden-set eval gate in CI · thumbs, citation clicks, abstain rate → feedback queue · audit log 90 days · watsonx.governance / Purview</text>
+</svg>

@@ -1,0 +1,21 @@
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata: {name: mockllm-backend}
+spec:
+  scaleTargetRef: {name: mockllm-backend}
+  minReplicaCount: 1
+  maxReplicaCount: 6
+  pollingInterval: 5
+  cooldownPeriod: 60
+  advanced:
+    horizontalPodAutoscalerConfig:
+      behavior:
+        scaleUp:   {stabilizationWindowSeconds: 0}
+        scaleDown: {stabilizationWindowSeconds: 60}
+  triggers:
+  - type: metrics-api
+    metricType: AverageValue          # desired = ceil(inflight / 2)
+    metadata:
+      url: "http://mockllm-gateway.default.svc.cluster.local:8000/stats"
+      valueLocation: "inflight"
+      targetValue: "2"                # = backend MAX_CONCURRENCY

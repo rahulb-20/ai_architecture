@@ -1,0 +1,531 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>GenAI Prep · Day 18 — Multi-agent patterns</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: single reading column (~70ch) with a sticky section index on wide screens; tables and code scroll in place. */
+:root{
+  --bg:#f5f7f9; --surface:#ffffff; --ink:#15202b; --muted:#56626e; --line:#d9e0e6;
+  --accent:#0f5ad8; --accent-soft:#e3ecfb; --warn:#a4570a; --warn-soft:#fbefe2; --ok:#1d7a4a; --code-bg:#eef2f6;
+  --f-display:"IBM Plex Sans Condensed","Arial Narrow",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0d1319; --surface:#141c24; --ink:#e3e9ee; --muted:#93a1ad; --line:#26323d;
+  --accent:#78a9ff; --accent-soft:#1a2a44; --warn:#f0a35c; --warn-soft:#33240f; --ok:#5fcf91; --code-bg:#0a0f14; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0d1319; --surface:#141c24; --ink:#e3e9ee; --muted:#93a1ad; --line:#26323d;
+  --accent:#78a9ff; --accent-soft:#1a2a44; --warn:#f0a35c; --warn-soft:#33240f; --ok:#5fcf91; --code-bg:#0a0f14; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:16px/1.62 var(--f-body);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 64px}
+.wrap{max-width:1120px;margin:0 auto;display:grid;grid-template-columns:200px minmax(0,1fr);gap:48px}
+nav.toc{position:sticky;top:calc(env(safe-area-inset-top,0px) + 24px);align-self:start;padding-top:40px;font-size:13.5px}
+nav.toc a{display:block;color:var(--muted);text-decoration:none;padding:4px 0 4px 10px;border-left:2px solid var(--line)}
+nav.toc a:hover,nav.toc a:focus-visible{color:var(--accent);border-left-color:var(--accent)}
+main{min-width:0;max-width:760px}
+@media (max-width:860px){.wrap{grid-template-columns:minmax(0,1fr);gap:0} nav.toc{display:none}}
+header.hero{padding-block:40px 24px;border-bottom:1px solid var(--line)}
+.eyebrow{font:600 12px/1 var(--f-mono);letter-spacing:.12em;text-transform:uppercase;color:var(--accent)}
+h1{font:700 clamp(30px,5vw,44px)/1.08 var(--f-display);margin:12px 0 10px;text-wrap:balance;letter-spacing:-.01em}
+.lede{color:var(--muted);max-width:62ch;margin:0}
+.meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
+.chip{font:500 12px/1 var(--f-mono);padding:6px 9px;border:1px solid var(--line);border-radius:4px;color:var(--muted);background:var(--surface)}
+section{padding-block:36px 4px}
+h2{font:600 24px/1.2 var(--f-display);margin:0 0 14px;display:flex;gap:12px;align-items:baseline;text-wrap:balance}
+h2 .n{font:500 13px var(--f-mono);color:var(--accent)}
+h3{font:600 17px/1.3 var(--f-display);margin:24px 0 8px}
+p,li{max-width:68ch}
+a{color:var(--accent)}
+code{font:0.88em var(--f-mono);background:var(--code-bg);padding:1px 5px;border-radius:3px}
+.callout{border:1px solid var(--line);background:var(--surface);border-radius:6px;padding:14px 18px;margin:16px 0}
+.callout.warn{background:var(--warn-soft);border-color:transparent}
+.callout.warn strong{color:var(--warn)}
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:6px;background:var(--surface);margin:14px 0}
+table{border-collapse:collapse;width:100%;min-width:720px;font-size:14px}
+th,td{text-align:left;vertical-align:top;padding:10px 12px;border-bottom:1px solid var(--line)}
+th{font:600 12px var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:var(--bg)}
+tr:last-child td{border-bottom:0}
+td:first-child{font-weight:600;white-space:nowrap}
+.codebox{position:relative;margin:12px 0 18px}
+.codebox .lbl{font:500 12px var(--f-mono);color:var(--muted);margin-bottom:4px}
+pre{margin:0;background:var(--code-bg);border:1px solid var(--line);border-radius:6px;padding:14px 16px;overflow:auto;max-height:560px;font:13px/1.55 var(--f-mono);tab-size:4}
+pre code{background:none;padding:0;font-size:inherit}
+.copy{position:absolute;top:22px;right:8px;font:500 12px var(--f-mono);padding:5px 9px;border-radius:4px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+.copy:hover{border-color:var(--accent);color:var(--accent)}
+.copy:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+figure{margin:18px 0;overflow-x:auto}
+figure svg{display:block;width:100%;min-width:640px;height:auto}
+figcaption{font-size:13px;color:var(--muted);margin-top:6px}
+svg .box{fill:var(--surface);stroke:var(--line);stroke-width:1.5}
+svg .hub{fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5}
+svg .t{fill:var(--ink);font:500 12px var(--f-body)}
+svg .s{fill:var(--muted);font:11px var(--f-mono)}
+svg .h{fill:var(--accent);font:600 13px var(--f-display);letter-spacing:.04em}
+svg .e{stroke:var(--muted);stroke-width:1.4;fill:none}
+svg .ea{stroke:var(--accent);stroke-width:1.6;fill:none}
+svg .ar{fill:var(--muted)} svg .arA{fill:var(--accent)}
+.qa details{border-top:1px solid var(--line);padding:12px 0}
+.qa details:last-child{border-bottom:1px solid var(--line)}
+.qa summary{cursor:pointer;font-weight:600;list-style:none;display:flex;gap:10px}
+.qa summary::before{content:"Q";font:600 13px var(--f-mono);color:var(--accent);padding-top:2px}
+.qa details[open] summary{color:var(--accent)}
+.qa details>div{padding:8px 0 0 22px}
+.adr dl{display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px 18px;margin:0}
+.adr dt{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--muted);padding-top:3px}
+.adr dd{margin:0}
+@media (max-width:560px){.adr dl{grid-template-columns:minmax(0,1fr)} .adr dt{padding-top:8px}}
+ul.repos{padding-left:0;list-style:none} ul.repos li{padding:10px 0;border-bottom:1px solid var(--line)}
+ul.repos li:last-child{border-bottom:0}
+.tag{font:500 11px var(--f-mono);padding:2px 6px;border-radius:3px;background:var(--warn-soft);color:var(--warn);margin-left:6px}
+.tag.ok{background:var(--accent-soft);color:var(--accent)}
+footer{margin-top:40px;padding-top:18px;border-top:1px solid var(--line);color:var(--muted);font-size:14px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+<nav class="toc" aria-label="Sections">
+  <a href="#why">Why it matters</a><a href="#brief">Concept brief</a><a href="#tradeoffs">Trade-offs</a>
+  <a href="#exercise">Hands-on</a><a href="#repos">Repos</a><a href="#read">Read / watch</a>
+  <a href="#qa">Interview Qs</a><a href="#adr">Architect's lens</a><a href="#next">Tomorrow</a>
+</nav>
+<main>
+<header class="hero">
+  <div class="eyebrow">Week 3 · Agentic systems · Day 18 of 30</div>
+  <h1>Multi-agent patterns, and when not to use them</h1>
+  <p class="lede">Supervisor, hierarchical, swarm/handoffs, ReAct vs plan-and-execute. Today's goal: be able to defend a single-agent design in a review as confidently as a multi-agent one, with numbers.</p>
+  <div class="meta"><span class="chip">langgraph 1.2.x</span><span class="chip">langchain 1.4.x</span><span class="chip">Ollama · qwen2.5:3b</span><span class="chip">≈ 75 min</span></div>
+</header>
+
+<section id="why">
+  <h2><span class="n">01</span>Why this matters for the JD</h2>
+  <p>The JD names <em>"agentic frameworks (LangChain, LangGraph, MCP, tool calling, memory, planning, multi-agent, guardrails)"</em> and asks for <em>"HLD/LLD, NFRs, decision logs, cost estimates"</em>. Multi-agent is where those meet: the topology you pick sets token cost, latency, debuggability and the blast radius of a prompt injection. Interviewers increasingly probe the opposite question too: why you <em>didn't</em> go multi-agent.</p>
+</section>
+
+<section id="brief">
+  <h2><span class="n">02</span>Concept brief</h2>
+  <p>Strip away framework names and there are only a few decisions. <strong>Who owns control flow</strong> (code or an LLM)? <strong>Who owns the conversation</strong> with the user (one agent, or whoever was handed the baton)? <strong>What context each worker sees</strong> (the full history, or a brief written by the caller)? Everything below is a point in that space.</p>
+
+  <figure>
+  <svg viewBox="0 0 960 300" role="img" aria-label="Four topologies: single agent with tools, router workflow, supervisor with sub-agents as tools, and peer handoffs">
+    <defs>
+      <marker id="m" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ar" d="M0,0L10,5L0,10z"/></marker>
+      <marker id="mA" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="arA" d="M0,0L10,5L0,10z"/></marker>
+    </defs>
+    <!-- A single -->
+    <text class="h" x="20" y="24">A · SINGLE AGENT</text>
+    <rect class="hub" x="50" y="60" width="140" height="44" rx="6"/><text class="t" x="120" y="87" text-anchor="middle">ReAct agent</text>
+    <rect class="box" x="20" y="170" width="60" height="34" rx="4"/><text class="s" x="50" y="191" text-anchor="middle">tool</text>
+    <rect class="box" x="90" y="170" width="60" height="34" rx="4"/><text class="s" x="120" y="191" text-anchor="middle">tool</text>
+    <rect class="box" x="160" y="170" width="60" height="34" rx="4"/><text class="s" x="190" y="191" text-anchor="middle">tool</text>
+    <path class="e" d="M90 104L52 168" marker-end="url(#m)"/><path class="e" d="M120 104L120 168" marker-end="url(#m)"/><path class="e" d="M150 104L188 168" marker-end="url(#m)"/>
+    <text class="s" x="20" y="240">1 context · LLM loops</text><text class="s" x="20" y="258">cheapest, easiest to trace</text>
+
+    <!-- B router -->
+    <text class="h" x="260" y="24">B · ROUTER / WORKFLOW</text>
+    <rect class="box" x="290" y="60" width="130" height="44" rx="6"/><text class="t" x="355" y="80" text-anchor="middle">classify</text><text class="s" x="355" y="96" text-anchor="middle">1 structured call</text>
+    <rect class="hub" x="262" y="170" width="86" height="34" rx="4"/><text class="t" x="305" y="191" text-anchor="middle">policy</text>
+    <rect class="hub" x="362" y="170" width="86" height="34" rx="4"/><text class="t" x="405" y="191" text-anchor="middle">finance</text>
+    <path class="e" d="M330 104L310 168" marker-end="url(#m)"/><path class="e" d="M380 104L400 168" marker-end="url(#m)"/>
+    <path class="ea" d="M348 187L360 187" marker-end="url(#mA)"/>
+    <text class="s" x="262" y="240">code owns the edges</text><text class="s" x="262" y="258">predictable, testable paths</text>
+
+    <!-- C supervisor -->
+    <text class="h" x="500" y="24">C · SUPERVISOR</text>
+    <rect class="hub" x="540" y="60" width="140" height="44" rx="6"/><text class="t" x="610" y="80" text-anchor="middle">supervisor</text><text class="s" x="610" y="96" text-anchor="middle">owns the user</text>
+    <rect class="box" x="505" y="170" width="95" height="34" rx="4"/><text class="t" x="552" y="191" text-anchor="middle">sub-agent</text>
+    <rect class="box" x="620" y="170" width="95" height="34" rx="4"/><text class="t" x="667" y="191" text-anchor="middle">sub-agent</text>
+    <path class="ea" d="M585 104L556 168" marker-end="url(#mA)"/><path class="e" d="M566 168L595 106" marker-end="url(#m)"/>
+    <path class="ea" d="M635 104L664 168" marker-end="url(#mA)"/><path class="e" d="M654 168L625 106" marker-end="url(#m)"/>
+    <text class="s" x="505" y="240">sub-agents = tools</text><text class="s" x="505" y="258">brief in, summary out</text>
+
+    <!-- D handoffs -->
+    <text class="h" x="750" y="24">D · HANDOFFS / SWARM</text>
+    <rect class="hub" x="760" y="60" width="90" height="40" rx="6"/><text class="t" x="805" y="85" text-anchor="middle">triage</text>
+    <rect class="box" x="750" y="170" width="90" height="34" rx="4"/><text class="t" x="795" y="191" text-anchor="middle">billing</text>
+    <rect class="box" x="860" y="120" width="90" height="34" rx="4"/><text class="t" x="905" y="141" text-anchor="middle">tech</text>
+    <path class="ea" d="M800 100L796 168" marker-end="url(#mA)"/><path class="ea" d="M850 85L900 118" marker-end="url(#mA)"/>
+    <path class="ea" d="M840 182L870 156" marker-end="url(#mA)"/>
+    <text class="s" x="750" y="240">active agent talks to user</text><text class="s" x="750" y="258">shared history, hard to bound</text>
+    <line x1="0" y1="282" x2="960" y2="282" class="e" style="stroke-dasharray:3 4"/>
+    <text class="s" x="0" y="298">← more control in code · fewer tokens</text><text class="s" x="960" y="298" text-anchor="end">more autonomy · more tokens, more failure modes →</text>
+  </svg>
+  <figcaption>Blue arrows carry control. In C the supervisor gets results back and stays in charge; in D control moves and stays moved.</figcaption>
+  </figure>
+
+  <h3>Supervisor vs hierarchical vs swarm</h3>
+  <p><strong>Supervisor</strong>: one coordinator calls specialists, usually exposed as tools. It sees summaries, never the specialists' raw tool traces, so its context stays small. LangChain's own docs now recommend building this directly with tool-calling sub-agents; the <code>langgraph-supervisor</code> package says so in its README and has had no release since Nov 2025. <strong>Hierarchical</strong> nests supervisors (team leads). It only pays off when each team has a large, distinct toolset; every layer adds a round-trip and a place where the brief gets lossy. <strong>Swarm / handoffs</strong>: the active agent transfers control with a <code>Command(goto=…)</code> (LangGraph) or a <code>handoff</code> (OpenAI Agents SDK), and the receiving agent talks to the user directly. Good for customer-service triage where the user should stay with a billing specialist for many turns. Bad when you need one owner for policy, audit and the final answer.</p>
+
+  <h3>ReAct vs plan-and-execute</h3>
+  <p><strong>ReAct</strong> interleaves think → act → observe per step. It adapts well, but each step re-reads the growing history, so cost grows roughly with the square of the number of steps, and it can loop. <strong>Plan-and-execute</strong> spends one strong-model call producing a plan (a DAG of steps), then runs the steps with cheaper models or plain code, often in parallel, and replans only on failure. You get bounded cost, an auditable plan (put it in front of a human for approval) and parallel fan-out. The price is brittleness when step 2's result should have changed step 3. A useful middle ground is <em>orchestrator-workers</em>: the lead plans, spawns parallel workers with self-contained briefs, then synthesises. This is the shape of Anthropic's research system.</p>
+
+  <div class="callout warn"><strong>The numbers to remember.</strong> Anthropic reports agents use about 4× the tokens of chat, and multi-agent systems about 15×. Their multi-agent research setup beat single-agent Opus by 90.2% on an internal eval, and token usage alone explained about 80% of performance variance on BrowseComp. Multi-agent buys quality on <em>breadth-first, parallelisable</em> work by spending tokens. Cognition (Devin) argues the opposite for tightly coupled work like coding: sub-agents act on partial context and make conflicting implicit decisions. The MAST study (UC Berkeley) catalogued 14 failure modes in 3 groups: specification/system design, inter-agent misalignment, and task verification.</div>
+
+  <h3>Platform mapping</h3>
+  <div class="tbl"><table>
+    <tr><th>Pattern</th><th>LangGraph / LangChain</th><th>AWS</th><th>Azure</th><th>GCP</th><th>IBM</th></tr>
+    <tr><td>Supervisor</td><td>sub-agents as <code>@tool</code> around <code>create_agent</code></td><td>Bedrock multi-agent collaboration (supervisor mode)</td><td>Agent Framework: Magentic / group-chat manager</td><td>ADK <code>AgentTool</code>, <code>sub_agents</code></td><td>watsonx Orchestrate collaborator agents</td></tr>
+    <tr><td>Router</td><td><code>add_conditional_edges</code> + structured output</td><td>Bedrock supervisor with routing</td><td>Agent Framework workflows (sequential / concurrent)</td><td>ADK <code>SequentialAgent</code> / <code>ParallelAgent</code></td><td>Orchestrate agent routing</td></tr>
+    <tr><td>Handoffs</td><td><code>Command(goto=…, graph=Command.PARENT)</code></td><td>Strands / AgentCore (custom)</td><td>Agent Framework handoff orchestration</td><td>ADK transfer to agent</td><td>Orchestrate agent-to-agent</td></tr>
+  </table></div>
+  <p style="font-size:13px;color:var(--muted)">Managed-service feature names change often; check the current console docs before quoting them in a client deck.</p>
+</section>
+
+<section id="tradeoffs">
+  <h2><span class="n">03</span>Trade-offs &amp; decision table</h2>
+  <div class="tbl"><table>
+    <tr><th>Option</th><th>Pick when</th><th>Failure modes</th><th>Cost / latency</th></tr>
+    <tr><td>Single agent + tools</td><td>≤ ~15 well-described tools, one domain, sequential reasoning. The default.</td><td>Tool confusion as the toolset grows; context bloat on long tasks</td><td>Baseline: 1 context, N calls</td></tr>
+    <tr><td>Router / workflow</td><td>Intents are known and enumerable (HR vs IT vs Finance); compliance wants fixed paths</td><td>Misclassification is silent; "both/other" intents fall through</td><td>+1 cheap classify call; best p95 control</td></tr>
+    <tr><td>Supervisor (tools)</td><td>Distinct specialist toolsets or separate permissions/data; want context isolation</td><td>Lossy briefs (supervisor forgets to pass facts); double summarisation; supervisor answers itself</td><td>~2–3× single; serial unless the model issues parallel tool calls</td></tr>
+    <tr><td>Hierarchical</td><td>Many teams with 10+ tools each; org boundaries mirror agent boundaries</td><td>Telephone-game drift; deep stacks hard to trace</td><td>Multiplies per layer; latency stacks</td></tr>
+    <tr><td>Handoffs / swarm</td><td>Multi-turn conversations that belong to one specialist (support triage)</td><td>Ping-pong loops; no single owner for guardrails; shared history leaks context across trust boundaries</td><td>Cheap per turn; unbounded per session without a hop limit</td></tr>
+    <tr><td>Plan-and-execute</td><td>Long tasks with parallelisable steps; plan needs human approval</td><td>Stale plan; over-planning simple tasks</td><td>1 strong call + cheap workers; parallel cuts wall-clock</td></tr>
+    <tr><td>Orchestrator-workers</td><td>Breadth-first research, many independent sub-questions</td><td>Duplicate work; weak synthesis; 15× token bills</td><td>Highest tokens, lowest wall-clock for wide tasks</td></tr>
+  </table></div>
+  <p><strong>Review heuristics.</strong> Start with A. Move to B when the intents are enumerable. Move to C only when you can name the isolation benefit: different tools, different data permissions, or a context window that genuinely overflows. Every topology needs a hop/recursion budget, a token budget per request, and traces that show the brief each sub-agent received.</p>
+</section>
+
+<section id="exercise">
+  <h2><span class="n">04</span>Hands-on: benchmark three topologies (60–90 min)</h2>
+  <p>Build the same tiny HR/finance assistant three ways (single agent, supervisor with sub-agents as tools, router workflow) on identical tools and five tasks. Measure correctness, LLM calls, tokens and seconds. The deliverable is a 5-line table you could paste into an ADR.</p>
+  <div class="callout">Runs natively on Windows 11 with Ollama on the RTX 3050. No WSL2 or Docker needed. A 3B model keeps the comparison fast. Small models make the hand-off failures <em>more</em> visible, which is the point of the exercise.</div>
+
+  <div class="codebox"><div class="lbl">PowerShell · setup</div><button class="copy" type="button">Copy</button><pre><code># 1) Ollama for Windows (native, no WSL2/Docker needed)
+winget install --id Ollama.Ollama -e
+ollama pull qwen2.5:3b          # ~1.9 GB, fits the 6 GB RTX 3050 with room for 8k context
+# optional comparison model
+ollama pull llama3.2:3b
+
+# 2) Project + venv (PowerShell)
+mkdir day18; cd day18
+py -3.13 -m venv .venv
+.\.venv\Scripts\Activate.ps1      # if blocked: Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
+python -m pip install -U &quot;langgraph&gt;=1.2,&lt;2&quot; &quot;langchain&gt;=1.4,&lt;2&quot; &quot;langchain-ollama&gt;=1.1,&lt;2&quot;
+
+# 3) Run (save the script below as multiagent_bench.py)
+python multiagent_bench.py
+$env:OLLAMA_MODEL=&quot;llama3.2:3b&quot;; python multiagent_bench.py</code></pre></div>
+
+  <div class="codebox"><div class="lbl">multiagent_bench.py</div><button class="copy" type="button">Copy</button><pre><code>&quot;&quot;&quot;Day 18 - single agent vs supervisor vs router, same tools, same tasks.
+Measures: correctness, LLM calls, tokens, latency. Runs on Ollama locally.
+&quot;&quot;&quot;
+import ast
+import operator as op
+import os
+import time
+from typing import Literal, TypedDict
+
+from langchain.agents import create_agent
+from langchain_core.callbacks import BaseCallbackHandler
+from langchain_core.tools import tool
+from langchain_ollama import ChatOllama
+from langgraph.graph import END, START, StateGraph
+from pydantic import BaseModel
+
+MODEL = os.getenv(&quot;OLLAMA_MODEL&quot;, &quot;qwen2.5:3b&quot;)
+
+
+# ---------- metering: counts every LLM call, including ones inside sub-agents ----------
+class Meter(BaseCallbackHandler):
+    def __init__(self):
+        self.reset()
+
+    def reset(self):
+        self.calls, self.tin, self.tout = 0, 0, 0
+
+    def on_llm_end(self, response, **kwargs):
+        self.calls += 1
+        for gens in response.generations:
+            for g in gens:
+                um = getattr(getattr(g, &quot;message&quot;, None), &quot;usage_metadata&quot;, None) or {}
+                self.tin += um.get(&quot;input_tokens&quot;, 0)
+                self.tout += um.get(&quot;output_tokens&quot;, 0)
+
+
+METER = Meter()
+
+
+def llm():
+    return ChatOllama(model=MODEL, temperature=0, num_ctx=8192, callbacks=[METER])
+
+
+# ---------- a tiny, deterministic HR/finance domain ----------
+POLICY = {
+    &quot;leave&quot;: &quot;Employees accrue 1.5 days of earned leave per month; max carry-forward is 30 days.&quot;,
+    &quot;wfh&quot;: &quot;Up to 2 work-from-home days per week, with manager approval.&quot;,
+    &quot;travel&quot;: &quot;Domestic per-diem is INR 3500 per day. International per-diem is USD 75 per day.&quot;,
+}
+BALANCES = {&quot;E101&quot;: 12.0, &quot;E202&quot;: 27.5}
+USD_INR = 88.0  # fixed demo rate, not a live quote
+
+
+@tool
+def lookup_policy(topic: Literal[&quot;leave&quot;, &quot;wfh&quot;, &quot;travel&quot;]) -&gt; str:
+    &quot;&quot;&quot;Return the company policy text for a topic: leave, wfh or travel.&quot;&quot;&quot;
+    return POLICY[topic]
+
+
+@tool
+def leave_balance(employee_id: str) -&gt; str:
+    &quot;&quot;&quot;Return the current earned-leave balance (days) for an employee id like E101.&quot;&quot;&quot;
+    eid = employee_id.strip().upper()
+    return f&quot;{eid} has {BALANCES[eid]} days&quot; if eid in BALANCES else f&quot;Unknown employee {eid}&quot;
+
+
+_OPS = {ast.Add: op.add, ast.Sub: op.sub, ast.Mult: op.mul, ast.Div: op.truediv, ast.USub: op.neg}
+
+
+def _eval(node):
+    if isinstance(node, ast.Constant) and isinstance(node.value, (int, float)):
+        return node.value
+    if isinstance(node, ast.BinOp) and type(node.op) in _OPS:
+        return _OPS[type(node.op)](_eval(node.left), _eval(node.right))
+    if isinstance(node, ast.UnaryOp) and type(node.op) in _OPS:
+        return _OPS[type(node.op)](_eval(node.operand))
+    raise ValueError(&quot;unsupported expression&quot;)
+
+
+@tool
+def calculator(expression: str) -&gt; str:
+    &quot;&quot;&quot;Evaluate an arithmetic expression with + - * / and parentheses, e.g. &#x27;12 + 1.5*6&#x27;.&quot;&quot;&quot;
+    try:
+        return str(_eval(ast.parse(expression, mode=&quot;eval&quot;).body))
+    except Exception as e:  # return errors to the model instead of crashing the run
+        return f&quot;error: {e}&quot;
+
+
+@tool
+def usd_to_inr(amount_usd: float) -&gt; str:
+    &quot;&quot;&quot;Convert a USD amount to INR at the company&#x27;s fixed rate.&quot;&quot;&quot;
+    return f&quot;{amount_usd * USD_INR:.0f} INR&quot;
+
+
+ALL_TOOLS = [lookup_policy, leave_balance, calculator, usd_to_inr]
+
+
+def ask(agent, text: str) -&gt; str:
+    return agent.invoke({&quot;messages&quot;: [{&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: text}]})[&quot;messages&quot;][-1].content
+
+
+# ---------- Architecture A: one agent, all tools ----------
+single = create_agent(
+    llm(), ALL_TOOLS,
+    system_prompt=&quot;You are an HR assistant. Always use tools for facts and arithmetic; never guess numbers. &quot;
+                  &quot;Answer in one short sentence.&quot;,
+)
+
+# ---------- specialists (reused by B and C) ----------
+policy_agent = create_agent(
+    llm(), [lookup_policy, leave_balance],
+    system_prompt=&quot;You are the HR policy specialist. Use tools and quote the exact numbers you find.&quot;,
+)
+finance_agent = create_agent(
+    llm(), [calculator, usd_to_inr],
+    system_prompt=&quot;You are the finance specialist. Use the calculator or converter for every computation. &quot;
+                  &quot;Reply with the final number.&quot;,
+)
+
+
+# ---------- Architecture B: supervisor, sub-agents exposed as tools ----------
+@tool
+def ask_policy_specialist(request: str) -&gt; str:
+    &quot;&quot;&quot;Ask the HR policy specialist about leave, WFH or travel policy, or an employee&#x27;s leave balance.&quot;&quot;&quot;
+    return ask(policy_agent, request)
+
+
+@tool
+def ask_finance_specialist(request: str) -&gt; str:
+    &quot;&quot;&quot;Ask the finance specialist to compute something. Put every number it needs in the request.&quot;&quot;&quot;
+    return ask(finance_agent, request)
+
+
+supervisor = create_agent(
+    llm(), [ask_policy_specialist, ask_finance_specialist],
+    system_prompt=&quot;You coordinate two specialists. Get facts from the policy specialist first, then pass those &quot;
+                  &quot;facts explicitly to the finance specialist if a calculation is needed. &quot;
+                  &quot;Answer the user in one short sentence.&quot;,
+)
+
+
+# ---------- Architecture C: router workflow (1 classify call, fixed paths) ----------
+class Route(BaseModel):
+    route: Literal[&quot;policy&quot;, &quot;finance&quot;, &quot;both&quot;]
+
+
+class S(TypedDict, total=False):
+    question: str
+    route: str
+    facts: str
+    answer: str
+
+
+def classify(s: S) -&gt; S:
+    r = llm().with_structured_output(Route).invoke([
+        (&quot;system&quot;, &quot;Classify the HR question. policy = needs policy text or leave balance only. &quot;
+                   &quot;finance = pure arithmetic/conversion with all numbers given. &quot;
+                   &quot;both = needs policy facts AND a calculation.&quot;),
+        (&quot;user&quot;, s[&quot;question&quot;]),
+    ])
+    return {&quot;route&quot;: r.route}
+
+
+def policy_node(s: S) -&gt; S:
+    facts = ask(policy_agent, s[&quot;question&quot;])
+    return {&quot;facts&quot;: facts, &quot;answer&quot;: facts}
+
+
+def finance_node(s: S) -&gt; S:
+    q = s[&quot;question&quot;] + (f&quot;\nKnown facts: {s[&#x27;facts&#x27;]}&quot; if s.get(&quot;facts&quot;) else &quot;&quot;)
+    return {&quot;answer&quot;: ask(finance_agent, q)}
+
+
+g = StateGraph(S)
+g.add_node(&quot;classify&quot;, classify)
+g.add_node(&quot;policy&quot;, policy_node)
+g.add_node(&quot;finance&quot;, finance_node)
+g.add_edge(START, &quot;classify&quot;)
+g.add_conditional_edges(&quot;classify&quot;, lambda s: &quot;finance&quot; if s[&quot;route&quot;] == &quot;finance&quot; else &quot;policy&quot;,
+                        [&quot;policy&quot;, &quot;finance&quot;])
+g.add_conditional_edges(&quot;policy&quot;, lambda s: &quot;finance&quot; if s[&quot;route&quot;] == &quot;both&quot; else END, [&quot;finance&quot;, END])
+g.add_edge(&quot;finance&quot;, END)
+router = g.compile()
+
+# ---------- the benchmark ----------
+TASKS = [
+    (&quot;What is the domestic per-diem per day?&quot;, [&quot;3500&quot;]),
+    (&quot;How many leave days does E202 have?&quot;, [&quot;27.5&quot;]),
+    (&quot;E101 accrues leave at the policy rate. What will E101&#x27;s balance be after 6 more months?&quot;, [&quot;21&quot;]),
+    (&quot;What is the total international per-diem for a 4-day trip, in INR?&quot;, [&quot;26400&quot;]),
+    (&quot;Am I allowed to work from home 3 days a week?&quot;, [&quot;2&quot;]),
+]
+
+ARCHS = {
+    &quot;A single&quot;: lambda q: ask(single, q),
+    &quot;B supervisor&quot;: lambda q: ask(supervisor, q),
+    &quot;C router&quot;: lambda q: router.invoke({&quot;question&quot;: q})[&quot;answer&quot;],
+}
+
+
+def correct(ans: str, expected: list[str]) -&gt; bool:
+    norm = ans.replace(&quot;,&quot;, &quot;&quot;).replace(&quot;₹&quot;, &quot;&quot;)
+    return any(e in norm for e in expected)
+
+
+if __name__ == &quot;__main__&quot;:
+    print(f&quot;model={MODEL}\n&quot;)
+    print(f&quot;{&#x27;arch&#x27;:&lt;13}{&#x27;task&#x27;:&gt;4}{&#x27;ok&#x27;:&gt;4}{&#x27;calls&#x27;:&gt;6}{&#x27;tok_in&#x27;:&gt;8}{&#x27;tok_out&#x27;:&gt;8}{&#x27;sec&#x27;:&gt;7}&quot;)
+    totals = {}
+    for name, run in ARCHS.items():
+        t = totals.setdefault(name, [0, 0, 0, 0, 0.0])
+        for i, (q, exp) in enumerate(TASKS, 1):
+            METER.reset()
+            t0 = time.perf_counter()
+            try:
+                ans = run(q)
+            except Exception as e:  # recursion limit, bad tool args, etc. count as failures
+                ans = f&quot;ERROR {type(e).__name__}: {e}&quot;
+            dt = time.perf_counter() - t0
+            ok = correct(ans, exp)
+            print(f&quot;{name:&lt;13}{i:&gt;4}{&#x27;Y&#x27; if ok else &#x27;n&#x27;:&gt;4}{METER.calls:&gt;6}{METER.tin:&gt;8}{METER.tout:&gt;8}{dt:&gt;7.1f}&quot;
+                  f&quot;   {ans[:70]!r}&quot;)
+            for k, v in enumerate([ok, METER.calls, METER.tin, METER.tout, dt]):
+                t[k] += v
+    print(&quot;\nTOTALS&quot;)
+    for name, (ok, c, ti, to, dt) in totals.items():
+        print(f&quot;{name:&lt;13} correct={ok}/{len(TASKS)}  llm_calls={c}  tokens_in={ti}  tokens_out={to}  time={dt:.0f}s&quot;)
+</code></pre></div>
+
+  <h3>Expected output (shape, not exact numbers)</h3>
+  <p>Your numbers will differ with model and driver. What should show up: B makes roughly 2× the LLM calls and tokens of A, and fails task 3 or 4 whenever the supervisor forgets to forward the accrual rate or per-diem to the finance specialist. C is close to A on cost and gets more predictable. The single-tool tasks (1, 2, 5) are cheapest under C.</p>
+  <div class="codebox"><div class="lbl">illustrative console output</div><button class="copy" type="button">Copy</button><pre><code>model=qwen2.5:3b
+
+arch         task  ok calls  tok_in tok_out    sec
+A single        1   Y     2     610      38    2.9   &#x27;The domestic per-diem is INR 3500 per day.&#x27;
+A single        3   Y     4    1490      96    6.8   &quot;E101&#x27;s balance after 6 months will be 21 days.&quot;
+B supervisor    3   n     6    2950     170   11.4   &#x27;E101 will have 13.5 days.&#x27;   &lt;- facts lost in hand-off
+C router        4   Y     5    2310     120    8.7   &#x27;26400&#x27;
+...
+TOTALS
+A single      correct=4/5  llm_calls=14  tokens_in=5200   tokens_out=330  time=26s
+B supervisor  correct=3/5  llm_calls=27  tokens_in=11800  tokens_out=700  time=55s
+C router      correct=4/5  llm_calls=19  tokens_in=7400   tokens_out=410  time=36s</code></pre></div>
+
+  <h3>What to write down</h3>
+  <ul>
+    <li>Calls and tokens per correct answer for each topology. This is your cost-per-resolution metric.</li>
+    <li>For every B failure, the exact brief the supervisor sent. Add <code>print(request)</code> in <code>ask_finance_specialist</code>. That brief is the "inter-agent misalignment" category from MAST, observed first-hand.</li>
+  </ul>
+
+  <h3>Stretch goals</h3>
+  <ol>
+    <li><strong>Add topology D (handoffs).</strong> Rebuild B as a <code>StateGraph</code> with two agent nodes that hand off via a tool returning <code>Command(goto="finance", update={...})</code>. Add a hop counter in state that ends the graph after 4 transfers. Compare token growth: shared history vs briefs.</li>
+    <li><strong>Inject a failure and bound it.</strong> Make <code>usd_to_inr</code> raise on 30% of calls. Pass <code>config={"recursion_limit": 8}</code> on <code>invoke</code>. Report which topology degrades gracefully, and where you would put retry vs fail-fast in an LLD.</li>
+  </ol>
+  <p style="font-size:13px;color:var(--muted)">Verified this run: package versions on PyPI, script imports and graph compilation against langgraph 1.2 / langchain 1.4, tool functions. Not run against a live Ollama model here, so treat the console sample as illustrative.</p>
+</section>
+
+<section id="repos">
+  <h2><span class="n">05</span>GitHub repos to study</h2>
+  <ul class="repos">
+    <li><a href="https://github.com/langchain-ai/langgraph">langchain-ai/langgraph</a><span class="tag ok">v1.2.18 · released 26 Oct 2026</span><br>Read <code>libs/langgraph/langgraph/types.py</code> for <code>Command</code> and <code>Send</code>. These two primitives are how handoffs and map-reduce fan-out are actually built.</li>
+    <li><a href="https://github.com/openai/openai-agents-python">openai/openai-agents-python</a><span class="tag ok">v0.24.0 · Oct 2026</span><br>Compare <code>handoffs</code> with <code>agent.as_tool()</code> in the examples folder. It is the cleanest side-by-side of "transfer control" vs "call as tool" in any SDK.</li>
+    <li><a href="https://github.com/microsoft/agent-framework">microsoft/agent-framework</a><span class="tag ok">orchestrations 1.0 · Jul 2026</span><br>The successor to AutoGen and Semantic Kernel. Study the sequential, concurrent, handoff, group-chat and Magentic orchestrations. This is what Azure-shop clients will ask about.</li>
+    <li><a href="https://github.com/langchain-ai/langgraph-supervisor-py">langchain-ai/langgraph-supervisor-py</a><span class="tag">maintenance · last release Nov 2025</span><br>Read <code>handoff.py</code> to see how handoff tools are generated, then note why LangChain now recommends hand-rolled tool-calling supervisors instead.</li>
+  </ul>
+</section>
+
+<section id="read">
+  <h2><span class="n">06</span>Read / watch</h2>
+  <ul>
+    <li><a href="https://www.anthropic.com/engineering/multi-agent-research-system">Anthropic: How we built our multi-agent research system</a>. Source of the 4×/15× token figures, plus prompting rules for delegation briefs and effort scaling.</li>
+    <li><a href="https://cognition.ai/blog/dont-build-multi-agents">Cognition: Don't Build Multi-Agents</a>, read together with <a href="https://docs.langchain.com/oss/python/langchain/multi-agent">LangChain's multi-agent guide</a> (subagents, handoffs, router, custom). Read them as one debate.</li>
+    <li><a href="https://arxiv.org/abs/2503.13657">Why Do Multi-Agent LLM Systems Fail? (MAST, arXiv 2503.13657)</a>. Use its taxonomy as a checklist for design reviews and eval tagging.</li>
+  </ul>
+</section>
+
+<section id="qa" class="qa">
+  <h2><span class="n">07</span>Interview questions</h2>
+  <details open><summary>A stakeholder wants "a team of agents" for an HR knowledge assistant. How do you respond?</summary><div>Start from the workload, not the org chart. If intents are enumerable (leave, payroll, policy), propose a router workflow over one RAG agent: fixed paths, one owner of guardrails and citations, testable per route. Go multi-agent only for a named isolation need: different data permissions (payroll PII), toolsets too large for one prompt, or parallel breadth-first work. Quantify it: multi-agent runs at roughly 15× chat tokens versus about 4× for a single agent, and you'll show the eval delta that justifies it.</div></details>
+  <details><summary>Supervisor-with-tools vs handoffs: what changes architecturally?</summary><div>Ownership and context. With tools, the supervisor keeps the user, sends each specialist a brief and gets back a summary. Context is isolated, guardrails and audit sit in one place, and the risk is a lossy brief. With handoffs, control transfers and the specialist talks to the user, usually over shared history. That gives a natural multi-turn UX, but every agent sees everything (a trust-boundary issue), loops are possible, and there is no single place to enforce output policy. I use handoffs for long specialist conversations, tools for everything else, and a hop limit in both.</div></details>
+  <details><summary>When do you choose plan-and-execute over ReAct?</summary><div>When steps are parallelisable, the plan needs approval or audit, or cost must be bounded. One strong-model call writes a DAG, cheap models or code execute it in parallel, and you replan only on failure. ReAct wins when each observation should reshape the next step (debugging, exploratory search). In ReAct, cost grows super-linearly with steps because history is re-read each turn. Hybrid: plan at the top level, ReAct inside each worker with a step budget.</div></details>
+  <details><summary>How do you evaluate and observe a multi-agent system in production?</summary><div>Trace every hop with OpenTelemetry GenAI spans (Langfuse/LangSmith/Phoenix) so each sub-agent's input brief is visible. Evaluate at three levels: the final answer (task success, faithfulness), the trajectory (right agent, right tool, hop count), and the component (each specialist on its own golden set). Tag failures with the MAST categories: spec/design, inter-agent misalignment, verification. Track cost per resolved task, p95 latency and loop rate as SLOs, and run topology changes through the same eval gate as prompt changes.</div></details>
+  <details><summary>Your multi-agent prototype costs 6× the single-agent one. How do you bring it down without losing quality?</summary><div>Measure first: find which hops add quality via ablation on the golden set. Then cut cost: route easy intents around the supervisor; run specialists on smaller models and keep the strong model for planning and synthesis; return structured summaries instead of raw traces; parallelise independent calls to recover wall-clock; use prompt caching on stable system prompts and tool schemas; enforce per-request token and hop budgets with graceful degradation. Often the answer is collapsing two agents back into one with a better tool description.</div></details>
+</section>
+
+<section id="adr" class="adr">
+  <h2><span class="n">08</span>Architect's lens: ADR-018</h2>
+  <div class="callout"><dl>
+    <dt>Title</dt><dd>Agent topology for the enterprise employee assistant (HR + IT + Finance)</dd>
+    <dt>Status</dt><dd>Accepted</dd>
+    <dt>Context</dt><dd>About 40 tools across three domains; payroll data needs separate RBAC; 80% of traffic is single-intent FAQ; p95 target 6 s; budget ≤ ₹2 per conversation; audit needs one accountable answer path.</dd>
+    <dt>Options</dt><dd>(1) One agent with all tools. (2) Router workflow to per-domain agents. (3) Supervisor with domain sub-agents as tools. (4) Peer handoffs/swarm.</dd>
+    <dt>Decision</dt><dd>(2) as the front door: a structured-output classifier routes single-intent requests to a domain agent. Cross-domain requests ("both") go to (3), a supervisor that calls domain agents as tools. Reject (4) for now: no single guardrail owner, and shared history crosses the payroll RBAC boundary. Payroll runs as its own sub-agent with its own credentials, so isolation is enforced by identity rather than prompts.</dd>
+    <dt>Consequences</dt><dd>+ Predictable cost and latency on 80% of traffic; each route testable in CI; clean RBAC boundary. − Misroutes are silent, so log the classifier confidence and run a weekly misroute review. − Supervisor briefs can be lossy, so require a typed brief schema (facts, constraints, expected output). Revisit if cross-domain traffic exceeds 30% or the eval shows the router capping quality.</dd>
+  </dl></div>
+</section>
+
+<section id="next">
+  <h2><span class="n">09</span>Tomorrow</h2>
+  <p>Day 19: Agent memory. Short-term, long-term, episodic, summarisation, vector memory, and the LangGraph store.</p>
+</section>
+
+<footer>
+  Sources: <a href="https://pypi.org/project/langgraph/">PyPI langgraph</a> · <a href="https://pypi.org/project/langgraph-supervisor/">PyPI langgraph-supervisor</a> · <a href="https://pypi.org/project/openai-agents/">PyPI openai-agents</a> · <a href="https://docs.langchain.com/oss/python/langchain/multi-agent">LangChain multi-agent docs</a> · <a href="https://devblogs.microsoft.com/agent-framework/agent-frameworks-orchestration-patterns-reach-1-0">MS Agent Framework orchestrations 1.0</a> · <a href="https://www.anthropic.com/engineering/multi-agent-research-system">Anthropic engineering</a> · <a href="https://cognition.ai/blog/dont-build-multi-agents">Cognition</a> · <a href="https://arxiv.org/abs/2503.13657">MAST paper</a>
+</footer>
+</main>
+</div>
+<script>
+document.querySelectorAll('.copy').forEach(function(b){
+  b.addEventListener('click',function(){
+    var code=b.parentElement.querySelector('pre').innerText;
+    var done=function(){b.textContent='Copied';setTimeout(function(){b.textContent='Copy'},1500)};
+    var fallback=function(){var r=document.createRange();r.selectNodeContents(b.parentElement.querySelector('pre'));var s=getSelection();s.removeAllRanges();s.addRange(r);b.textContent='Selected, press Ctrl+C'};
+    try{navigator.clipboard.writeText(code).then(done,fallback)}catch(e){fallback()}
+  });
+});
+</script>
+
+</body></html>

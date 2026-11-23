@@ -1,0 +1,16 @@
+name: eval-gate
+on:
+  pull_request:
+    paths: ["prompts/**", "rag/**", "bundle.yaml"]
+jobs:
+  gate:
+    runs-on: self-hosted        # GPU box with Ollama, or swap MODEL for a hosted API
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.13" }
+      - run: python -m pip install "ollama>=0.6"
+      - run: python gate.py     # non-zero exit blocks the merge
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with: { name: eval-report, path: baseline.json }

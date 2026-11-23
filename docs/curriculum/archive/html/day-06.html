@@ -1,0 +1,647 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>GenAI Prep · Day 6 — Chunking Strategies</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: single reading column (~72ch) with a sticky section index on wide screens; code and tables scroll inside their own boxes. */
+:root{
+  --bg:#f6f8f8; --surface:#ffffff; --ink:#152224; --muted:#566a6d; --line:#d6e0e1;
+  --accent:#0d6e72; --accent-soft:#e1f0f0; --mark:#a8571b; --mark-soft:#fbeee2;
+  --code-bg:#0f1c1e; --code-ink:#d8ebe9;
+  --f-display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body:"IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --f-mono:"IBM Plex Mono", ui-monospace, "Cascadia Code", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0e1617; --surface:#152123; --ink:#e3eeee; --muted:#93a9ab; --line:#27393b;
+  --accent:#4fc3c4; --accent-soft:#16312f; --mark:#e9a066; --mark-soft:#33251a;
+  --code-bg:#091112; --code-ink:#d8ebe9; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0e1617; --surface:#152123; --ink:#e3eeee; --muted:#93a9ab; --line:#27393b;
+  --accent:#4fc3c4; --accent-soft:#16312f; --mark:#e9a066; --mark-soft:#33251a;
+  --code-bg:#091112; --code-ink:#d8ebe9; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:400 16px/1.65 var(--f-body);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 64px}
+.wrap{max-width:1120px;margin:0 auto;display:grid;grid-template-columns:200px minmax(0,1fr);gap:48px}
+@media (max-width:860px){.wrap{grid-template-columns:minmax(0,1fr)} nav.toc{display:none}}
+nav.toc{position:sticky;top:env(safe-area-inset-top,0px);align-self:start;padding-top:40px;font-size:13.5px}
+nav.toc ol{list-style:none;margin:0;padding:0;display:grid;gap:6px;counter-reset:s}
+nav.toc a{color:var(--muted);text-decoration:none}
+nav.toc a:hover,nav.toc a:focus-visible{color:var(--accent)}
+main{min-width:0;max-width:760px}
+header.hero{padding-block:40px 24px;border-bottom:1px solid var(--line)}
+.eyebrow{font:500 12px/1 var(--f-mono);letter-spacing:.12em;text-transform:uppercase;color:var(--accent)}
+h1{font:700 clamp(30px,5vw,46px)/1.08 var(--f-display);margin:12px 0 14px;text-wrap:balance;letter-spacing:-.01em}
+h2{font:700 26px/1.2 var(--f-display);margin:0 0 14px;text-wrap:balance}
+h3{font:600 17px/1.35 var(--f-body);margin:22px 0 8px}
+.lede{color:var(--muted);font-size:17px;max-width:62ch;margin:0}
+.meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
+.chip{font:500 12px/1 var(--f-mono);padding:6px 9px;border:1px solid var(--line);border-radius:4px;color:var(--muted);background:var(--surface)}
+section{padding-block:36px 8px;scroll-margin-top:16px}
+section > .num{font:500 12px/1 var(--f-mono);color:var(--mark);letter-spacing:.1em;margin-bottom:8px}
+p,li{max-width:70ch}
+a{color:var(--accent)}
+strong{font-weight:600}
+code{font:400 .88em var(--f-mono);background:var(--accent-soft);padding:1px 5px;border-radius:3px}
+.callout{border-left:3px solid var(--mark);background:var(--mark-soft);padding:12px 16px;margin:18px 0;border-radius:0 4px 4px 0}
+.callout p{margin:0}
+.tbl{overflow-x:auto;margin:14px 0;border:1px solid var(--line);border-radius:6px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;min-width:720px;font-size:14px}
+th,td{text-align:left;vertical-align:top;padding:10px 12px;border-bottom:1px solid var(--line)}
+th{font:600 12px/1.3 var(--f-mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);background:var(--bg)}
+tr:last-child td{border-bottom:0}
+td:first-child{font-weight:600;white-space:nowrap}
+.code{position:relative;margin:14px 0;border-radius:6px;background:var(--code-bg);overflow:hidden}
+.code .bar{display:flex;justify-content:space-between;align-items:center;padding:6px 10px 6px 14px;font:500 12px/1 var(--f-mono);color:#8fb3b0;border-bottom:1px solid #22383a}
+.code button{font:500 12px/1 var(--f-mono);background:transparent;color:#cfe7e4;border:1px solid #2e4a4c;border-radius:4px;padding:6px 10px;cursor:pointer}
+.code button:hover,.code button:focus-visible{border-color:#5fc4c2;outline:none}
+.code pre{margin:0;padding:14px;overflow-x:auto;max-height:560px;color:var(--code-ink);font:400 13px/1.55 var(--f-mono);tab-size:4}
+.code.long pre{max-height:640px}
+figure{margin:20px 0}
+figure .fig{overflow-x:auto;border:1px solid var(--line);border-radius:6px;background:var(--surface);padding:12px}
+figcaption{font-size:13px;color:var(--muted);margin-top:8px}
+svg text{font-family:var(--f-body)}
+.s-box{fill:var(--surface);stroke:var(--line);stroke-width:1.5}
+.s-ret{fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5}
+.s-gen{fill:var(--mark-soft);stroke:var(--mark);stroke-width:1.5}
+.s-t{fill:var(--ink);font-size:13px}
+.s-m{fill:var(--muted);font-size:11.5px}
+.s-a{stroke:var(--muted);stroke-width:1.5;fill:none}
+.s-ah{fill:var(--muted)}
+.s-acc{fill:var(--accent);font-size:12px;font-weight:600}
+.s-mk{fill:var(--mark);font-size:12px;font-weight:600}
+.s-child{fill:var(--accent);opacity:.75}
+.qa{display:grid;gap:12px;margin-top:8px}
+details{border:1px solid var(--line);border-radius:6px;background:var(--surface);padding:0 16px}
+details[open]{padding-bottom:12px}
+summary{cursor:pointer;padding:14px 0;font-weight:600;list-style-position:outside}
+summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.adr{border:1px solid var(--line);border-radius:6px;background:var(--surface);padding:6px 20px 14px}
+.adr dl{display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px 18px;margin:12px 0}
+.adr dt{font:600 12px/1.6 var(--f-mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.adr dd{margin:0}
+@media (max-width:560px){.adr dl{grid-template-columns:minmax(0,1fr)} .adr dt{margin-top:6px}}
+ul.res{padding-left:18px;display:grid;gap:10px}
+.tomorrow{margin-top:36px;padding:18px 20px;border:1px dashed var(--accent);border-radius:6px;background:var(--accent-soft)}
+.tomorrow p{margin:0}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
+</style>
+
+<div class="wrap">
+<nav class="toc" aria-label="Sections">
+  <ol>
+    <li><a href="#why">1 · Why it matters</a></li>
+    <li><a href="#brief">2 · Concept brief</a></li>
+    <li><a href="#tradeoffs">3 · Trade-offs</a></li>
+    <li><a href="#lab">4 · Hands-on lab</a></li>
+    <li><a href="#repos">5 · Repos</a></li>
+    <li><a href="#read">6 · Read</a></li>
+    <li><a href="#interview">7 · Interview Qs</a></li>
+    <li><a href="#adr">8 · Architect's lens</a></li>
+    <li><a href="#tomorrow">9 · Tomorrow</a></li>
+  </ol>
+</nav>
+<main>
+<header class="hero">
+  <div class="eyebrow">GenAI Architect · 30-day plan · Week 1</div>
+  <h1>Day 6 — Chunking strategies, with measurement</h1>
+  <p class="lede">Fixed, recursive, semantic, structure-aware, parent-child and late chunking. Today's goal is to stop arguing about chunk size and start measuring it: one corpus, one golden set, six strategies, and a table that tells you which one earns its tokens.</p>
+  <div class="meta">
+    <span class="chip">Thu 15 Oct 2026</span>
+    <span class="chip">Lab ≈ 75 min</span>
+    <span class="chip">RTX 3050 6 GB · Ollama · bge-small</span>
+    <span class="chip">langchain-text-splitters 1.1.3 · chonkie 1.7.0</span>
+  </div>
+</header>
+
+<section id="why">
+  <div class="num">01</div>
+  <h2>Why this matters for the JD</h2>
+  <p>The JD names <strong>RAG optimization (chunking, reranking, hybrid, feedback loops)</strong> as a preferred skill and <strong>evaluation (groundedness, relevance, latency/cost)</strong> as a must-have. Chunking is where those meet: it sets the ceiling on retrieval recall, it sets the per-query token bill (k × chunk size), and it is the decision reviewers most often see made by default rather than by data. An architect who can show a chunking bake-off table in a design review wins that argument quickly.</p>
+</section>
+
+<section id="brief">
+  <div class="num">02</div>
+  <h2>Concept brief</h2>
+  <h3>Two units, not one</h3>
+  <p>Every chunk does two jobs. It is the <strong>unit of retrieval</strong>: the text that gets turned into one vector, which should be about one thing so the vector is sharp. It is also the <strong>unit of generation</strong>: the text the LLM reads, which should be self-sufficient (it names its subject, keeps the table header, keeps the condition attached to the rule). These pull in opposite directions. Small chunks retrieve precisely but arrive at the LLM as orphans; large chunks read well but their vectors average several topics into mush. Most "advanced" chunking techniques are ways of decoupling the two units.</p>
+
+  <figure>
+    <div class="fig">
+    <svg viewBox="0 0 720 270" width="100%" style="min-width:600px" role="img" aria-labelledby="dg-t">
+      <title id="dg-t">Parent-child retrieval: small child chunks are embedded and searched; the matching parent section is what the LLM reads.</title>
+      <defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="s-ah"/></marker></defs>
+      <!-- source doc -->
+      <rect x="16" y="40" width="150" height="190" rx="6" class="s-box"/>
+      <text x="30" y="64" class="s-t">Policy.pdf</text>
+      <text x="30" y="84" class="s-m"># 4 Data retention</text>
+      <rect x="30" y="94" width="122" height="54" rx="3" class="s-gen"/>
+      <text x="38" y="114" class="s-m">## 4.2 Backups</text>
+      <text x="38" y="132" class="s-m">parent ≤1024 tok</text>
+      <rect x="30" y="156" width="122" height="54" rx="3" class="s-box"/>
+      <text x="38" y="176" class="s-m">## 4.3 Deletion</text>
+      <text x="38" y="194" class="s-m">parent ≤1024 tok</text>
+      <!-- children -->
+      <path d="M166 121 L222 121" class="s-a" marker-end="url(#ah)"/>
+      <text x="236" y="34" class="s-acc">UNIT OF RETRIEVAL</text>
+      <rect x="230" y="46" width="170" height="150" rx="6" class="s-ret"/>
+      <text x="244" y="70" class="s-t">Children, 128 tok each</text>
+      <rect x="244" y="82" width="142" height="18" rx="2" class="s-child"/>
+      <rect x="244" y="106" width="142" height="18" rx="2" class="s-child"/>
+      <rect x="244" y="130" width="142" height="18" rx="2" class="s-child"/>
+      <text x="244" y="172" class="s-m">+ breadcrumb, doc_id,</text>
+      <text x="244" y="187" class="s-m">parent_id, ACL tags</text>
+      <!-- index -->
+      <path d="M400 121 L452 121" class="s-a" marker-end="url(#ah)"/>
+      <rect x="460" y="90" width="110" height="62" rx="6" class="s-box"/>
+      <text x="474" y="116" class="s-t">Vector index</text>
+      <text x="474" y="136" class="s-m">sharp vectors</text>
+      <!-- query -->
+      <text x="460" y="30" class="s-m">query → top-k children</text>
+      <path d="M515 38 L515 84" class="s-a" marker-end="url(#ah)"/>
+      <!-- parent lookup -->
+      <path d="M515 152 L515 214" class="s-a" marker-end="url(#ah)"/>
+      <text x="526" y="186" class="s-m">dedupe by parent_id</text>
+      <text x="400" y="216" class="s-mk">UNIT OF GENERATION</text>
+      <rect x="400" y="222" width="300" height="40" rx="6" class="s-gen"/>
+      <text x="414" y="247" class="s-t">LLM reads parent §4.2 in full (k ≤ 3)</text>
+      <path d="M92 148 C 92 250, 300 250, 396 244" class="s-a" stroke-dasharray="4 4" marker-end="url(#ah)"/>
+      <text x="150" y="262" class="s-m">parent text fetched from doc store, not the vector DB</text>
+    </svg>
+    </div>
+    <figcaption>Parent-child ("small-to-big"): match on small children, return the parent. Context headers, contextual retrieval and late chunking solve the same tension in different places.</figcaption>
+  </figure>
+
+  <h3>The hard constraints you design inside</h3>
+  <ul>
+    <li><strong>Embedder max sequence length.</strong> <code>bge-small-en-v1.5</code> truncates at 512 tokens, silently. A 800-token chunk embeds only its first 512; the tail is unretrievable. Always chunk with the <em>embedder's</em> tokenizer, not tiktoken.</li>
+    <li><strong>Context budget.</strong> Tokens per query ≈ k × chunk tokens (+ prompt). At 10k queries/day, k=5 and 800-token chunks, that is 40M input tokens/day before the answer is written. Halving chunk size at the same recall is a direct cost cut.</li>
+    <li><strong>Index size.</strong> Overlap of 64 on 256-token windows adds ~33% more vectors. That is storage, ingest time, and duplicated context in top-k.</li>
+    <li><strong>Metadata inheritance.</strong> Every chunk must carry doc_id, section path, version and the source document's ACL tags. Chunking that drops ACLs turns retrieval into a data-leak path.</li>
+  </ul>
+
+  <h3>The strategies, by mechanism</h3>
+  <ul>
+    <li><strong>Fixed-size tokens</strong>: slide a window of N tokens (± overlap). Cheap and deterministic, blind to meaning; cuts sentences and tables in half.</li>
+    <li><strong>Recursive</strong>: try separators in order (<code>\n\n</code>, <code>\n</code>, space, char) until pieces fit. The sensible default for prose. Chroma's study found recursive at 200 tokens with no overlap consistently strong.</li>
+    <li><strong>Structure-aware</strong>: split on the document's own structure (Markdown headings, HTML sections, PDF layout items, table boundaries), then size-cap inside each section. Docling's <code>HybridChunker</code> does this from a parsed <code>DoclingDocument</code>, merges undersized siblings (<code>merge_peers</code>) and offers <code>contextualize()</code> to prepend the heading path to what you embed.</li>
+    <li><strong>Semantic</strong>: embed sentences, compute similarity across a sliding window, cut where it drops below a threshold. Chonkie's <code>SemanticChunker</code> also smooths the similarity curve (Savitzky-Golay filter) before picking cut points. Costs a sentence-level embedding pass at ingest, and the threshold is corpus-specific.</li>
+    <li><strong>Parent-child</strong>: the diagram above. Two stores, two IDs, one dedupe step.</li>
+    <li><strong>Contextual retrieval</strong> (Anthropic): an LLM writes 50–100 tokens of document context for each chunk, prepended before embedding and BM25 indexing. Reported top-20 retrieval failure: 5.7% → 3.7% with contextual embeddings, 2.9% adding contextual BM25, 1.9% adding reranking. One LLM call per chunk at ingest (~$1.02 per million document tokens with prompt caching in their setup).</li>
+    <li><strong>Late chunking</strong> (Jina): run a long-context embedder over the whole document first, then mean-pool token embeddings per chunk span. Each chunk vector "knows" its surroundings. Requires a long-context embedding model and access to token-level outputs, so most managed embedding APIs can't do it.</li>
+  </ul>
+
+  <h3>What the 2024–2026 evidence says</h3>
+  <ul>
+    <li>Chroma's token-level evaluation: recall spread across chunkers was ~8–9 points; the OpenAI Assistants default (800 tokens, 400 overlap) had the lowest precision and IoU of all configs; removing overlap generally improved IoU.</li>
+    <li>Zhou et al. (arXiv 2602.16974, Feb 2026): simple structure-based chunking beat LLM-guided chunking for in-corpus retrieval; contextualized chunking helped in-corpus retrieval but hurt in-document retrieval; chunk size only weakly correlated with in-corpus effectiveness.</li>
+    <li>Takeaway for reviews: the strategy rarely changes recall by more than ~10 points, but it can change <em>context tokens per correct answer</em> by 3–5×. Optimise for recall at a fixed token budget.</li>
+  </ul>
+
+  <h3>Where this lives on the platforms</h3>
+  <ul>
+    <li><strong>watsonx.ai</strong>: AutoAI RAG (<code>rag_optimizer</code> in the watsonx.ai Python SDK) searches chunking parameters alongside embedding and retrieval settings and ranks patterns by eval metrics. Docling (from IBM Research) is the natural parser and chunker for the InstructLab/Granite stack you already know.</li>
+    <li><strong>AWS Bedrock Knowledge Bases</strong>: fixed-size, hierarchical (parent-child), semantic, or no chunking, plus a custom Lambda transformation.</li>
+    <li><strong>Azure AI Search</strong>: integrated vectorization with the Text Split skill (page length and overlap), and a Document Layout skill for structure-aware splitting.</li>
+    <li><strong>Vertex AI RAG Engine</strong>: chunk size and overlap set on the import's transformation config.</li>
+  </ul>
+  <div class="callout"><p>Review line to remember: "Managed chunking is a starting configuration, not a decision. We ran our golden set across three settings and picked the one with the best recall per 1k context tokens."</p></div>
+</section>
+
+<section id="tradeoffs">
+  <div class="num">03</div>
+  <h2>Trade-offs & decision table</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>Strategy</th><th>Pick when</th><th>Failure modes</th><th>Ingest cost</th><th>Query-time cost</th></tr></thead>
+    <tbody>
+      <tr><td>Fixed tokens</td><td>Unstructured text dumps, logs, baseline for comparison</td><td>Splits sentences, tables, code; overlap used as a band-aid</td><td>Lowest</td><td>Predictable; overlap duplicates context in top-k</td></tr>
+      <tr><td>Recursive 200–500</td><td>Default for prose, wikis, tickets, emails</td><td>Ignores headings, so chunks lose their section subject; tables flattened</td><td>Low</td><td>Good recall per token at 200–400</td></tr>
+      <tr><td>Structure-aware</td><td>Policies, manuals, specs, contracts, anything with headings or tables</td><td>Only as good as the parser; scanned PDFs need OCR/layout models; giant sections still need a size cap</td><td>Medium to high (layout model, GPU helps)</td><td>Best citations; breadcrumbs add ~10–20 tokens per chunk</td></tr>
+      <tr><td>Semantic</td><td>Long unstructured narrative: transcripts, call notes, chat logs</td><td>Threshold is corpus-specific; produces fragments or giant chunks; non-deterministic across embedder upgrades</td><td>Sentence-level embedding pass</td><td>Variable chunk sizes make k hard to budget</td></tr>
+      <tr><td>Parent-child</td><td>Precise questions whose answers need surrounding context; long sections</td><td>Parent too large blows the context budget; needs a doc store and dedupe; harder citations</td><td>~4–8× more vectors</td><td>Highest context tokens; use small k</td></tr>
+      <tr><td>Contextual retrieval</td><td>High-value corpora where chunks are ambiguous on their own ("the company", "this clause")</td><td>LLM can hallucinate context; re-run on every doc change</td><td>One LLM call per chunk (cache the doc prefix)</td><td>+50–100 tokens per chunk if you return the context too</td></tr>
+      <tr><td>Late chunking</td><td>Self-hosted long-context embedder, documents with heavy cross-references</td><td>Doc length capped by embedder context (e.g. 8k); not available on most hosted APIs</td><td>One long forward pass per doc</td><td>Same as base chunking</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="lab">
+  <div class="num">04</div>
+  <h2>Hands-on lab: the chunking bake-off (60–90 min)</h2>
+  <p><strong>Task.</strong> Build a fixed golden set of 30 questions with a local LLM, then run six chunking strategies through the same embedder and score each on evidence hit@1, hit@5, MRR and context tokens per query. You finish with a CSV you can paste into an ADR.</p>
+  <p><strong>How scoring works.</strong> Each question is generated from one paragraph (the <em>evidence</em>). A retrieved chunk counts as a hit if it contains ≥80% of that evidence, measured by longest common substring after whitespace normalisation. This is a simplified version of Chroma's token-level recall. The golden set is cached in <code>golden.jsonl</code> so every strategy and every rerun sees the same questions.</p>
+
+  <h3>Setup (PowerShell, no WSL or Docker needed)</h3>
+  <div class="code"><div class="bar"><span>PowerShell</span><button type="button" data-copy="setup">Copy</button></div><pre id="setup">mkdir day06-chunking; cd day06-chunking
+py -3.13 -m venv .venv
+# If activation is blocked: Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+
+# GPU (optional): install the CUDA build of torch first. Copy the exact
+# command for your driver from https://pytorch.org/get-started/locally/
+# Skip it and everything still runs on CPU (slower embedding, same results).
+
+python -m pip install "langchain-text-splitters&gt;=1.1" "chonkie[semantic]&gt;=1.7" "sentence-transformers&gt;=5" ollama numpy pydantic
+
+# Ollama for Windows must be running (tray icon). 3B model fits in 6 GB VRAM.
+ollama pull qwen2.5:3b
+
+# Save the script below as chunking_bakeoff.py, then:
+python chunking_bakeoff.py                    # downloads 4 Kubernetes concept docs into .\corpus
+# or point it at your own docs (.md / .txt):
+python chunking_bakeoff.py --docs C:\path\to\your\docs --golden golden_mine.jsonl</pre></div>
+
+  <h3>chunking_bakeoff.py</h3>
+  <div class="code long"><div class="bar"><span>Python 3.13</span><button type="button" data-copy="script">Copy</button></div><pre id="script">"""
+Day 6 - Chunking bake-off: measure, don't guess.
+
+Compares 6 chunking strategies on the SAME corpus + SAME golden set + SAME embedder:
+  fixed_256, fixed_256_ov64, recursive_512, md_structure, semantic, parent_child
+Metrics per strategy: #chunks, avg tokens, hit@1, hit@k, MRR, context tokens sent to the LLM, hits per 1k ctx tokens.
+
+A "hit" = a returned chunk contains &gt;= 80% of the evidence passage the question was generated from
+(the token-level idea behind Chroma's chunking evaluation, simplified to char overlap).
+
+Usage (PowerShell):
+  python chunking_bakeoff.py                         # downloads 4 Kubernetes docs into .\\corpus
+  python chunking_bakeoff.py --docs C:\\work\\my_docs   # your own .md / .txt files
+  python chunking_bakeoff.py --n-questions 40 --k 5 --llm qwen2.5:3b
+"""
+from __future__ import annotations
+
+import argparse
+import csv
+import json
+import random
+import re
+import time
+import urllib.request
+from difflib import SequenceMatcher
+from pathlib import Path
+
+import numpy as np
+import ollama
+from pydantic import BaseModel
+from sentence_transformers import SentenceTransformer
+from langchain_text_splitters import MarkdownHeaderTextSplitter, RecursiveCharacterTextSplitter
+from chonkie import SemanticChunker
+from chonkie.embeddings import SentenceTransformerEmbeddings
+
+K8S_DOCS = {
+    "pods.md": "https://raw.githubusercontent.com/kubernetes/website/main/content/en/docs/concepts/workloads/pods/_index.md",
+    "service.md": "https://raw.githubusercontent.com/kubernetes/website/main/content/en/docs/concepts/services-networking/service.md",
+    "secret.md": "https://raw.githubusercontent.com/kubernetes/website/main/content/en/docs/concepts/configuration/secret.md",
+    "hpa.md": "https://raw.githubusercontent.com/kubernetes/website/main/content/en/docs/concepts/workloads/autoscaling/horizontal-pod-autoscale.md",
+}
+BGE_QUERY_PREFIX = "Represent this sentence for searching relevant passages: "
+
+
+# ----------------------------------------------------------------------------- corpus
+def clean_md(text: str) -&gt; str:
+    text = re.sub(r"^---\n.*?\n---\n", "", text, flags=re.S)          # front matter
+    text = re.sub(r"\{\{[&lt;%].*?[&gt;%]\}\}", "", text, flags=re.S)        # hugo shortcodes
+    text = re.sub(r"&lt;!--.*?--&gt;", "", text, flags=re.S)                 # html comments
+    return re.sub(r"\n{3,}", "\n\n", text).strip()
+
+
+def load_corpus(folder: Path) -&gt; dict[str, str]:
+    folder.mkdir(parents=True, exist_ok=True)
+    if not any(folder.glob("*.md")) and not any(folder.glob("*.txt")):
+        print(f"[corpus] {folder} is empty -&gt; downloading 4 Kubernetes concept docs")
+        for name, url in K8S_DOCS.items():
+            with urllib.request.urlopen(url, timeout=30) as r:
+                (folder / name).write_text(r.read().decode("utf-8"), encoding="utf-8")
+    docs = {p.name: clean_md(p.read_text(encoding="utf-8", errors="ignore"))
+            for p in sorted(folder.iterdir()) if p.suffix.lower() in {".md", ".txt"}}
+    print(f"[corpus] {len(docs)} docs, {sum(len(t) for t in docs.values()):,} chars")
+    return docs
+
+
+# ----------------------------------------------------------------------------- golden set
+class GoldenQ(BaseModel):
+    question: str
+
+
+def candidate_passages(docs: dict[str, str]) -&gt; list[tuple[str, str]]:
+    out = []
+    for doc_id, text in docs.items():
+        in_code = False
+        for para in text.split("\n\n"):
+            if para.strip().startswith("```"):
+                in_code = not in_code if para.count("```") % 2 else in_code
+                continue
+            p = para.strip()
+            if in_code or p.startswith(("#", "|", "-", "*", "&lt;", "&gt;")):
+                continue
+            if 200 &lt;= len(p) &lt;= 700:
+                out.append((doc_id, p))
+    return out
+
+
+def build_golden(docs, path: Path, n: int, llm: str, seed: int = 7) -&gt; list[dict]:
+    if path.exists():
+        rows = [json.loads(l) for l in path.read_text(encoding="utf-8").splitlines() if l.strip()]
+        if len(rows) &gt;= n:
+            print(f"[golden] reusing {path} ({len(rows)} questions) - keep it fixed across runs!")
+            return rows[:n]
+    random.seed(seed)
+    cands = candidate_passages(docs)
+    picks = random.sample(cands, min(n, len(cands)))
+    rows = []
+    for i, (doc_id, passage) in enumerate(picks, 1):
+        resp = ollama.chat(
+            model=llm,
+            messages=[
+                {"role": "system", "content": "You write evaluation questions for a retrieval system."},
+                {"role": "user", "content": (
+                    "Write ONE specific question that can be answered only from this passage. "
+                    "Paraphrase - do not copy phrases longer than 3 words. Return JSON.\n\n"
+                    f"PASSAGE:\n{passage}")},
+            ],
+            format=GoldenQ.model_json_schema(),
+            options={"temperature": 0},
+        )
+        q = GoldenQ.model_validate_json(resp.message.content).question
+        rows.append({"doc_id": doc_id, "question": q, "evidence": passage})
+        print(f"[golden] {i:&gt;2}/{len(picks)}  {q[:90]}")
+    path.write_text("\n".join(json.dumps(r) for r in rows), encoding="utf-8")
+    return rows
+
+
+# ----------------------------------------------------------------------------- strategies
+# Every unit: {"doc_id", "embed_text" (what we vectorise), "return_text" (what the LLM sees)}
+def fixed_tokens(text, tok, size, overlap):
+    enc = tok(text, add_special_tokens=False, return_offsets_mapping=True)
+    offs = enc["offset_mapping"]
+    step = size - overlap
+    out = []
+    for s in range(0, len(offs), step):
+        window = offs[s:s + size]
+        if not window:
+            break
+        out.append(text[window[0][0]:window[-1][1]])
+        if s + size &gt;= len(offs):
+            break
+    return out
+
+
+def strat_fixed(docs, tok, size=256, overlap=0):
+    return [{"doc_id": d, "embed_text": c, "return_text": c}
+            for d, t in docs.items() for c in fixed_tokens(t, tok, size, overlap)]
+
+
+def strat_recursive(docs, tok, size=512, overlap=64):
+    sp = RecursiveCharacterTextSplitter.from_huggingface_tokenizer(tok, chunk_size=size, chunk_overlap=overlap)
+    return [{"doc_id": d, "embed_text": c, "return_text": c} for d, t in docs.items() for c in sp.split_text(t)]
+
+
+MD_HEADERS = [("#", "h1"), ("##", "h2"), ("###", "h3")]
+
+
+def md_sections(text):
+    return MarkdownHeaderTextSplitter(headers_to_split_on=MD_HEADERS, strip_headers=False).split_text(text)
+
+
+def strat_md_structure(docs, tok, size=512, overlap=64):
+    """Structure-aware: split on headings, then recursive inside; prepend a breadcrumb to the EMBEDDED text."""
+    sp = RecursiveCharacterTextSplitter.from_huggingface_tokenizer(tok, chunk_size=size, chunk_overlap=overlap)
+    out = []
+    for d, t in docs.items():
+        for sec in md_sections(t):
+            crumb = " &gt; ".join([d] + [sec.metadata[h] for _, h in MD_HEADERS if h in sec.metadata])
+            for c in sp.split_text(sec.page_content):
+                out.append({"doc_id": d, "embed_text": f"[{crumb}]\n{c}", "return_text": c})
+    return out
+
+
+def strat_semantic(docs, st_model, size=512, threshold=0.75):
+    ch = SemanticChunker(embedding_model=SentenceTransformerEmbeddings(st_model),
+                         threshold=threshold, chunk_size=size, similarity_window=3,
+                         min_sentences_per_chunk=2)
+    return [{"doc_id": d, "embed_text": c.text, "return_text": c.text} for d, t in docs.items() for c in ch.chunk(t)]
+
+
+def strat_parent_child(docs, tok, child=128, parent=1024):
+    """Retrieve on small children (precise vectors), return the parent section (enough context)."""
+    psp = RecursiveCharacterTextSplitter.from_huggingface_tokenizer(tok, chunk_size=parent, chunk_overlap=0)
+    csp = RecursiveCharacterTextSplitter.from_huggingface_tokenizer(tok, chunk_size=child, chunk_overlap=16)
+    out = []
+    for d, t in docs.items():
+        for sec in md_sections(t):
+            for p in psp.split_text(sec.page_content):
+                for c in csp.split_text(p):
+                    out.append({"doc_id": d, "embed_text": c, "return_text": p})
+    return out
+
+
+# ----------------------------------------------------------------------------- retrieval + metrics
+def norm(s: str) -&gt; str:
+    return re.sub(r"\s+", " ", s).strip().lower()
+
+
+def containment(evidence: str, chunk: str) -&gt; float:
+    a, b = norm(evidence), norm(chunk)
+    m = SequenceMatcher(None, a, b, autojunk=False).find_longest_match(0, len(a), 0, len(b))
+    return m.size / max(1, len(a))
+
+
+def evaluate(name, units, golden, model, tok, k, build_s):
+    t0 = time.perf_counter()
+    vecs = model.encode([u["embed_text"] for u in units], batch_size=32,
+                        normalize_embeddings=True, show_progress_bar=False)
+    qv = model.encode([BGE_QUERY_PREFIX + g["question"] for g in golden],
+                      normalize_embeddings=True, show_progress_bar=False)
+    embed_s = time.perf_counter() - t0
+    sims = qv @ vecs.T
+    hit1 = hitk = rr = ctx = 0.0
+    for qi, g in enumerate(golden):
+        order = np.argsort(-sims[qi])
+        returned, seen = [], set()
+        for idx in order:                       # dedupe (parent-child returns the same parent many times)
+            rt = units[idx]["return_text"]
+            if rt in seen:
+                continue
+            seen.add(rt)
+            returned.append(rt)
+            if len(returned) == k:
+                break
+        ctx += sum(len(tok(r, add_special_tokens=False)["input_ids"]) for r in returned)
+        ranks = [i for i, r in enumerate(returned, 1) if containment(g["evidence"], r) &gt;= 0.8]
+        if ranks:
+            hitk += 1
+            rr += 1 / ranks[0]
+            hit1 += ranks[0] == 1
+    n = len(golden)
+    toks = [len(tok(u["embed_text"], add_special_tokens=False)["input_ids"]) for u in units]
+    return {
+        "strategy": name, "chunks": len(units), "avg_tok": round(float(np.mean(toks))),
+        "max_tok": int(np.max(toks)), "hit@1": round(hit1 / n, 3), f"hit@{k}": round(hitk / n, 3),
+        "mrr": round(rr / n, 3), "ctx_tok@k": round(ctx / n),
+        "hits/1k_ctx": round((hitk / n) / max(1, ctx / n) * 1000, 3),
+        "build_s": round(build_s, 2), "embed_s": round(embed_s, 2),
+    }
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--docs", default="corpus")
+    ap.add_argument("--golden", default="golden.jsonl")
+    ap.add_argument("--n-questions", type=int, default=30)
+    ap.add_argument("--k", type=int, default=5)
+    ap.add_argument("--llm", default="qwen2.5:3b")
+    ap.add_argument("--embed", default="BAAI/bge-small-en-v1.5")
+    args = ap.parse_args()
+
+    docs = load_corpus(Path(args.docs))
+    golden = build_golden(docs, Path(args.golden), args.n_questions, args.llm)
+    model = SentenceTransformer(args.embed)     # auto-uses CUDA if torch sees your RTX 3050
+    tok = model.tokenizer                       # chunk with the EMBEDDER's tokenizer, not tiktoken
+    print(f"[embed] {args.embed} on {model.device}, max_seq_length={model.max_seq_length}")
+
+    strategies = {
+        "fixed_256": lambda: strat_fixed(docs, tok, 256, 0),
+        "fixed_256_ov64": lambda: strat_fixed(docs, tok, 256, 64),
+        "recursive_512": lambda: strat_recursive(docs, tok, 500, 64),
+        "md_structure": lambda: strat_md_structure(docs, tok, 450, 64),
+        "semantic": lambda: strat_semantic(docs, model, 500, 0.75),
+        "parent_child": lambda: strat_parent_child(docs, tok, 128, 1024),
+    }
+    results = []
+    for name, fn in strategies.items():
+        t0 = time.perf_counter()
+        units = fn()
+        results.append(evaluate(name, units, golden, model, tok, args.k, time.perf_counter() - t0))
+        print(f"[done] {name:&lt;15} {len(units)} units")
+
+    cols = list(results[0].keys())
+    print("\n" + " | ".join(f"{c:&gt;13}" for c in cols))
+    for r in sorted(results, key=lambda r: -r["mrr"]):
+        print(" | ".join(f"{str(r[c]):&gt;13}" for c in cols))
+    with open("chunking_results.csv", "w", newline="", encoding="utf-8") as f:
+        w = csv.DictWriter(f, fieldnames=cols)
+        w.writeheader()
+        w.writerows(results)
+    print("\n[saved] chunking_results.csv")
+
+
+if __name__ == "__main__":
+    main()
+</pre></div>
+  <p style="font-size:14px;color:var(--muted)">The pipeline logic was dry-run end to end before publishing (with a stub embedder and stub LLM, since model downloads were not available in the build environment). First real run downloads bge-small (~130 MB) from Hugging Face.</p>
+
+  <h3>Expected output</h3>
+  <div class="code"><div class="bar"><span>Console (shape; your numbers will differ)</span><button type="button" data-copy="out">Copy</button></div><pre id="out">[corpus] 4 docs, ~135,000 chars
+[golden]  1/30  What happens to a Pod's ephemeral containers when ...
+...
+[embed] BAAI/bge-small-en-v1.5 on cuda:0, max_seq_length=512
+[done] fixed_256       ~120 units
+[done] fixed_256_ov64  ~160 units
+[done] recursive_512   ~70 units
+[done] md_structure    ~120 units
+[done] semantic        varies a lot with threshold
+[done] parent_child    ~300 units
+
+     strategy |  chunks | avg_tok | max_tok | hit@1 | hit@5 |  mrr | ctx_tok@k | hits/1k_ctx | build_s | embed_s
+          ... sorted by MRR ...
+[saved] chunking_results.csv</pre></div>
+  <p><strong>What to look for</strong> (hypotheses to confirm or kill with your numbers):</p>
+  <ul>
+    <li>Overlap adds ~33% more chunks and context tokens; check whether hit@5 actually moves.</li>
+    <li><code>parent_child</code> should lead on hit@5 but cost the most context tokens. Is it best on <code>hits/1k_ctx</code>?</li>
+    <li><code>md_structure</code> should beat <code>recursive_512</code> on docs with good headings, because the breadcrumb tells the vector what the chunk is about.</li>
+    <li>If <code>semantic</code> shows hundreds of tiny chunks, the threshold is too high for this embedder. Tune it before judging the method.</li>
+    <li>Bias check: questions come from paragraphs, so paragraph-aligned chunkers get a small home advantage. Note it in your write-up; reviewers ask.</li>
+  </ul>
+
+  <h3>Stretch goals</h3>
+  <ol>
+    <li><strong>Structure-aware on real PDFs with Docling.</strong> <code>python -m pip install docling</code>, convert 3–5 policy PDFs (your compliance-bot corpus is ideal), chunk with <code>HybridChunker(tokenizer=HuggingFaceTokenizer(tokenizer=model.tokenizer, max_tokens=450), merge_peers=True)</code>, embed <code>chunker.contextualize(chunk)</code>, and add it as a seventh strategy. Note how tables come through compared with the Markdown splitter.</li>
+    <li><strong>Contextual retrieval, measured.</strong> For <code>recursive_512</code>, ask <code>qwen2.5:3b</code> for a 50-token "situate this chunk in the document" line per chunk, prepend it to <code>embed_text</code> only, and rerun. Report the hit@5 delta and the ingest cost (LLM calls = chunks, wall-clock minutes). Is the gain worth it at 10× the corpus size?</li>
+  </ol>
+</section>
+
+<section id="repos">
+  <div class="num">05</div>
+  <h2>GitHub repos to study</h2>
+  <ul class="res">
+    <li><a href="https://github.com/chonkie-inc/chonkie" target="_blank" rel="noopener">chonkie-inc/chonkie</a> (~4.8k★, MIT; currently served from the feyninc org): 11 chunkers in one API, including Semantic, Late, Code, Table and an LLM-driven one. Read <code>chunker/semantic.py</code> to see windowed similarity plus filtering decide cut points.</li>
+    <li><a href="https://github.com/docling-project/docling" target="_blank" rel="noopener">docling-project/docling</a> (~69k★, MIT): layout-aware parsing to <code>DoclingDocument</code>. Study the hybrid-chunking example and how heading context is carried into each chunk.</li>
+    <li><a href="https://github.com/brandonstarxel/chunking_evaluation" target="_blank" rel="noopener">brandonstarxel/chunking_evaluation</a> (~510★): the code behind Chroma's chunking study. Look at the token-level recall/precision/IoU metrics and <code>ClusterSemanticChunker</code>. Commit activity is low, so borrow the method rather than the dependency.</li>
+    <li><a href="https://github.com/jina-ai/late-chunking" target="_blank" rel="noopener">jina-ai/late-chunking</a> (~540★, Apache-2.0): <code>chunked_pooling/</code> shows span-level mean pooling over a single long forward pass; <code>run_chunked_eval.py</code> reproduces the BeIR comparison.</li>
+  </ul>
+</section>
+
+<section id="read">
+  <div class="num">06</div>
+  <h2>Read</h2>
+  <ul class="res">
+    <li><a href="https://www.trychroma.com/research/evaluating-chunking" target="_blank" rel="noopener">Chroma Research — Evaluating Chunking Strategies for Retrieval</a>. The metric design (token-level IoU and Precision_Ω) is the part to steal for your own eval harness. 25 min.</li>
+    <li><a href="https://www.anthropic.com/news/contextual-retrieval" target="_blank" rel="noopener">Anthropic — Introducing Contextual Retrieval</a>. Cleanest published ablation of contextual embeddings + BM25 + reranking, with ingest cost math. 15 min.</li>
+    <li><a href="https://arxiv.org/abs/2602.16974" target="_blank" rel="noopener">Zhou et al. (2026) — Beyond Chunk-Then-Embed: a taxonomy and evaluation of chunking strategies</a>. Use it to defend "structure-based first, LLM chunking only with evidence". Skim results tables, 30 min. Companion: <a href="https://arxiv.org/abs/2409.04701" target="_blank" rel="noopener">Late Chunking paper (Jina)</a>.</li>
+  </ul>
+</section>
+
+<section id="interview">
+  <div class="num">07</div>
+  <h2>Interview questions</h2>
+  <div class="qa">
+    <details open><summary>Users say the assistant misses answers that are definitely in the documents. How do you prove or rule out chunking as the cause?</summary>
+      <p>Separate retrieval from generation first. Build a golden set with evidence spans, run retrieval only, and measure evidence recall@k. Then classify misses: (1) <em>split evidence</em>, the answer straddles a boundary; (2) <em>diluted vector</em>, the chunk covers several topics; (3) <em>orphaned chunk</em>, the chunk never names its subject, so the query can't match it; (4) <em>truncation</em>, the chunk exceeds the embedder's max length and the tail was never embedded. Check (4) first because it is silent and common. Each class has a different fix: structure-aware boundaries, smaller chunks, breadcrumbs or contextual retrieval, and tokenizer-aligned sizing.</p></details>
+    <details><summary>How do you choose chunk size?</summary>
+      <p>Bound it above by the embedder's max sequence length and by k × size against the context budget. Then match query shape: factoid lookups favour 128–256 tokens; synthesis or procedure questions favour larger units or parent-child. Sweep three sizes on the golden set and choose on recall@k <em>at a fixed context-token budget</em>, not raw recall, because a bigger chunk always looks better on recall alone while costing more per query and diluting grounding.</p></details>
+    <details><summary>Is chunk overlap a good default?</summary>
+      <p>It's a patch for blind boundaries. It increases vector count (64/256 ≈ +33%) and puts duplicate text into top-k, which wastes context and can crowd out a distinct relevant chunk. Chroma found removing overlap generally improved IoU. Prefer boundaries that respect structure, or parent-child; keep small overlap only for fixed-size splitting of unstructured text, and dedupe near-identical hits before the prompt.</p></details>
+    <details><summary>A team wants LLM-based or semantic chunking everywhere. Your position?</summary>
+      <p>Show me the eval. Recent results (Chroma 2024; Zhou et al. 2026) show structure-based and recursive splitting matching or beating semantic and LLM chunking for corpus-level retrieval, while semantic and LLM chunking add ingest cost, threshold tuning per corpus and non-determinism when the model changes. I'd allow them where structure is absent (transcripts, chat logs) and the golden set shows a gain that pays for the ingest cost.</p></details>
+    <details><summary>You need to change chunking on a 20M-chunk production index. How do you roll it out safely?</summary>
+      <p>Treat chunker + embedder as a versioned artifact. Use deterministic chunk IDs (hash of doc_id, version and span) and put <code>chunker_version</code> and <code>embedder_version</code> in metadata. Build a shadow index, run offline golden-set eval plus a shadow-traffic comparison, then switch with an index alias (blue-green), keeping the old index for rollback. Estimate the re-embedding cost and time up front, keep ACL metadata identical, and check that citations still resolve to the same source anchors.</p></details>
+  </div>
+</section>
+
+<section id="adr">
+  <div class="num">08</div>
+  <h2>Architect's lens</h2>
+  <div class="adr">
+    <h3>ADR-006: Default chunking for an enterprise policy & procedures assistant</h3>
+    <dl>
+      <dt>Status</dt><dd>Proposed, pending golden-set evaluation</dd>
+      <dt>Context</dt><dd>~40k policy PDFs and DOCX files with heading hierarchies and tables; per-document ACLs; questions split between precise lookups ("retention period for backups in EU") and procedures. Embedder max length 512 tokens. Target: evidence hit@5 ≥ 0.90 and ≤ 3k context tokens per query at p95.</dd>
+      <dt>Options</dt><dd>(A) Vendor default fixed 800/400. (B) Recursive 400/0. (C) Structure-aware via Docling HybridChunker, heading breadcrumb in the embedded text, parent-child with section parents ≤1024 tokens. (D) Semantic or LLM chunking. (E) Late chunking with a self-hosted long-context embedder.</dd>
+      <dt>Decision</dt><dd>C as the default; B as the fallback for documents without usable structure. Contextual retrieval is held back for the top two high-value collections and enabled only if it lifts hit@5 by ≥3 points on their golden sets.</dd>
+      <dt>Consequences</dt><dd><strong>+</strong> Citations map to real sections; tables stay intact; ACLs inherited per section; recall improves without larger k. <strong>−</strong> A layout-parsing dependency and GPU cost at ingest; two stores (vectors + parent text); chunker version must be tracked and re-indexing planned. A rejected because the token cost per answer is about 4× with no recall gain in published evals; D and E rejected for ingest cost and hosted-API constraints respectively.</dd>
+      <dt>Revisit when</dt><dd>hit@5 drops below 0.85 on the monthly eval, the embedder changes, or a long-context embedder becomes available on the chosen platform.</dd>
+    </dl>
+  </div>
+</section>
+
+<section id="tomorrow">
+  <div class="num">09</div>
+  <h2>Tomorrow</h2>
+  <div class="tomorrow"><p><strong>Day 7 — Vector search internals:</strong> HNSW, IVF and PQ, recall vs latency trade-offs, with FAISS hands-on on the chunks you produced today.</p></div>
+</section>
+</main>
+</div>
+
+<script>
+document.querySelectorAll('button[data-copy]').forEach(function(btn){
+  btn.addEventListener('click', function(){
+    var el = document.getElementById(btn.getAttribute('data-copy'));
+    var text = el.innerText;
+    function done(msg){ btn.textContent = msg; setTimeout(function(){ btn.textContent = 'Copy'; }, 1600); }
+    function fallback(){
+      var r = document.createRange(); r.selectNodeContents(el);
+      var s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+      done('Selected, press Ctrl+C');
+    }
+    try {
+      navigator.clipboard.writeText(text).then(function(){ done('Copied'); }, fallback);
+    } catch (e) { fallback(); }
+  });
+});
+</script>
+
+</body></html>

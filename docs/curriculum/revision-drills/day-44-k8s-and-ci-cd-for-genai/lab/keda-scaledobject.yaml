@@ -1,0 +1,19 @@
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata: { name: hr-copilot-vllm }
+spec:
+  scaleTargetRef: { name: hr-copilot-vllm }
+  minReplicaCount: 2
+  maxReplicaCount: 8
+  advanced:
+    horizontalPodAutoscalerConfig:
+      behavior:
+        scaleDown: { stabilizationWindowSeconds: 600 }
+  triggers:
+    - type: prometheus
+      metadata:
+        serverAddress: http://prometheus.monitoring:9090
+        query: sum(vllm:num_requests_waiting{app="hr-copilot-vllm"})
+        threshold: "4"          # target waiting requests per replica
+    - type: cron                # pre-scale for the 09:30 IST peak
+      metadata: { timezone: Asia/Kolkata, start: "0 9 * * 1-5", end: "0 11 * * 1-5", desiredReplicas: "4" }

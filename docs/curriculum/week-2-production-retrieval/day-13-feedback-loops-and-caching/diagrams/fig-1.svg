@@ -1,0 +1,23 @@
+<svg font-family="IBM Plex Sans, Segoe UI, Arial, sans-serif" aria-label="Request path with three cache layers and a feedback loop back into the golden set and index" role="img" style="background:#ffffff" viewbox="0 0 760 330" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="ar" markerheight="7" markerwidth="7" orient="auto" refx="9" refy="5" viewbox="0 0 10 10"><path d="M0,0L10,5L0,10z" fill="#555"></path></marker></defs>
+
+<text class="h" x="10" y="18">FAST LOOP · REQUEST PATH</text>
+<rect class="b" height="54" rx="6" width="86" x="10" y="32"></rect><text class="t" text-anchor="middle" x="53" y="56">Query</text><text class="s" text-anchor="middle" x="53" y="73">+ tenant, ACL</text>
+<rect class="c" height="54" rx="6" width="120" x="116" y="32"></rect><text class="t" text-anchor="middle" x="176" y="54">L1 answer cache</text><text class="s" text-anchor="middle" x="176" y="71">exact → semantic</text>
+<rect class="b" height="54" rx="6" width="120" x="256" y="32"></rect><text class="t" text-anchor="middle" x="316" y="54">Retrieve + rerank</text><text class="s" text-anchor="middle" x="316" y="71">L3: embed cache</text>
+<rect class="c" height="54" rx="6" width="150" x="396" y="32"></rect><text class="t" text-anchor="middle" x="471" y="54">L2 prefix cache</text><text class="s" text-anchor="middle" x="471" y="71">static ‖ dynamic</text>
+<rect class="b" height="54" rx="6" width="84" x="566" y="32"></rect><text class="t" text-anchor="middle" x="608" y="64">LLM</text>
+<rect class="b" height="54" rx="6" width="80" x="670" y="32"></rect><text class="t" text-anchor="middle" x="710" y="64">Answer</text>
+<path class="l" d="M96 59H114" marker-end="url(#ar)"></path><path class="l" d="M236 59H254" marker-end="url(#ar)"></path><path class="l" d="M376 59H394" marker-end="url(#ar)"></path><path class="l" d="M546 59H564" marker-end="url(#ar)"></path><path class="l" d="M650 59H668" marker-end="url(#ar)"></path>
+<path class="l" d="M176 32V14H710V30" marker-end="url(#ar)" stroke-dasharray="4 3"></path><text class="s" text-anchor="middle" x="440" y="10">hit: skip retrieval + generation</text>
+<text class="h" x="10" y="140">SLOW LOOP · IMPROVEMENT PATH</text>
+<rect class="w" height="60" rx="6" width="150" x="600" y="156"></rect><text class="t" text-anchor="middle" x="675" y="180">Signals</text><text class="s" text-anchor="middle" x="675" y="198">thumbs · re-ask · escalate</text>
+<rect class="b" height="60" rx="6" width="150" x="420" y="156"></rect><text class="t" text-anchor="middle" x="495" y="180">Triage</text><text class="s" text-anchor="middle" x="495" y="198">judge + human queue</text>
+<rect class="b" height="60" rx="6" width="150" x="240" y="156"></rect><text class="t" text-anchor="middle" x="315" y="180">Classify failure</text><text class="s" text-anchor="middle" x="315" y="198">retrieval/gen/stale</text>
+<rect class="b" height="60" rx="6" width="200" x="10" y="156"></rect><text class="t" text-anchor="middle" x="110" y="180">Fix at the right layer</text><text class="s" text-anchor="middle" x="110" y="198">chunk · index · prompt · model</text>
+<path class="l" d="M710 86V154" marker-end="url(#ar)"></path><path class="l" d="M600 186H572" marker-end="url(#ar)"></path><path class="l" d="M420 186H392" marker-end="url(#ar)"></path><path class="l" d="M240 186H212" marker-end="url(#ar)"></path>
+<rect class="c" height="56" rx="6" width="200" x="10" y="252"></rect><text class="t" text-anchor="middle" x="110" y="276">Golden set + eval gate</text><text class="s" text-anchor="middle" x="110" y="294">CI blocks regressions</text>
+<rect class="w" height="56" rx="6" width="200" x="240" y="252"></rect><text class="t" text-anchor="middle" x="340" y="276">Invalidate cache</text><text class="s" text-anchor="middle" x="340" y="294">bad entry · corpus version</text>
+<path class="l" d="M110 216V250" marker-end="url(#ar)"></path><path class="l" d="M210 280H238" marker-end="url(#ar)"></path>
+<path class="l" d="M440 280H520V88" marker-end="url(#ar)" stroke-dasharray="4 3"></path><path class="l" d="M110 252V236H60V88" marker-end="url(#ar)" stroke-dasharray="4 3"></path>
+</svg>

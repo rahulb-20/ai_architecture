@@ -1,0 +1,29 @@
+<svg font-family="Source Sans 3, system-ui, sans-serif" font-size="13" style="background:#ffffff" viewbox="0 0 680 300" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="ar" markerheight="7" markerwidth="7" orient="auto" refx="9" refy="5" viewbox="0 0 10 10"><path d="M0,0 L10,5 L0,10 z" fill="#555"></path></marker></defs>
+<rect fill="#555" height="70" rx="8" stroke="#555" width="120" x="10" y="110"></rect>
+<text fill="#555" font-weight="700" text-anchor="middle" x="70" y="140">12 copilots</text>
+<text fill="#555" text-anchor="middle" x="70" y="160">LangGraph / Orchestrate</text>
+<rect fill="#555" height="80" rx="8" stroke="#555" stroke-width="1.5" width="160" x="200" y="40"></rect>
+<text fill="#555" font-weight="700" text-anchor="middle" x="280" y="70">AI gateway</text>
+<text fill="#555" text-anchor="middle" x="280" y="90">keys · budgets · fallback</text>
+<text fill="#555" text-anchor="middle" x="280" y="106">semantic cache</text>
+<rect fill="#555" height="80" rx="8" stroke="#555" stroke-width="1.5" width="160" x="200" y="180"></rect>
+<text fill="#555" font-weight="700" text-anchor="middle" x="280" y="210">MCP gateway</text>
+<text fill="#555" text-anchor="middle" x="280" y="230">OAuth · tool RBAC · audit</text>
+<text fill="#555" text-anchor="middle" x="280" y="246">definition pinning</text>
+<line marker-end="url(#ar)" stroke="#555" x1="130" x2="198" y1="135" y2="85"></line>
+<line marker-end="url(#ar)" stroke="#555" x1="130" x2="198" y1="155" y2="215"></line>
+<g fill="#555" stroke="#555">
+<rect height="30" rx="6" width="230" x="440" y="14"></rect><rect height="30" rx="6" width="230" x="440" y="54"></rect><rect height="30" rx="6" width="230" x="440" y="94"></rect>
+<rect height="30" rx="6" width="230" x="440" y="166"></rect><rect height="30" rx="6" width="230" x="440" y="206"></rect><rect height="30" rx="6" width="230" x="440" y="246"></rect>
+</g>
+<g fill="#555">
+<text x="452" y="34">Azure OpenAI · India regions</text><text x="452" y="74">watsonx.ai · Mumbai</text><text x="452" y="114">vLLM (Granite) · on-prem DR</text>
+<text x="452" y="186">Core banking MCP (read-only)</text><text x="452" y="226">Confluence MCP</text><text x="452" y="266">ServiceNow MCP</text>
+</g>
+<g fill="none" stroke="#555">
+<line marker-end="url(#ar)" x1="360" x2="438" y1="70" y2="29"></line><line marker-end="url(#ar)" x1="360" x2="438" y1="80" y2="69"></line><line marker-end="url(#ar)" x1="360" x2="438" y1="90" y2="109"></line>
+<line marker-end="url(#ar)" x1="360" x2="438" y1="210" y2="181"></line><line marker-end="url(#ar)" x1="360" x2="438" y1="220" y2="221"></line><line marker-end="url(#ar)" x1="360" x2="438" y1="230" y2="261"></line>
+</g>
+<text fill="#555" font-size="12" text-anchor="middle" x="280" y="152">guardrails · PII masking · OTel traces on both paths</text>
+</svg>

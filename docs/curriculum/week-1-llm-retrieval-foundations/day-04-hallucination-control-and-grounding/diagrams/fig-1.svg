@@ -1,0 +1,42 @@
+<svg font-family="IBM Plex Sans, Segoe UI, Arial, sans-serif" aria-labelledby="dg-t" role="img" style="background:#ffffff" viewbox="0 0 860 300" xmlns="http://www.w3.org/2000/svg">
+
+<defs>
+<marker id="ar" markerheight="7" markerwidth="7" orient="auto" refx="9" refy="5" viewbox="0 0 10 10"><path class="ah" d="M0,0L10,5L0,10z"></path></marker>
+<marker id="arw" markerheight="7" markerwidth="7" orient="auto" refx="9" refy="5" viewbox="0 0 10 10"><path class="ah w" d="M0,0L10,5L0,10z"></path></marker>
+</defs>
+<rect class="box" height="74" rx="6" width="120" x="10" y="40"></rect>
+<text class="t" text-anchor="middle" x="70" y="70">Query</text>
+<text class="s" text-anchor="middle" x="70" y="90">+ user ACL</text>
+<rect class="box" height="74" rx="6" width="140" x="170" y="40"></rect>
+<text class="t" text-anchor="middle" x="240" y="64">L1 Retrieve</text>
+<text class="s" text-anchor="middle" x="240" y="84">hybrid + rerank</text>
+<text class="s" text-anchor="middle" x="240" y="100">score floor</text>
+<rect class="box" height="74" rx="6" width="140" x="350" y="40"></rect>
+<text class="t" text-anchor="middle" x="420" y="64">L2 Generate</text>
+<text class="s" text-anchor="middle" x="420" y="84">JSON schema:</text>
+<text class="s" text-anchor="middle" x="420" y="100">claims + quotes</text>
+<rect class="box" height="74" rx="6" width="140" x="530" y="40"></rect>
+<text class="t" text-anchor="middle" x="600" y="64">L3 + L4 Verify</text>
+<text class="s" text-anchor="middle" x="600" y="84">quote ∈ passage</text>
+<text class="s" text-anchor="middle" x="600" y="100">NLI / HHEM entail</text>
+<rect class="box g" height="74" rx="6" width="140" x="710" y="40"></rect>
+<text class="t" text-anchor="middle" x="780" y="70">Grounded answer</text>
+<text class="s" text-anchor="middle" x="780" y="90">with citations</text>
+<path class="ln" d="M130 77H166" marker-end="url(#ar)"></path>
+<path class="ln" d="M310 77H346" marker-end="url(#ar)"></path>
+<path class="ln" d="M490 77H526" marker-end="url(#ar)"></path>
+<path class="ln" d="M670 77H706" marker-end="url(#ar)"></path>
+<rect class="box w" height="70" rx="6" width="260" x="300" y="210"></rect>
+<text class="t" text-anchor="middle" x="430" y="238">Respond safely</text>
+<text class="s" text-anchor="middle" x="430" y="258">abstain · partial answer · escalate to human</text>
+<path class="ln w" d="M240 114V170H360V206" marker-end="url(#arw)"></path>
+<text class="lbl" x="248" y="150">top score &lt; floor</text>
+<path class="ln w" d="M420 114V206" marker-end="url(#arw)"></path>
+<text class="lbl" x="428" y="168">answerable=false</text>
+<path class="ln w" d="M600 114V170H500V206" marker-end="url(#arw)"></path>
+<text class="lbl" x="608" y="150">claims fail</text>
+<text class="s" x="10" y="22">PREVENT</text>
+<text class="s" x="350" y="22">CONSTRAIN</text>
+<text class="s" x="530" y="22">VERIFY</text>
+<text class="s" x="710" y="22">RESPOND</text>
+</svg>

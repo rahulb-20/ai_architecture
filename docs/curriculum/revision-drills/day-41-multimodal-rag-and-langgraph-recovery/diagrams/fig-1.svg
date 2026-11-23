@@ -1,0 +1,23 @@
+<svg font-family="IBM Plex Sans, Segoe UI, Arial, sans-serif" aria-label="Documents enter a queue and an admission outbox, then a LangGraph ingestion graph with a checkpoint after every super-step. The graph classifies, parses, fans out to text, tables and figures, masks PII, embeds, upserts with deterministic keys and finally flips the version alias. A Postgres checkpointer and object storage sit underneath." role="img" style="background:#ffffff" viewbox="0 0 780 360" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="a" markerheight="8" markerwidth="8" orient="auto" refx="7" refy="4"><path class="h" d="M0 0L8 4L0 8z"></path></marker></defs>
+<rect class="b" height="56" width="104" x="14" y="70"></rect><text text-anchor="middle" x="66" y="94">Queue</text><text class="s" text-anchor="middle" x="66" y="111">+ outbox row</text>
+<rect class="b" height="56" width="100" x="146" y="70"></rect><text text-anchor="middle" x="196" y="94">Classify</text><text class="s" text-anchor="middle" x="196" y="111">type, scan quality</text>
+<rect class="w" height="56" width="110" x="274" y="70"></rect><text text-anchor="middle" x="329" y="94">Parse</text><text class="s" text-anchor="middle" x="329" y="111">layout or VLM</text>
+<rect class="b" height="40" width="110" x="414" y="14"></rect><text text-anchor="middle" x="469" y="39">Text chunks</text>
+<rect class="b" height="40" width="110" x="414" y="78"></rect><text text-anchor="middle" x="469" y="103">Tables</text>
+<rect class="w" height="40" width="110" x="414" y="142"></rect><text text-anchor="middle" x="469" y="167">Figure captions</text>
+<rect class="b" height="56" width="96" x="554" y="70"></rect><text text-anchor="middle" x="602" y="94">Mask + embed</text><text class="s" text-anchor="middle" x="602" y="111">pure, retryable</text>
+<rect class="k" height="44" width="96" x="674" y="44"></rect><text text-anchor="middle" x="722" y="64">Upsert</text><text class="s" text-anchor="middle" x="722" y="79">deterministic keys</text>
+<rect class="k" height="44" width="96" x="674" y="112"></rect><text text-anchor="middle" x="722" y="132">Flip alias</text><text class="s" text-anchor="middle" x="722" y="147">version goes live</text>
+<path class="l" d="M118 98H144" marker-end="url(#a)"></path><path class="l" d="M246 98H272" marker-end="url(#a)"></path>
+<path class="l" d="M384 92L412 36" marker-end="url(#a)"></path><path class="l" d="M384 98H412" marker-end="url(#a)"></path><path class="l" d="M384 104L412 160" marker-end="url(#a)"></path>
+<path class="l" d="M524 34L552 88" marker-end="url(#a)"></path><path class="l" d="M524 98H552" marker-end="url(#a)"></path><path class="l" d="M524 162L552 108" marker-end="url(#a)"></path>
+<path class="l" d="M650 90L672 70" marker-end="url(#a)"></path><path class="l" d="M722 88V110" marker-end="url(#a)"></path>
+<circle class="cp" cx="132" cy="214" r="5"></circle><circle class="cp" cx="260" cy="214" r="5"></circle><circle class="cp" cx="399" cy="214" r="5"></circle><circle class="cp" cx="539" cy="214" r="5"></circle><circle class="cp" cx="662" cy="214" r="5"></circle>
+<path class="l" d="M60 214H740" stroke-dasharray="3 4"></path>
+<text class="s" x="60" y="236">Checkpoint after each super-step (durability="sync"). Completed sibling writes are kept, so only a failed branch re-runs.</text>
+<rect class="band" height="88" width="760" x="10" y="256"></rect>
+<rect class="b" height="52" width="220" x="30" y="276"></rect><text text-anchor="middle" x="140" y="298">Postgres checkpointer</text><text class="s" text-anchor="middle" x="140" y="315">encrypted serde, pruned by age</text>
+<rect class="b" height="52" width="220" x="280" y="276"></rect><text text-anchor="middle" x="390" y="298">Object storage (in-region)</text><text class="s" text-anchor="middle" x="390" y="315">pages, crops, DocTags; state holds URIs</text>
+<rect class="b" height="52" width="220" x="530" y="276"></rect><text text-anchor="middle" x="640" y="298">Indexes</text><text class="s" text-anchor="middle" x="640" y="315">hybrid text + page-image subset</text>
+</svg>

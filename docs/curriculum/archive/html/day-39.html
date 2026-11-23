@@ -1,0 +1,428 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>GenAI Prep · Day 39 — Revision Drill: Hybrid Search & Agentic RAG</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: single reading column (~760px) with wide blocks (diagram, tables, code) allowed to scroll inside their own frames. */
+:root{
+  --bg:#f6f7f9; --surface:#ffffff; --fg:#1b2230; --muted:#5a6475; --line:#dde2ea;
+  --accent:#2f5bd3; --accent-soft:#e7edfb; --code-bg:#f0f2f6; --ok:#1f7a4d; --warn:#a15c00; --bad:#b3261e;
+  --f-display:"IBM Plex Sans Condensed","Arial Narrow",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#11151c; --surface:#181e27; --fg:#e4e8ef; --muted:#9aa4b4; --line:#2b3340;
+  --accent:#8aa8ff; --accent-soft:#1f2a44; --code-bg:#0d1117; --ok:#5cc08a; --warn:#e0a84a; --bad:#ff8a80; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#11151c; --surface:#181e27; --fg:#e4e8ef; --muted:#9aa4b4; --line:#2b3340;
+  --accent:#8aa8ff; --accent-soft:#1f2a44; --code-bg:#0d1117; --ok:#5cc08a; --warn:#e0a84a; --bad:#ff8a80; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:16px;line-height:1.6;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:32px 64px}
+.wrap{max-width:780px;margin:0 auto;display:flex;flex-direction:column;gap:40px}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;line-height:1.2;margin:0}
+h1{font-size:clamp(1.8rem,4.5vw,2.5rem)}
+h2{font-size:1.45rem;display:flex;gap:.6em;align-items:baseline}
+h2 .n{font-family:var(--f-mono);font-size:.8rem;color:var(--accent);font-weight:500}
+h3{font-size:1.1rem}
+p{margin:0}
+section{display:flex;flex-direction:column;gap:14px}
+.eyebrow{font-family:var(--f-mono);font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.lede{color:var(--muted);max-width:65ch}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{font-family:var(--f-mono);font-size:.78rem;padding:3px 10px;border-radius:999px;background:var(--accent-soft);color:var(--accent)}
+a{color:var(--accent)}
+a:focus-visible,button:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+code{font-family:var(--f-mono);font-size:.88em;background:var(--code-bg);padding:1px 5px;border-radius:4px}
+ul,ol{margin:0;padding-left:1.3em;display:flex;flex-direction:column;gap:6px}
+.frame{overflow-x:auto;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;min-width:640px;font-size:.92rem}
+th,td{text-align:left;vertical-align:top;padding:10px 12px;border-bottom:1px solid var(--line)}
+th{font-family:var(--f-mono);font-size:.75rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:500}
+tr:last-child td{border-bottom:0}
+.recap{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.recap>div{min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:16px;display:flex;flex-direction:column;gap:8px}
+details{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:0}
+summary{cursor:pointer;padding:14px 16px;font-weight:600;list-style:none;display:flex;gap:12px}
+summary::-webkit-details-marker{display:none}
+summary .q{font-family:var(--f-mono);color:var(--accent);font-weight:500;flex:none}
+details[open] summary{border-bottom:1px solid var(--line)}
+details .a{padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.qs{display:flex;flex-direction:column;gap:10px}
+.code{position:relative;min-width:0}
+.code pre{margin:0;overflow-x:auto;background:var(--code-bg);border:1px solid var(--line);border-radius:8px;padding:14px 16px;font-family:var(--f-mono);font-size:.82rem;line-height:1.55}
+.code .label{font-family:var(--f-mono);font-size:.72rem;color:var(--muted);margin-bottom:4px}
+.copy{position:absolute;top:26px;right:8px;font-family:var(--f-mono);font-size:.72rem;padding:4px 10px;border-radius:6px;border:1px solid var(--line);background:var(--surface);color:var(--fg);cursor:pointer}
+.copy:hover{border-color:var(--accent)}
+.note{border-left:3px solid var(--warn);padding:8px 14px;background:var(--surface);font-size:.93rem}
+.scenario{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:18px;display:flex;flex-direction:column;gap:12px}
+.budget td:last-child,.budget th:last-child{text-align:right;font-variant-numeric:tabular-nums}
+svg text{font-family:var(--f-mono)}
+footer{color:var(--muted);font-size:.85rem;border-top:1px solid var(--line);padding-top:16px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+<header style="display:flex;flex-direction:column;gap:12px">
+  <div class="eyebrow">GenAI Architect prep · Day 39 · Revision drill · Tue 17 Nov 2026</div>
+  <h1>Hybrid search, reranking and corrective RAG loops</h1>
+  <p class="lede">The first revision pass covered weeks 3–4 (Days 31–38). This pass pairs a week-2 retrieval topic with the week-3 orchestration that uses it: hybrid search and reranking (Day 9), driven by a LangGraph corrective-RAG loop (Days 10 and 17). Eight hard questions, one design scenario and a 45-minute drill.</p>
+  <div class="chips"><span class="chip">Day 9 · Hybrid + rerank</span><span class="chip">Day 10 · Corrective RAG</span><span class="chip">Day 17 · LangGraph</span><span class="chip">langgraph 1.2.22</span><span class="chip">sentence-transformers 6.3.0</span></div>
+</header>
+
+<section>
+  <h2><span class="n">01</span>Why this matters for the JD</h2>
+  <p>The JD names <em>hybrid search, metadata filtering</em> and <em>RAG optimization (chunking, reranking, hybrid, feedback loops)</em> as must-have and preferred skills, and <em>LangGraph, planning, guardrails</em> under agentic frameworks. In a review, the question is rarely "do you use hybrid?" It is "why that fusion, that candidate depth, that reranker, and what happens when the loop doesn't converge?"</p>
+</section>
+
+<section>
+  <h2><span class="n">02</span>Five-minute recap</h2>
+  <div class="frame" style="padding:12px">
+  <svg viewBox="0 0 760 230" width="100%" style="min-width:640px;display:block" role="img" aria-label="Pipeline: query router, BM25 and dense retrieval with ACL filter, RRF fusion, cross-encoder rerank, score gate that either generates, rewrites and loops back, or abstains">
+    <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0L10,5L0,10z" fill="var(--muted)"/></marker></defs>
+    <g fill="none" stroke="var(--muted)" stroke-width="1.4">
+      <path d="M100 95 L140 60" marker-end="url(#ar)"/><path d="M100 115 L140 150" marker-end="url(#ar)"/>
+      <path d="M262 50 L300 90" marker-end="url(#ar)"/><path d="M262 160 L300 120" marker-end="url(#ar)"/>
+      <path d="M390 105 L420 105" marker-end="url(#ar)"/><path d="M530 105 L560 105" marker-end="url(#ar)"/>
+      <path d="M660 90 L700 50" marker-end="url(#ar)"/><path d="M660 120 L700 160" marker-end="url(#ar)"/>
+      <path d="M612 140 L612 205 L60 205 L60 135" stroke-dasharray="5 4" marker-end="url(#ar)"/>
+    </g>
+    <g stroke="var(--line)" stroke-width="1.2">
+      <rect x="10" y="80" width="90" height="50" rx="6" fill="var(--surface)"/>
+      <rect x="140" y="25" width="122" height="50" rx="6" fill="var(--surface)"/>
+      <rect x="140" y="135" width="122" height="50" rx="6" fill="var(--surface)"/>
+      <rect x="300" y="80" width="90" height="50" rx="6" fill="var(--accent-soft)"/>
+      <rect x="420" y="80" width="110" height="50" rx="6" fill="var(--accent-soft)"/>
+      <rect x="560" y="75" width="100" height="60" rx="6" fill="var(--surface)"/>
+      <rect x="700" y="28" width="56" height="40" rx="6" fill="var(--surface)"/>
+      <rect x="700" y="142" width="56" height="40" rx="6" fill="var(--surface)"/>
+    </g>
+    <g fill="var(--fg)" font-size="11.5" text-anchor="middle">
+      <text x="55" y="102">query</text><text x="55" y="117" fill="var(--muted)" font-size="10">router</text>
+      <text x="201" y="47">BM25 / sparse</text><text x="201" y="62" fill="var(--muted)" font-size="10">exact codes, IDs</text>
+      <text x="201" y="157">dense ANN</text><text x="201" y="172" fill="var(--muted)" font-size="10">paraphrase</text>
+      <text x="345" y="102">RRF</text><text x="345" y="117" fill="var(--muted)" font-size="10">top 50</text>
+      <text x="475" y="102">cross-encoder</text><text x="475" y="117" fill="var(--muted)" font-size="10">top 5–8</text>
+      <text x="610" y="100">score gate</text><text x="610" y="115" fill="var(--muted)" font-size="10">≥ τ ?</text>
+      <text x="728" y="52">gen</text><text x="728" y="166">abstain</text>
+      <text x="330" y="222" fill="var(--muted)" font-size="10">below τ and attempts &lt; max: rewrite query / relax filter, retrieve again</text>
+      <text x="201" y="105" fill="var(--muted)" font-size="10">ACL filter on both legs</text>
+    </g>
+  </svg>
+  </div>
+  <div class="recap">
+    <div><h3>Hybrid + fusion</h3><p>BM25 catches exact tokens (error codes, SKUs, clause numbers) that embeddings blur; dense catches paraphrase. RRF fuses by rank, <code>Σ 1/(k + rank)</code>, so BM25's unbounded scores and cosine similarities never need normalising. Elastic's <code>rank_constant</code> defaults to 60 and Azure AI Search recommends a small k such as 60. Qdrant offers RRF and DBSF and lets you set k from v1.16, but its docs list a different default, so check each engine.</p></div>
+    <div><h3>Reranking</h3><p>Bi-encoders score query and document separately. Cross-encoders read them together, which makes them more accurate and O(N) per query. Retrieve wide (30–100), rerank narrow (5–8). Current options: MiniLM cross-encoders (CPU), <code>bge-reranker-v2-m3</code> (0.6B, multilingual, Apache-2.0), and managed Cohere <code>rerank-v4.0-pro/fast</code> (32k context). Cohere now also lists a Rerank 5.</p></div>
+    <div><h3>Corrective loop (LangGraph)</h3><p><code>retrieve → grade → (generate | rewrite → retrieve | abstain)</code>, built as a <code>StateGraph</code> with conditional edges. The attempt count lives in state, and the loop is bounded by both your own <code>MAX_ATTEMPTS</code> and LangGraph's <code>recursion_limit</code>. A grader can be the reranker score (cheap, deterministic) or an LLM (flexible, costly). The abstain branch is a feature: it is how you control hallucination.</p></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="n">03</span>Decision table</h2>
+  <div class="frame"><table>
+    <thead><tr><th>Choice</th><th>Pick when</th><th>Failure mode</th><th>Cost / latency</th></tr></thead>
+    <tbody>
+      <tr><td><b>Dense only</b></td><td>Conversational queries, few identifiers, domain-tuned embedder</td><td>Misses exact codes; a "VPN-809" query returns VPN-812</td><td>1 ANN query; cheapest</td></tr>
+      <tr><td><b>BM25 + dense, RRF</b></td><td>Enterprise default; mixed identifiers and prose</td><td>Long natural-language questions pull BM25 noise into the top-k</td><td>2 queries in parallel, +10–30 ms; two indexes to keep in sync</td></tr>
+      <tr><td><b>Weighted (convex) fusion</b></td><td>You have a golden set to tune α and score normalisation on</td><td>Weights drift when the corpus or embedder changes; needs re-tuning</td><td>Same as RRF, plus a tuning job</td></tr>
+      <tr><td><b>Learned sparse (SPLADE, BGE-M3 sparse)</b></td><td>Vocabulary mismatch hurts BM25; GPU available for indexing</td><td>Bigger posting lists; model-bound vocabulary; reindex on model upgrade</td><td>Inference at index and query time</td></tr>
+      <tr><td><b>Self-hosted cross-encoder</b></td><td>Data residency, predictable volume, multilingual (bge-reranker-v2-m3)</td><td>GPU contention adds to p99; a sigmoid vs logit mix-up breaks thresholds</td><td>GPU node; ~N × (q + d) tokens per query</td></tr>
+      <tr><td><b>Managed reranker (Cohere, Azure semantic ranker, Vertex ranking)</b></td><td>Fast time to value; long documents (32k context)</td><td>Egress and residency review; per-search pricing; vendor rate limits</td><td>Network round trip; pay per call</td></tr>
+      <tr><td><b>Corrective loop</b></td><td>Retrieval quality varies by query; abstaining is acceptable</td><td>Unbounded loops, query drift, p99 explosion</td><td>Each loop adds retrieve + rerank (+ LLM rewrite)</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section>
+  <h2><span class="n">04</span>Eight hard interview questions</h2>
+  <div class="qs">
+  <details open><summary><span class="q">Q1</span>RRF or weighted score fusion? Defend your choice.</summary><div class="a">
+    <p>I'd start with RRF. It uses only ranks, so mismatched score scales (BM25 is unbounded, cosine sits in [-1, 1]) don't matter, it needs no tuning, and it holds up when the corpus or embedder changes. The cost is that it ignores magnitude: a very confident dense hit and a marginal one at the same rank count the same.</p>
+    <p>Once there is a golden set, I'd test a convex combination with normalised scores (α·dense + (1−α)·bm25). Published analyses, for example Bruch et al. on fusion functions for hybrid retrieval, find that a tuned convex combination can beat RRF and needs few labelled queries. I'd ship whichever wins on nDCG@10 for each query slice, and re-tune α in CI whenever the embedder changes. Fusion defaults also differ by engine, so state the k you use and don't assume it.</p></div></details>
+
+  <details><summary><span class="q">Q2</span>Your reranker adds 400 ms at p95. Bring it under 150 ms without losing quality.</summary><div class="a">
+    <ul>
+      <li><b>Measure first:</b> latency is roughly linear in N × (query + passage tokens). Plot nDCG@10 against N. Quality usually plateaus around 20–40 candidates, so cut N from 100 to that point.</li>
+      <li><b>Truncate passages</b> to the window the model was trained on (often 256–512 tokens) and rerank the chunks, not the parent documents.</li>
+      <li><b>Run on GPU with batching</b> in a dedicated pool so rerank calls don't queue behind LLM inference. Use FP16 or ONNX/int8, and a smaller model for the long tail.</li>
+      <li><b>Cache</b> scores keyed on (normalised query hash, chunk id, model version). FAQ-heavy helpdesks get high hit rates.</li>
+      <li><b>Degrade gracefully:</b> put a hard timeout on the rerank call and fall back to the fused order, and emit a metric when that happens. The system should get slower or slightly worse, never fail.</li>
+    </ul></div></details>
+
+  <details><summary><span class="q">Q3</span>Where do ACLs go in a hybrid pipeline, and what is the classic bug?</summary><div class="a">
+    <p>Security filters go into <b>both</b> retrieval legs as pre-filters, before fusion. The classic bug is filtering only the dense leg, or post-filtering after top-k. Unauthorised BM25 hits then leak into the fused list, or restrictive post-filters leave empty results. The reranker and the LLM are never the enforcement point. Filtered HNSW can also lose recall when a filter is very selective, so check the engine's filtered-search strategy (Qdrant payload indexes, Elastic filters on kNN, Azure <code>vectorFilterMode</code>). Test with low-cardinality tenants, and log the principal's group claims with every retrieval for audit.</p></div></details>
+
+  <details><summary><span class="q">Q4</span>Why use the reranker score as the corrective-RAG grader instead of an LLM grader?</summary><div class="a">
+    <p>It is already computed, so it adds no extra call. It is also deterministic, which makes the gate testable in CI, and fast (milliseconds against hundreds of milliseconds). The catch is calibration: the scores are not probabilities that carry across domains, and a sigmoid applied twice, or not at all, silently shifts every threshold. I'd set τ from a golden set using precision of the "answerable" decision, use the LLM grader only for the ambiguous band (for example 0.2 ≤ score ≤ 0.45), and re-derive τ whenever the reranker version changes. That threshold is a versioned config value, not a magic number in the code.</p></div></details>
+
+  <details><summary><span class="q">Q5</span>Name four ways an agentic RAG loop fails in production and how you contain each.</summary><div class="a">
+    <ul>
+      <li><b>Non-convergence:</b> cap attempts in state, set <code>recursion_limit</code>, and end in a defined abstain node rather than an exception.</li>
+      <li><b>Query drift:</b> the rewrite answers a different question. Keep the original question for generation and grading, log the rewrite, and eval rewrite fidelity.</li>
+      <li><b>Tail latency and cost:</b> every loop multiplies p99 and tokens. Carry a budget (ms and tokens) in state and stop when it runs out. Stream a "searching more sources…" status to the user.</li>
+      <li><b>Unobservable trajectories:</b> evaluating only the final answer hides bad paths. Trace each node (OTel GenAI spans or Langfuse) and evaluate trajectories: loop rate, abstain rate, and answer quality broken down by attempt count.</li>
+    </ul></div></details>
+
+  <details><summary><span class="q">Q6</span>When would you <em>not</em> add BM25?</summary><div class="a">
+    <p>I'd skip it when the queries are conversational and the corpus has no identifiers, when the embedder is already fine-tuned on in-domain query–document pairs and the offline eval shows hybrid adds less than about 1 point of recall@k, or when the language isn't served well by the analyser (Indic scripts or code-mixed Hinglish with a default analyser). In that last case, learned sparse or multilingual dense may do better. The second index also adds ingestion complexity, so the decision is driven by data broken down by query slice, not by habit.</p></div></details>
+
+  <details><summary><span class="q">Q7</span>LangGraph or a plain Python loop for corrective RAG?</summary><div class="a">
+    <p>For one retrieve–grade–rewrite loop with no pauses, a plain function is simpler, and I'd say so in the review. LangGraph pays off when you need what the graph runtime gives you: checkpointing (resume after a crash, time-travel debugging), <code>interrupt()</code> for human review of low-confidence answers, per-node streaming of status to the UI, durable threads, and a graph that can be drawn and reviewed. The deciding question is whether the workflow needs state that persists across steps, pauses or branches. If not, use a function.</p></div></details>
+
+  <details><summary><span class="q">Q8</span>How do you choose between bge-reranker-v2-m3, a MiniLM cross-encoder and Cohere Rerank 4?</summary><div class="a">
+    <p>Score them against fixed criteria. Quality: nDCG@10 on our golden set, broken out by language. Latency: p95 at our N on target hardware. Cost: per 1,000 queries, including GPU idle time. Plus license, data residency and context length. A typical outcome: MiniLM for an English-only CPU path, bge-reranker-v2-m3 on our own GPUs where data must stay in-region or queries are multilingual, and Cohere where long semi-structured documents need the 32k window and data can leave our environment. Record the result as an ADR with a re-evaluation trigger (new model release, more than 5% eval drift, or a cost change).</p></div></details>
+  </div>
+</section>
+
+<section>
+  <h2><span class="n">05</span>Design scenario</h2>
+  <div class="scenario">
+    <p><b>Brief.</b> An IT and HR helpdesk assistant for 50,000 employees in India. The corpus is about 2M chunks: policies in English and Hindi, plus IT runbooks full of error codes like <code>VPN-812</code>. Volume is about 200k queries a day. Documents carry business-unit ACLs, the latency target is p95 under 3 s to the first token, and data must stay in-region. Design retrieval and orchestration, then defend the latency budget.</p>
+    <h3>Model answer outline</h3>
+    <ol>
+      <li><b>Ingest:</b> Docling-style parsing, structure-aware chunking, and ACL group IDs plus <code>lang</code>, <code>dept</code> and <code>doc_version</code> as payload. Embed with a multilingual model and index BM25 with a code-preserving analyser (keep <code>VPN-812</code> as one token).</li>
+      <li><b>Engine:</b> one engine with native hybrid search (Elastic/OpenSearch, Azure AI Search in an India region, or Qdrant with sparse vectors), so fusion and filtering happen server-side in a single round trip.</li>
+      <li><b>Query path:</b> a regex and small-classifier router extracts codes and department, then hybrid retrieval with the ACL pre-filter, RRF to the top 40, bge-reranker-v2-m3 to the top 6, and the score gate. Above the threshold, generate with citations. Below it, do one rewrite (drop the department filter, transliterate) and retry. Otherwise abstain with a ticket link.</li>
+      <li><b>Capacity:</b> 200k/day averages about 2.3 QPS. With an assumed 5× business-hours peak, plan for about 12 QPS × 40 pairs, roughly 500 rerank pairs a second. Size the GPU pool by load test, not by datasheet.</li>
+      <li><b>Controls:</b> rerank timeout with fallback to fused order, a semantic cache for top FAQs, eval gates in CI (faithfulness, nDCG, abstain precision), and traces per node.</li>
+    </ol>
+    <div class="frame"><table class="budget" style="min-width:420px">
+      <thead><tr><th>Stage (p95 target)</th><th>ms</th></tr></thead>
+      <tbody>
+        <tr><td>Router + query embedding</td><td>40</td></tr>
+        <tr><td>Hybrid retrieval + RRF (server-side)</td><td>80</td></tr>
+        <tr><td>Rerank 40 pairs on GPU</td><td>150</td></tr>
+        <tr><td>Optional single rewrite loop (worst case)</td><td>300</td></tr>
+        <tr><td>LLM time to first token (in-region endpoint)</td><td>900</td></tr>
+        <tr><td><b>Total worst case (headroom remains under 3,000)</b></td><td><b>1,470</b></td></tr>
+      </tbody></table></div>
+    <p class="note">The budget figures are illustrative targets to defend in a review. Replace them with your own load-test numbers.</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="n">06</span>45-minute drill: hybrid → rerank → corrective loop</h2>
+  <p>A single file that runs on CPU. It shows BM25 and dense disagreeing, RRF fusing them, a cross-encoder reranking the result, and a LangGraph loop that rewrites the query or abstains. Ollama is optional; without it the script prints the grounded context instead of an answer.</p>
+  <div class="code"><div class="label">PowerShell · setup</div><button class="copy" type="button">Copy</button><pre>mkdir day39; cd day39
+py -3.13 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -U pip
+python -m pip install &quot;langgraph==1.2.22&quot; &quot;sentence-transformers==6.3.0&quot; &quot;rank-bm25==0.2.2&quot; numpy
+# optional: local LLM for the generate node
+python -m pip install &quot;langchain-ollama==1.1.0&quot;
+ollama pull qwen3:1.7b
+# save the script below as hybrid_crag.py, then:
+python hybrid_crag.py</pre></div>
+  <div class="code"><div class="label">hybrid_crag.py</div><button class="copy" type="button">Copy</button><pre>&quot;&quot;&quot;Day 39 drill: hybrid retrieval (BM25 + dense, RRF) -&gt; cross-encoder rerank -&gt; LangGraph corrective loop.
+Runs on CPU in ~1-2 GB RAM. Optional: Ollama for the final answer (falls back to printing context).
+&quot;&quot;&quot;
+from __future__ import annotations
+
+import re
+import time
+from typing import TypedDict
+
+import numpy as np
+import torch
+from rank_bm25 import BM25Okapi
+from sentence_transformers import CrossEncoder, SentenceTransformer
+from langgraph.graph import END, START, StateGraph
+
+# ---------------------------------------------------------------- corpus
+DOCS = [
+    {&quot;id&quot;: &quot;HR-4.1&quot;, &quot;dept&quot;: &quot;hr&quot;, &quot;text&quot;: &quot;Employees accrue 1.75 days of paid leave per month; unused leave above 30 days lapses on 31 March.&quot;},
+    {&quot;id&quot;: &quot;HR-4.3&quot;, &quot;dept&quot;: &quot;hr&quot;, &quot;text&quot;: &quot;Parental leave is 26 weeks for the primary caregiver and 4 weeks for the secondary caregiver.&quot;},
+    {&quot;id&quot;: &quot;HR-6.2&quot;, &quot;dept&quot;: &quot;hr&quot;, &quot;text&quot;: &quot;Remote work requires manager approval; a maximum of 3 remote days per week applies to client-facing roles.&quot;},
+    {&quot;id&quot;: &quot;IT-2.7&quot;, &quot;dept&quot;: &quot;it&quot;, &quot;text&quot;: &quot;Error VPN-809 means the device certificate has expired; re-enrol the laptop through the Company Portal.&quot;},
+    {&quot;id&quot;: &quot;IT-2.9&quot;, &quot;dept&quot;: &quot;it&quot;, &quot;text&quot;: &quot;Error VPN-812 indicates MFA push timeout; approve the prompt within 60 seconds or use a TOTP code.&quot;},
+    {&quot;id&quot;: &quot;IT-3.1&quot;, &quot;dept&quot;: &quot;it&quot;, &quot;text&quot;: &quot;Personal USB storage is blocked on corporate laptops; request an exception via ticket category SEC-USB.&quot;},
+    {&quot;id&quot;: &quot;IT-5.4&quot;, &quot;dept&quot;: &quot;it&quot;, &quot;text&quot;: &quot;Laptops are refreshed every 4 years; engineers with GPU workloads may request an RTX-class workstation.&quot;},
+    {&quot;id&quot;: &quot;FIN-1.2&quot;, &quot;dept&quot;: &quot;finance&quot;, &quot;text&quot;: &quot;Travel claims must be filed within 15 days of return with itemised receipts above INR 500.&quot;},
+    {&quot;id&quot;: &quot;FIN-1.5&quot;, &quot;dept&quot;: &quot;finance&quot;, &quot;text&quot;: &quot;International per diem for the US is USD 75 per day, covering meals and incidentals.&quot;},
+    {&quot;id&quot;: &quot;FIN-3.3&quot;, &quot;dept&quot;: &quot;finance&quot;, &quot;text&quot;: &quot;Purchase orders above INR 5 lakh need CFO approval and three competing vendor quotes.&quot;},
+    {&quot;id&quot;: &quot;SEC-1.1&quot;, &quot;dept&quot;: &quot;security&quot;, &quot;text&quot;: &quot;Customer PII must never be pasted into public AI chatbots; use the approved internal assistant only.&quot;},
+    {&quot;id&quot;: &quot;SEC-2.4&quot;, &quot;dept&quot;: &quot;security&quot;, &quot;text&quot;: &quot;Production secrets are stored in the vault and rotated every 90 days; never commit them to git.&quot;},
+]
+
+def tok(s: str) -&gt; list[str]:
+    # keep codes like vpn-809 and 1.75 intact: exact-match tokens are where BM25 beats dense
+    return re.findall(r&quot;[a-z0-9]+(?:[-.][a-z0-9]+)*&quot;, s.lower())
+
+print(&quot;Loading models (first run downloads ~200 MB)...&quot;)
+EMB = SentenceTransformer(&quot;BAAI/bge-small-en-v1.5&quot;, device=&quot;cpu&quot;)
+RERANK = CrossEncoder(&quot;cross-encoder/ms-marco-MiniLM-L6-v2&quot;, device=&quot;cpu&quot;,
+                      activation_fn=torch.nn.Sigmoid())  # explicit: scores in 0..1 so a threshold means something
+QUERY_PREFIX = &quot;Represent this sentence for searching relevant passages: &quot;  # bge v1.5 query instruction
+
+BM25 = BM25Okapi([tok(d[&quot;text&quot;]) for d in DOCS])
+DOC_VECS = EMB.encode([d[&quot;text&quot;] for d in DOCS], normalize_embeddings=True)
+
+# ---------------------------------------------------------------- retrieval primitives
+def bm25_rank(q: str, allowed: list[int], k: int) -&gt; list[int]:
+    s = BM25.get_scores(tok(q))
+    return sorted(allowed, key=lambda i: -s[i])[:k]
+
+def dense_rank(q: str, allowed: list[int], k: int) -&gt; list[int]:
+    qv = EMB.encode(QUERY_PREFIX + q, normalize_embeddings=True)
+    sims = DOC_VECS @ qv
+    return sorted(allowed, key=lambda i: -sims[i])[:k]
+
+def rrf(rankings: list[list[int]], k: int = 60) -&gt; list[int]:
+    &quot;&quot;&quot;Reciprocal Rank Fusion: score(d) = sum 1/(k + rank). Rank-based, so no score normalisation needed.&quot;&quot;&quot;
+    scores: dict[int, float] = {}
+    for ranking in rankings:
+        for r, i in enumerate(ranking, start=1):
+            scores[i] = scores.get(i, 0.0) + 1.0 / (k + r)
+    return sorted(scores, key=lambda i: -scores[i])
+
+def hybrid(q: str, dept: str | None, k_each: int = 6) -&gt; list[int]:
+    allowed = [i for i, d in enumerate(DOCS) if dept is None or d[&quot;dept&quot;] == dept]  # pre-filter, like a metadata filter
+    return rrf([bm25_rank(q, allowed, k_each), dense_rank(q, allowed, k_each)])
+
+def rerank(q: str, cand: list[int], top_n: int = 3) -&gt; list[tuple[int, float]]:
+    scores = RERANK.predict([(q, DOCS[i][&quot;text&quot;]) for i in cand])
+    order = np.argsort(-scores)[:top_n]
+    return [(cand[j], float(scores[j])) for j in order]
+
+# ---------------------------------------------------------------- LangGraph corrective loop
+class S(TypedDict, total=False):
+    question: str
+    query: str
+    dept: str | None
+    hits: list[tuple[int, float]]
+    attempts: int
+    answer: str
+
+THRESHOLD = 0.30   # tune on a golden set, never by eye
+MAX_ATTEMPTS = 2
+
+def retrieve(state: S) -&gt; S:
+    q = state.get(&quot;query&quot;) or state[&quot;question&quot;]
+    cand = hybrid(q, state.get(&quot;dept&quot;))
+    return {&quot;query&quot;: q, &quot;hits&quot;: rerank(q, cand), &quot;attempts&quot;: state.get(&quot;attempts&quot;, 0) + 1}
+
+def route(state: S) -&gt; str:
+    best = state[&quot;hits&quot;][0][1] if state[&quot;hits&quot;] else 0.0
+    if best &gt;= THRESHOLD:
+        return &quot;generate&quot;
+    return &quot;rewrite&quot; if state[&quot;attempts&quot;] &lt; MAX_ATTEMPTS else &quot;abstain&quot;
+
+def rewrite(state: S) -&gt; S:
+    # cheap deterministic rewrite: drop the metadata filter (maybe the router guessed wrong) and strip filler words.
+    # Stretch goal: replace with an LLM rewrite via Ollama.
+    stop = {&quot;what&quot;, &quot;is&quot;, &quot;the&quot;, &quot;how&quot;, &quot;do&quot;, &quot;i&quot;, &quot;my&quot;, &quot;a&quot;, &quot;an&quot;, &quot;for&quot;, &quot;of&quot;, &quot;to&quot;, &quot;can&quot;, &quot;does&quot;}
+    q = &quot; &quot;.join(w for w in tok(state[&quot;question&quot;]) if w not in stop)
+    return {&quot;query&quot;: q, &quot;dept&quot;: None}
+
+def generate(state: S) -&gt; S:
+    ctx = &quot;\n&quot;.join(f&quot;[{DOCS[i][&#x27;id&#x27;]}] {DOCS[i][&#x27;text&#x27;]}&quot; for i, _ in state[&quot;hits&quot;])
+    try:
+        from langchain_ollama import ChatOllama
+        llm = ChatOllama(model=&quot;qwen3:1.7b&quot;, temperature=0)
+        msg = llm.invoke(&quot;Answer ONLY from the context and cite ids in [brackets]. &quot;
+                         &quot;If the context does not contain the answer, say you don&#x27;t know.\n\n&quot;
+                         f&quot;Context:\n{ctx}\n\nQuestion: {state[&#x27;question&#x27;]}&quot;)
+        return {&quot;answer&quot;: msg.content}
+    except Exception as e:  # no Ollama running -&gt; still show the grounded context
+        return {&quot;answer&quot;: f&quot;(LLM unavailable: {type(e).__name__}) Top context:\n{ctx}&quot;}
+
+def abstain(state: S) -&gt; S:
+    return {&quot;answer&quot;: &quot;I couldn&#x27;t find this in the policy corpus. Raise a ticket with HR/IT.&quot;}
+
+g = StateGraph(S)
+for name, fn in [(&quot;retrieve&quot;, retrieve), (&quot;rewrite&quot;, rewrite), (&quot;generate&quot;, generate), (&quot;abstain&quot;, abstain)]:
+    g.add_node(name, fn)
+g.add_edge(START, &quot;retrieve&quot;)
+g.add_conditional_edges(&quot;retrieve&quot;, route, {&quot;generate&quot;: &quot;generate&quot;, &quot;rewrite&quot;: &quot;rewrite&quot;, &quot;abstain&quot;: &quot;abstain&quot;})
+g.add_edge(&quot;rewrite&quot;, &quot;retrieve&quot;)
+g.add_edge(&quot;generate&quot;, END)
+g.add_edge(&quot;abstain&quot;, END)
+app = g.compile()
+
+# ---------------------------------------------------------------- demo
+if __name__ == &quot;__main__&quot;:
+    tests = [
+        (&quot;What does error VPN-812 mean?&quot;, &quot;it&quot;),            # exact code: BM25 carries it
+        (&quot;How long can new mothers take off work?&quot;, &quot;hr&quot;),   # paraphrase: dense carries it
+        (&quot;What is the US daily allowance?&quot;, &quot;hr&quot;),           # wrong filter -&gt; rewrite drops it
+        (&quot;What is the canteen menu on Friday?&quot;, None),       # not in corpus -&gt; abstain
+    ]
+    for q, dept in tests:
+        print(f&quot;\nQ: {q}  (filter={dept})&quot;)
+        print(f&quot;  bm25 : {[DOCS[i][&#x27;id&#x27;] for i in bm25_rank(q, list(range(len(DOCS))), 3)]}&quot;)
+        print(f&quot;  dense: {[DOCS[i][&#x27;id&#x27;] for i in dense_rank(q, list(range(len(DOCS))), 3)]}&quot;)
+        t = time.perf_counter()
+        out = app.invoke({&quot;question&quot;: q, &quot;dept&quot;: dept})
+        ms = (time.perf_counter() - t) * 1000
+        print(f&quot;  reranked: {[(DOCS[i][&#x27;id&#x27;], round(s, 3)) for i, s in out[&#x27;hits&#x27;]]}  attempts={out[&#x27;attempts&#x27;]}  {ms:.0f} ms&quot;)
+        print(&quot;  -&gt;&quot;, out[&quot;answer&quot;].replace(&quot;\n&quot;, &quot;\n     &quot;))
+</pre></div>
+  <h3>What you should see</h3>
+  <ul>
+    <li><b>VPN-812:</b> BM25 ranks <code>IT-2.9</code> first. Dense may put <code>IT-2.7</code> (VPN-809) alongside or above it, which is the exact-code failure. After the rerank, <code>IT-2.9</code> is on top and the answer comes in one attempt.</li>
+    <li><b>"New mothers":</b> there is no lexical overlap with "parental leave", so dense carries <code>HR-4.3</code> and BM25 doesn't.</li>
+    <li><b>US daily allowance with the wrong <code>hr</code> filter:</b> attempt 1 scores low, the rewrite drops the filter, and attempt 2 finds <code>FIN-1.5</code>.</li>
+    <li><b>Canteen menu:</b> both attempts score below the threshold, so the graph abstains.</li>
+    <li>Exact scores vary by model version. Per-query latency after warm-up should be well under a second on CPU.</li>
+  </ul>
+  <h3>Stretch goals</h3>
+  <ol>
+    <li>Build 20 labelled queries and compute recall@3 for BM25, dense and RRF, then RRF with k = 10, 60 and 200. Which slice (codes or paraphrases) moves?</li>
+    <li>Replace <code>rewrite()</code> with an Ollama LLM rewrite and add a <code>budget_ms</code> field to the state that stops the loop. Then run <code>BAAI/bge-reranker-v2-m3</code> on the RTX 3050 (<code>device="cuda"</code>, FP16) and compare its latency with MiniLM on CPU.</li>
+  </ol>
+  <p class="note">Windows notes: everything here is native. No WSL2 or Docker is needed. If <code>import torch</code> fails on Python 3.13, install the CPU wheel with <code>python -m pip install torch --index-url https://download.pytorch.org/whl/cpu</code>, or the CUDA wheel matching your driver for the GPU stretch goal.</p>
+</section>
+
+<section>
+  <h2><span class="n">07</span>Repos to revisit</h2>
+  <ul>
+    <li><a href="https://github.com/langchain-ai/langgraph" target="_blank" rel="noopener">langchain-ai/langgraph</a>: read <code>libs/langgraph/langgraph/graph/state.py</code> to see how conditional edges and reducers resolve, and the checkpointer interface beside it.</li>
+    <li><a href="https://github.com/FlagOpen/FlagEmbedding" target="_blank" rel="noopener">FlagOpen/FlagEmbedding</a>: the reranker folder covers training data format and layerwise or lightweight reranker variants you can trade for latency.</li>
+    <li><a href="https://github.com/AnswerDotAI/rerankers" target="_blank" rel="noopener">AnswerDotAI/rerankers</a>: one API over cross-encoders, ColBERT, LLM rerankers and Cohere. Use it to A/B rerankers behind a single interface.</li>
+    <li><a href="https://github.com/qdrant/qdrant" target="_blank" rel="noopener">qdrant/qdrant</a>: see how server-side prefetch plus fusion (RRF/DBSF) and payload-indexed filtering are implemented. Development happens on the <code>dev</code> branch.</li>
+  </ul>
+</section>
+
+<section>
+  <h2><span class="n">08</span>Read</h2>
+  <ul>
+    <li><a href="https://docs.langchain.com/oss/python/langgraph/agentic-rag" target="_blank" rel="noopener">LangGraph: Agentic RAG tutorial</a>, the official retrieve, grade, rewrite and generate graph. Compare its LLM grader with the score gate above.</li>
+    <li><a href="https://learn.microsoft.com/en-us/azure/search/hybrid-search-ranking" target="_blank" rel="noopener">Azure AI Search: hybrid search ranking (RRF)</a> and <a href="https://www.elastic.co/docs/reference/elasticsearch/rest-apis/reciprocal-rank-fusion" target="_blank" rel="noopener">Elastic RRF retriever</a>, for how two managed engines expose fusion parameters.</li>
+    <li><a href="https://cormack.uwaterloo.ca/cormacksigir09-rrf.pdf" target="_blank" rel="noopener">Cormack, Clarke & Büttcher (SIGIR 2009): Reciprocal Rank Fusion</a>, the four-page origin of k = 60.</li>
+  </ul>
+</section>
+
+<section>
+  <h2><span class="n">09</span>Architect's lens: ADR-039</h2>
+  <div class="frame"><table style="min-width:520px">
+    <tbody>
+      <tr><th style="width:22%">Context</th><td>A multilingual helpdesk corpus with error codes and in-region residency. p95 TTFT target under 3 s. Retrieval misses are the top cause of wrong answers in pilot traces.</td></tr>
+      <tr><th>Options</th><td>(a) Dense only. (b) Hybrid with RRF and no rerank. (c) Hybrid with RRF, a self-hosted cross-encoder and a score gate. (d) Hybrid with a managed reranker.</td></tr>
+      <tr><th>Decision</th><td>(c): engine-native hybrid with RRF (k recorded in config), bge-reranker-v2-m3 on an in-region GPU pool, a top-40 → top-6 rerank, τ derived from the golden set, and one bounded rewrite before abstaining.</td></tr>
+      <tr><th>Consequences</th><td>+ Exact-code recall and residency. + A deterministic, testable gate. − A GPU pool to run and capacity-plan. − τ must be re-derived on every reranker upgrade. Fallback to fused order on rerank timeout. Revisit if eval shows managed reranking at least 3 nDCG points better and residency allows it.</td></tr>
+    </tbody></table></div>
+</section>
+
+<section>
+  <h2><span class="n">10</span>Tomorrow</h2>
+  <p>Day 40 drill: RAG evaluation (Day 11) with GenAI observability (Day 27), covering golden sets, LLM-as-judge pitfalls and eval dashboards wired to traces.</p>
+</section>
+
+<footer>Versions checked on PyPI on 17 Nov 2026: langgraph 1.2.22, langchain-core 1.8.1, langchain-ollama 1.1.0, sentence-transformers 6.3.0, rank-bm25 0.2.2. Links verified the same day.</footer>
+</div>
+
+<script>
+document.querySelectorAll('.copy').forEach(function(btn){
+  btn.addEventListener('click',function(){
+    var pre=btn.parentElement.querySelector('pre');var txt=pre.innerText;
+    var done=function(){btn.textContent='Copied';setTimeout(function(){btn.textContent='Copy'},1500)};
+    try{navigator.clipboard.writeText(txt).then(done,function(){sel(pre)})}catch(e){sel(pre)}
+  });
+});
+function sel(el){var r=document.createRange();r.selectNodeContents(el);var s=getSelection();s.removeAllRanges();s.addRange(r)}
+</script>
+
+</body></html>

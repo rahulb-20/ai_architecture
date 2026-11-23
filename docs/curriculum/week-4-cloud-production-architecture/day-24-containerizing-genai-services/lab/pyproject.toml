@@ -1,0 +1,12 @@
+[project]
+name = "genai-gateway"
+version = "0.1.0"
+requires-python = ">=3.13"
+dependencies = [
+    "fastapi>=0.135",        # fastapi.sse landed in 0.135.0; tested on 0.162.0
+    "uvicorn[standard]>=0.54",
+    "ollama>=0.6.3",
+]
+
+[dependency-groups]
+dev = ["httpx>=0.28"]

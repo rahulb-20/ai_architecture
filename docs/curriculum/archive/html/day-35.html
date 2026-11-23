@@ -1,0 +1,468 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>GenAI Prep · Day 35 — Revision Drill: Agent Memory &amp; Cloud Architectures</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,650&family=Source+Sans+3:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: single reading column (same system as the Day 31–34 drills), numbered Q&A in drill order, scenario as a whiteboard panel */
+:root{
+  --bg:#f6f7f9; --surface:#ffffff; --fg:#1b2230; --muted:#5a6476; --line:#dde2ea;
+  --accent:#1f5fbf; --accent-soft:#e6eefb; --warn:#9a5b00; --warn-soft:#fbf1e1; --bad:#b3261e; --bad-soft:#fbe9e7; --ok:#1d7a4a; --ok-soft:#e5f4ec; --code:#f0f3f7;
+  --display:"Fraunces",Georgia,serif; --body:"Source Sans 3",system-ui,sans-serif; --mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#11151c; --surface:#181e27; --fg:#e4e8ef; --muted:#9aa4b5; --line:#2a3240;
+  --accent:#7fb0ff; --accent-soft:#1c2a42; --warn:#f0b35c; --warn-soft:#2e2414; --bad:#ff8a80; --bad-soft:#3a1d1b; --ok:#5fd39a; --ok-soft:#15291f; --code:#0d1117; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#11151c; --surface:#181e27; --fg:#e4e8ef; --muted:#9aa4b5; --line:#2a3240;
+  --accent:#7fb0ff; --accent-soft:#1c2a42; --warn:#f0b35c; --warn-soft:#2e2414; --bad:#ff8a80; --bad-soft:#3a1d1b; --ok:#5fd39a; --ok-soft:#15291f; --code:#0d1117; color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:17px;line-height:1.6}
+.wrap{max-width:820px;margin:0 auto;padding-block:40px 64px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:36px}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;line-height:1.2;margin:0}
+h1{font-size:clamp(28px,5vw,40px);font-weight:650}
+h2{font-size:24px;font-weight:650;padding-bottom:8px;border-bottom:1px solid var(--line)}
+h3{font-size:19px;font-weight:500}
+p{margin:0}
+.eyebrow{font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);font-weight:700}
+.lede{color:var(--muted);max-width:65ch}
+header{display:flex;flex-direction:column;gap:12px}
+section{display:flex;flex-direction:column;gap:16px;min-width:0}
+.alert{background:var(--warn-soft);border:1px solid var(--warn);border-radius:8px;padding:14px 16px;display:flex;flex-direction:column;gap:6px}
+.alert b.lbl{color:var(--warn);font-size:13px;letter-spacing:.06em;text-transform:uppercase}
+ul,ol{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:4px}
+.q{display:flex;flex-direction:column;gap:10px;padding:18px 0;border-top:1px solid var(--line);min-width:0}
+.q:first-of-type{border-top:0}
+.qhead{display:flex;gap:12px;align-items:baseline}
+.qn{font-family:var(--mono);font-size:13px;color:var(--accent);font-weight:600;flex:none;width:2.4em}
+.qt{font-weight:700;font-size:17.5px;min-width:0}
+.ans{padding-left:calc(2.4em + 12px);display:flex;flex-direction:column;gap:8px;min-width:0}
+details summary{cursor:pointer;color:var(--accent);font-weight:600;font-size:15px}
+details[open] summary{margin-bottom:8px}
+details>*+*{margin-top:8px}
+code{font-family:var(--mono);font-size:.88em;background:var(--code);padding:1px 5px;border-radius:4px}
+.codebox{position:relative;background:var(--code);border:1px solid var(--line);border-radius:8px;min-width:0}
+.codebox pre{margin:0;padding:14px 16px;overflow-x:auto;font-family:var(--mono);font-size:13.5px;line-height:1.5}
+.codebox pre code{background:none;padding:0}
+.copy{position:absolute;top:8px;right:8px;font:600 12px var(--body);background:var(--surface);color:var(--fg);border:1px solid var(--line);border-radius:6px;padding:4px 10px;cursor:pointer}
+.copy:focus-visible,summary:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:15px;min-width:560px}
+th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:13px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+td.num{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+tr:last-child td{border-bottom:0}
+.scenario{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:20px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.diagram{overflow-x:auto}
+.diagram svg{display:block;min-width:640px;width:100%;height:auto}
+.out{font-family:var(--mono);font-size:13px;background:var(--code);border:1px dashed var(--line);border-radius:8px;padding:12px 14px;overflow-x:auto;white-space:pre;color:var(--ok)}
+.out.bad{color:var(--bad)}
+a{color:var(--accent)}
+.small{font-size:14px;color:var(--muted)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+<header>
+  <div class="eyebrow">Day 35 · Revision drill · Fri 13 Nov 2026</div>
+  <h1>Revision drill: agent memory and cloud reference architectures</h1>
+  <p class="lede">Two topics re-tested at interview depth: Day 19 (short-term, long-term, episodic and procedural memory; summarisation; the LangGraph store) and Day 22 (Azure, AWS, GCP and watsonx reference architectures: private networking, IAM, data residency). They meet in one uncomfortable place: memory is personal data that persists, so where it lives, who can reach it over the network, and how you erase it are architecture decisions, not library settings. Eight hard questions, a 25-minute local drill that shows a cross-tenant leak and an incomplete erasure, then one design scenario.</p>
+</header>
+
+<div class="alert" role="note">
+  <b class="lbl">Worth knowing before an interview</b>
+  <p><b>Every hyperscaler now sells managed agent memory,</b> and they differ in ways that matter for a regulated client: AWS AgentCore Memory added an <code>IngestData</code> API on 8 Sep 2026 that writes straight to long-term memory without a short-term event; Microsoft Foundry's memory is still labelled preview; Google's Memory Bank docs now sit under the Gemini Enterprise Agent Platform name. On the IBM side, IBM and Yotta announced general availability of their sovereign agentic platform (watsonx Orchestrate on Yotta's Shakti Cloud, India) at the end of September 2026, after announcing the plan on 7 May. Meanwhile <code>langmem</code> has not released since 27 Oct 2025 (0.0.30), so quote it as reference code, not as a dependency.</p>
+</div>
+
+<section>
+  <h2>Versions and services to quote (checked today)</h2>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Package / service</th><th>Latest</th><th>Released</th><th>Note</th></tr></thead>
+    <tbody>
+      <tr><td><code>langgraph</code></td><td class="num">1.2.21</td><td class="num">12 Nov 2026</td><td>Checkpointer = short-term (per thread); <code>Store</code> = long-term (cross-thread, namespaced, optional vector index).</td></tr>
+      <tr><td><code>langgraph-checkpoint-postgres</code></td><td class="num">3.2.0</td><td class="num">14 Oct 2026</td><td>Production checkpointer and <code>PostgresStore</code> (pgvector for semantic search).</td></tr>
+      <tr><td><code>langgraph-checkpoint-sqlite</code></td><td class="num">3.1.3</td><td class="num">30 Oct 2026</td><td>Ships <code>SqliteSaver</code> and <code>SqliteStore</code>: persistence on Windows with no Docker (stretch goal 1).</td></tr>
+      <tr><td><code>mem0ai</code></td><td class="num">2.2.1</td><td class="num">25 Sep 2026</td><td>Framework-agnostic memory layer (extract → dedupe/update → retrieve).</td></tr>
+      <tr><td><code>langmem</code></td><td class="num">0.0.30</td><td class="num">27 Oct 2025</td><td>No release in ~12 months. Read its extraction prompts; don't depend on it.</td></tr>
+      <tr><td><code>bedrock-agentcore</code> SDK</td><td class="num">1.26.0</td><td class="num">10 Nov 2026</td><td>AgentCore Memory strategies: semantic, user preference, summary, episodic; built-in, built-in with overrides, or self-managed.</td></tr>
+      <tr><td>Microsoft Foundry Agent Service</td><td>—</td><td>docs 29 Oct 2026</td><td>Private networking = BYO VNet with a subnet delegated to <code>Microsoft.App/environments</code>, plus BYO Cosmos DB, AI Search and Storage.</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section>
+  <h2>Eight interview questions</h2>
+  <p class="small">Answer each aloud in under 90 seconds before opening the model answer. Q1–4 are memory, Q5–7 are cloud architecture, Q8 is where the two meet.</p>
+
+  <div class="q"><div class="qhead"><span class="qn">Q1</span><span class="qt">A product owner wants the HR copilot to "remember everything about each employee". Design the memory model you would actually build, and say what you would refuse to store.</span></div>
+  <div class="ans"><details><summary>Model answer</summary>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Layer</th><th>What it holds</th><th>Store / scope</th><th>Lifetime</th></tr></thead>
+      <tbody>
+        <tr><td>Short-term (thread)</td><td>The current conversation, tool results, graph state</td><td>Checkpointer, keyed by <code>thread_id</code></td><td>Session; purge after N days</td></tr>
+        <tr><td>Semantic: profile</td><td>A small typed document: role, location, language, stated preferences</td><td>Store, <code>(tenant, user, "profile")</code>, one key</td><td>Until changed; overwrite, not append</td></tr>
+        <tr><td>Semantic: collection</td><td>Facts the user told the assistant ("my project is X")</td><td>Store with vector index, <code>(tenant, user, "memories")</code></td><td>TTL plus "last used" decay</td></tr>
+        <tr><td>Episodic</td><td>Past task outcomes used as few-shot examples ("how we resolved a similar request")</td><td>Store, often per team rather than per user, after redaction</td><td>Curated; reviewed</td></tr>
+        <tr><td>Procedural</td><td>Instructions and prompts the agent improves over time</td><td>Prompt registry, versioned and evaluated (Day 26)</td><td>Release-managed</td></tr>
+      </tbody>
+    </table></div>
+    <p><b>Refuse:</b> anything the HR system of record already owns (salary, leave balance, performance rating). Fetch it live with the user's own authorisation instead, so memory never becomes a stale, unaudited copy of HR data. Also refuse health, grievances and other sensitive categories by default, with a classifier on the write path. Every memory row carries <code>source</code> (user said / inferred / tool), <code>created_at</code>, <code>last_used_at</code> and a confidence, so you can show it, correct it and expire it.</p>
+  </details></div></div>
+
+  <div class="q"><div class="qhead"><span class="qn">Q2</span><span class="qt">Hot-path or background memory writes? The user said "I moved to Pune" last month and "I'm in Bengaluru" today. What happens in your design?</span></div>
+  <div class="ans"><details><summary>Model answer</summary>
+    <ul>
+      <li><b>Hot path</b> (the agent calls a "save memory" tool during the turn): visible to the user, immediate, but adds latency and a model decision on every turn, and the agent writes too much or too little.</li>
+      <li><b>Background</b> (a worker reads finished threads after a delay and extracts memories): no user latency, better extraction with a stronger model and more context, but the memory appears minutes later and needs a queue and a debounce so one chat is not processed five times.</li>
+      <li><b>Default:</b> background extraction, plus a hot-path tool only for explicit "remember this" requests. AgentCore's built-in strategies, Mem0 and Memory Bank all follow this extract-then-consolidate shape.</li>
+      <li><b>Contradictions are a consolidation problem.</b> On write, search existing memories for the same attribute and decide ADD / UPDATE / DELETE / NOOP (Mem0's model). Location belongs in the profile document, so the new value replaces the old one and the old one goes to history with a timestamp. Never keep both as free text in a vector collection, because retrieval will return whichever is closer to the query wording.</li>
+      <li>Measure it: a memory eval set of multi-session scripts with expected recalled facts, including contradictions and deletions, scored for precision (no stale facts) as well as recall.</li>
+    </ul>
+  </details></div></div>
+
+  <div class="q"><div class="qhead"><span class="qn">Q3</span><span class="qt">How can long-term memory become a security vulnerability, and what controls do you put in?</span></div>
+  <div class="ans"><details><summary>Model answer</summary>
+    <ul>
+      <li><b>Cross-tenant or cross-user leakage:</b> a namespace built from anything the model or the request body controls, or a shared namespace (today's <code>--leaky</code> run). Control: the namespace is built server-side from the authenticated identity (LangGraph runtime <code>context</code>, AgentCore <code>actorId</code>), never from the prompt; add a test that user B can never retrieve user A's memory; for strict tenants, a separate index or database per tenant.</li>
+      <li><b>Memory poisoning:</b> an indirect prompt injection in a retrieved document or email gets extracted as a "fact" or "instruction" and then influences every future session (OWASP LLM01 and LLM04 territory). Controls: extract only from user turns by default, never from tool output; store facts, not instructions; label recalled memory as untrusted data in the prompt; run the Day 21 guard model on the write path.</li>
+      <li><b>Sensitive data accumulation:</b> PII masking (Presidio) before writing, encryption with customer-managed keys, retention limits.</li>
+      <li><b>No visibility:</b> users and auditors must be able to see, correct and delete memories. A "what do you remember about me" screen is both a trust feature and a compliance control.</li>
+    </ul>
+  </details></div></div>
+
+  <div class="q"><div class="qhead"><span class="qn">Q4</span><span class="qt">An employee invokes the right to erasure under India's DPDP Act. List every place your agent has their data, and how you prove it's gone.</span></div>
+  <div class="ans"><details><summary>Model answer</summary>
+    <ul>
+      <li><b>Long-term store:</b> all keys under <code>(tenant, user, *)</code>, including the vector index entries.</li>
+      <li><b>Checkpoints:</b> every thread the user owns. Today's drill shows memories deleted while the checkpoint still holds 14 messages. You need a <code>user_id → thread_ids</code> index to find them, then <code>checkpointer.delete_thread(thread_id)</code>.</li>
+      <li><b>Derived data:</b> summaries, episodic examples copied into team memory, fine-tuning or eval datasets built from conversations, semantic-cache entries keyed on their prompts.</li>
+      <li><b>Telemetry:</b> traces in Langfuse, LangSmith or App Insights, which often hold full prompts. Set retention, mask PII at ingestion, and support delete by user ID.</li>
+      <li><b>Provider side:</b> whether the model provider keeps prompts for abuse monitoring, and for how long; this is a contract and configuration question (for example, Azure's modified abuse monitoring for approved customers).</li>
+      <li><b>Backups:</b> usually handled by documented expiry rather than surgery, which you state in the privacy notice.</li>
+      <li><b>Proof:</b> an erasure job that produces an audit record per store with counts deleted, plus a test that searches every store for the user ID afterwards. On timing: the DPDP Rules were notified in November 2025 with a 12–18 month phase-in, so most data-fiduciary obligations apply from around May 2027. Design for it now.</li>
+    </ul>
+  </details></div></div>
+
+  <div class="q"><div class="qhead"><span class="qn">Q5</span><span class="qt">The security team says "we put a private endpoint on the Foundry resource, so the agent is private." Why is that only half the answer?</span></div>
+  <div class="ans"><details><summary>Model answer</summary>
+    <ul>
+      <li><b>A private endpoint controls inbound access</b> to the service. It says nothing about outbound traffic: where the agent's runtime goes when it calls a tool, an MCP server or a web API.</li>
+      <li><b>For Foundry Agent Service, outbound control needs the standard setup with private networking:</b> your own VNet with a subnet delegated to <code>Microsoft.App/environments</code> (Microsoft's docs recommend /24; /27 is the minimum in the portal steps), in the same region as the Foundry resource, and bring-your-own Cosmos DB (thread storage), AI Search (vector stores) and Storage (files), each with public access disabled and its own private endpoint, which are not created for you.</li>
+      <li><b>Then route egress</b> through Azure Firewall or a NAT gateway with an allow-list of FQDNs per tool, so an injected instruction cannot make the agent post data to an arbitrary URL.</li>
+      <li><b>DNS is where it usually breaks:</b> private DNS zones for every service, and conditional forwarders from on-prem to Azure DNS (168.63.129.16).</li>
+      <li><b>Identity:</b> the project's managed identity gets data-plane roles on each BYO resource; no keys in config. The same split applies elsewhere: on AWS, VPC endpoints (PrivateLink) for Bedrock inbound and a VPC configuration for AgentCore Runtime outbound; on GCP, VPC Service Controls around Vertex AI plus Private Service Connect; on IBM Cloud, private service endpoints for watsonx.ai.</li>
+    </ul>
+  </details></div></div>
+
+  <div class="q"><div class="qhead"><span class="qn">Q6</span><span class="qt">An Indian bank requires all customer data to stay in India. Walk through what "data residency" means for a GenAI system on Azure or AWS, and where it is commonly broken.</span></div>
+  <div class="ans"><details><summary>Model answer</summary>
+    <ul>
+      <li><b>Inference location:</b> on Azure, Global deployments may process prompts in any region; Data Zone deployments keep processing within a named geography; a regional Standard or Provisioned deployment in Central India or South India keeps it in-region. Check which models are offered as regional deployments in India, because the newest models often arrive as Global first. On AWS, cross-region inference profiles route requests across several regions in a geography; check that the profile you use does not route outside India, or call the model in-region without a profile.</li>
+      <li><b>Data at rest:</b> vector index, memory store, checkpoints, uploaded files, fine-tuning data, all in Indian regions, encrypted with customer-managed keys in a key vault in India.</li>
+      <li><b>Where it is commonly broken:</b> observability (a SaaS tracing tool hosted in the US receives full prompts); evaluation (an LLM-as-judge call to a Global deployment); semantic cache in a shared global Redis; the provider's abuse-monitoring storage; support tickets with pasted transcripts; DR replicas in a non-Indian paired region.</li>
+      <li><b>DR inside the boundary:</b> Central India ↔ South India for Azure; Mumbai ↔ Hyderabad for AWS.</li>
+      <li><b>If no compliant hosted model exists:</b> open-weight models self-hosted in an Indian region or on-prem, or watsonx on OpenShift, or the IBM–Yotta sovereign platform on Shakti Cloud. Map RBI's payment-data localisation rules and DPDP cross-border provisions with the bank's legal team; the architect's job is to show every data flow on one diagram.</li>
+    </ul>
+  </details></div></div>
+
+  <div class="q"><div class="qhead"><span class="qn">Q7</span><span class="qt">Managed agent platform (AgentCore, Foundry Agent Service, Vertex/Gemini Enterprise Agent Platform, watsonx Orchestrate) or your own LangGraph on Kubernetes? Defend a choice for a client that is "Azure-first but wants to avoid lock-in".</span></div>
+  <div class="ans"><details><summary>Model answer</summary>
+    <ul>
+      <li><b>Managed platforms give you</b> runtime, identity integration, managed memory, tool hosting and evaluation hooks in weeks, with the provider's compliance attestations. You give up control of the agent loop, upgrade timing, and portability of memory and thread data, and your agent definitions become provider-specific resources.</li>
+      <li><b>Self-hosted LangGraph</b> on AKS or Container Apps gives you a portable graph, your own Postgres for checkpoints and memory, and any model through a gateway. You own scaling, patching, HITL storage and the security reviews.</li>
+      <li><b>For "Azure-first, avoid lock-in":</b> keep the agent logic in a portable framework (LangGraph or Microsoft Agent Framework), run it on Azure Container Apps or AKS inside the client's VNet, call models through an AI gateway (Azure API Management or LiteLLM) so the provider can change, and keep memory in your own Postgres with pgvector behind a small <code>MemoryStore</code> interface. Use managed pieces where lock-in is cheap to reverse: Azure OpenAI as a model, AI Search as an index.</li>
+      <li><b>What I would choose differently:</b> for a team with little platform-engineering capacity and a single-cloud strategy, the managed agent service is the better trade, and I would write down the exit cost in the ADR (how threads and memory would be exported).</li>
+    </ul>
+  </details></div></div>
+
+  <div class="q"><div class="qhead"><span class="qn">Q8</span><span class="qt">Draw where agent memory sits in a cloud reference architecture. What network, identity and key-management controls does it get that a plain vector index for documents doesn't?</span></div>
+  <div class="ans"><details><summary>Model answer</summary>
+    <ul>
+      <li><b>Position:</b> memory is a data-tier service beside the document index, reached only by the agent runtime in the private subnet, never by the client or the model provider directly. The model receives a few recalled lines in the prompt, nothing more.</li>
+      <li><b>Document index vs memory:</b> documents are shared, curated and permissioned by ACL groups; memory is per-person, created by the system, mutable and subject to erasure. That changes the controls:</li>
+      <li><b>Identity:</b> row- or namespace-level authorisation bound to the end user's token (on-behalf-of), not just the service identity, so a bug in the agent cannot read another user's namespace. Postgres row-level security keyed on <code>user_id</code> is a cheap way to enforce this in the database.</li>
+      <li><b>Keys:</b> customer-managed keys; for strict tenants, a key per tenant so crypto-shredding is an erasure option.</li>
+      <li><b>Network:</b> private endpoint only, no public access, and no egress from the memory tier.</li>
+      <li><b>Operations:</b> retention and TTL jobs, an erasure API, an access log of every read (who, which memory, which run), and memory-level metrics on the observability dashboard: memories per user, recall hit rate, writes rejected by the PII classifier.</li>
+    </ul>
+  </details></div></div>
+</section>
+
+<section>
+  <h2>25-minute local drill: scope memory correctly, then break it</h2>
+  <p>A small LangGraph app with both kinds of memory: a checkpointer for each thread and a <code>Store</code> with semantic search for facts that cross threads. The tenant and user come from the runtime context (standing in for your auth layer), never from the prompt. A toy hashed embedding keeps it deterministic and offline. It runs on native Windows with no GPU and no API key.</p>
+  <div class="codebox"><button class="copy" type="button">Copy</button><pre><code>mkdir agent-memory; cd agent-memory
+py -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install langgraph==1.2.21 numpy</code></pre></div>
+  <p>Save as <code>memory_drill.py</code>:</p>
+  <div class="codebox"><button class="copy" type="button">Copy</button><pre><code>"""Day 35 drill: short-term vs long-term agent memory in LangGraph, and the ways it leaks.
+
+Short-term = per-thread state persisted by a checkpointer (here InMemorySaver).
+Long-term  = cross-thread memories in a Store, namespaced (tenant, user, "memories"),
+             with semantic search through a toy embedding so it runs with no GPU/API key.
+
+  python memory_drill.py           # correct scoping
+  python memory_drill.py --leaky   # namespace built without the tenant/user: watch data cross users
+"""
+import hashlib
+import math
+import sys
+from dataclasses import dataclass
+from typing import Annotated, TypedDict
+import operator
+
+from langgraph.checkpoint.memory import InMemorySaver
+from langgraph.graph import END, START, StateGraph
+from langgraph.runtime import Runtime
+from langgraph.store.memory import InMemoryStore
+
+LEAKY = "--leaky" in sys.argv
+WINDOW = 4  # short-term: keep the last N messages verbatim, fold older ones into a summary
+
+# ---- toy embedding: hashed bag of words, 64 dims (swap for nomic-embed-text via Ollama) ----
+DIMS = 64
+def embed(texts: list[str]) -&gt; list[list[float]]:
+    out = []
+    for t in texts:
+        v = [0.0] * DIMS
+        for w in t.lower().replace(",", " ").replace(".", " ").replace("?", " ").split():
+            v[int(hashlib.md5(w.encode()).hexdigest(), 16) % DIMS] += 1.0
+        n = math.sqrt(sum(x * x for x in v)) or 1.0
+        out.append([x / n for x in v])
+    return out
+
+def toks(texts: list[str]) -&gt; int:
+    return sum(len(t.split()) * 4 // 3 for t in texts)
+
+@dataclass
+class Ctx:               # trusted identity comes from the auth layer, never from the prompt
+    tenant: str
+    user_id: str
+
+class S(TypedDict):
+    messages: Annotated[list[str], operator.add]
+    summary: str
+    prompt_tokens: int
+    recalled: list[str]
+
+def ns(ctx: Ctx) -&gt; tuple:
+    return ("memories",) if LEAKY else (ctx.tenant, ctx.user_id, "memories")
+
+def agent(state: S, runtime: Runtime[Ctx]) -&gt; dict:
+    ctx, store = runtime.context, runtime.store
+    msg = state["messages"][-1]
+    if msg.lower().startswith("remember"):                      # hot-path write (explicit ask)
+        fact = msg.split(" ", 1)[1]
+        store.put(ns(ctx), hashlib.sha1(fact.encode()).hexdigest()[:8], {"text": fact, "source": "user"})
+        reply = f"OK, saved: {fact}"
+        recalled = []
+    else:
+        hits = store.search(ns(ctx), query=msg, limit=2)        # semantic recall
+        recalled = [f"{h.value['text']} (score {h.score:.2f})" for h in hits]
+        reply = "Using memory: " + "; ".join(h.value["text"] for h in hits) if hits else "No memory found."
+    # short-term: summary + last WINDOW messages is what the model would actually see
+    window = state["messages"][-WINDOW:]
+    prompt = [state.get("summary", "")] + window + [r for r in recalled]
+    return {"messages": [f"AI: {reply}"], "prompt_tokens": toks(prompt) + 200, "recalled": recalled}
+
+def summarize(state: S) -&gt; dict:
+    """Fold messages that fell out of the window into a running summary (a cheap model in real life)."""
+    old = state["messages"][:-WINDOW]
+    if not old:
+        return {}
+    return {"summary": f"[summary of {len(old)} earlier messages]"}
+
+def build():
+    g = StateGraph(S, context_schema=Ctx)
+    g.add_node("agent", agent)
+    g.add_node("summarize", summarize)
+    g.add_edge(START, "agent")
+    g.add_edge("agent", "summarize")
+    g.add_edge("summarize", END)
+    store = InMemoryStore(index={"embed": embed, "dims": DIMS, "fields": ["text"]})
+    return g.compile(checkpointer=InMemorySaver(), store=store), store
+
+def say(app, text, thread, ctx):
+    out = app.invoke({"messages": [f"User: {text}" if not text.lower().startswith("remember") else text]},
+                     {"configurable": {"thread_id": thread}}, context=ctx)
+    print(f"  [{ctx.tenant}/{ctx.user_id} · {thread}] {text}")
+    print(f"      -&gt; {out['messages'][-1]}   (history={len(out['messages'])} msgs, prompt~{out['prompt_tokens']} tok)")
+    return out
+
+if __name__ == "__main__":
+    app, store = build()
+    rahul = Ctx("acme", "rahul")
+    priya = Ctx("globex", "priya")
+    print(f"leaky={LEAKY}  window={WINDOW}\n")
+
+    print("1) Long-term writes in thread t1")
+    say(app, "remember I prefer answers with Azure and watsonx mappings", "t1", rahul)
+    say(app, "remember my project is the HR policy assistant for 50k employees", "t1", rahul)
+
+    print("\n2) New thread t2: short-term is empty, long-term recall still works")
+    say(app, "Which cloud mappings should you include for me?", "t2", rahul)
+
+    print("\n3) Another tenant's user asks a similar question")
+    out = say(app, "Which cloud mappings and project should you use?", "p1", priya)
+    leaked = any("watsonx" in r or "HR policy" in r for r in out["recalled"])
+    print(f"      cross-tenant leak: {'YES  &lt;-- incident' if leaked else 'no'}")
+
+    print("\n4) Long thread: prompt stays bounded because of window + summary")
+    for i in range(6):
+        out = say(app, f"Follow-up question number {i} about leave policy", "t2", rahul)
+    print(f"      summary: {out['summary']!r}; full history would be ~{toks(out['messages']) + 200} tok and growing")
+
+    print("\n5) Right to erasure (DPDP / GDPR): delete Rahul's long-term memories")
+    for item in store.search(ns(rahul), limit=100):
+        store.delete(ns(rahul), item.key)
+    say(app, "Which cloud mappings should you include for me?", "t3", rahul)
+    cp = app.get_state({"configurable": {"thread_id": "t2"}})
+    print(f"      ...but thread t2's checkpoint still holds {len(cp.values['messages'])} messages: erasure must cover checkpoints too")
+</code></pre></div>
+  <div class="codebox"><button class="copy" type="button">Copy</button><pre><code>python memory_drill.py
+python memory_drill.py --leaky</code></pre></div>
+  <p class="small">Expected output (tested today on Python 3.13 with langgraph 1.2.21; deterministic). Normal run, abridged:</p>
+  <div class="out">2) New thread t2: short-term is empty, long-term recall still works
+  [acme/rahul · t2] Which cloud mappings should you include for me?
+      -&gt; AI: Using memory: I prefer answers with Azure and watsonx mappings; my project is the HR policy assistant for 50k employees   (history=2 msgs, prompt~241 tok)
+
+3) Another tenant's user asks a similar question
+  [globex/priya · p1] Which cloud mappings and project should you use?
+      -&gt; AI: No memory found.   (history=2 msgs, prompt~212 tok)
+      cross-tenant leak: no
+
+4) Long thread: prompt stays bounded because of window + summary
+  ...
+      summary: '[summary of 10 earlier messages]'; full history would be ~468 tok and growing
+
+5) Right to erasure (DPDP / GDPR): delete Rahul's long-term memories
+  [acme/rahul · t3] Which cloud mappings should you include for me?
+      -&gt; AI: No memory found.   (history=2 msgs, prompt~212 tok)
+      ...but thread t2's checkpoint still holds 14 messages: erasure must cover checkpoints too</div>
+  <p class="small">With <code>--leaky</code> the namespace drops tenant and user, and Priya at another company gets Rahul's memories:</p>
+  <div class="out bad">3) Another tenant's user asks a similar question
+  [globex/priya · p1] Which cloud mappings and project should you use?
+      -&gt; AI: Using memory: I prefer answers with Azure and watsonx mappings; my project is the HR policy assistant for 50k employees   (history=2 msgs, prompt~241 tok)
+      cross-tenant leak: YES  &lt;-- incident</div>
+  <p><b>Then fix it properly (10 min):</b></p>
+  <ol>
+    <li><b>Finish the erasure.</b> Keep a <code>user_id → [thread_id]</code> map as threads are created, then call <code>app.checkpointer.delete_thread(tid)</code> for each in step 5. Re-run and confirm <code>app.get_state(...)</code> for t2 comes back empty. That is Q4 in code.</li>
+    <li><b>Make the leak impossible, not just absent.</b> Wrap the store in a small class whose methods take only the <code>Ctx</code> and build the namespace themselves, so no node can pass a raw namespace. Add an assertion test: after Rahul writes, every search as Priya returns nothing.</li>
+  </ol>
+  <p><b>Stretch goals:</b></p>
+  <ul>
+    <li><b>Persistence and real embeddings.</b> <code>python -m pip install langgraph-checkpoint-sqlite==3.1.3 langchain-ollama</code> and <code>ollama pull nomic-embed-text</code>. Swap in <code>SqliteSaver.from_conn_string("mem.db")</code> and <code>SqliteStore.from_conn_string("mem.db", index={"embed": OllamaEmbeddings(model="nomic-embed-text"), "dims": 768, "fields": ["text"]})</code> (both are context managers, so use <code>with</code>). Restart the script between steps 1 and 2 and confirm recall survives. Note how scores change compared with the toy embedding.</li>
+    <li><b>Consolidation (Q2).</b> Add a profile document at <code>(tenant, user, "profile")</code> with a <code>city</code> field. When the user says "I moved to X", overwrite the field and append the old value to a <code>history</code> list with a timestamp. Then ask "where am I based?" in a new thread and check that only the current city comes back.</li>
+  </ul>
+</section>
+
+<section>
+  <h2>Design scenario (25 minutes, paper first)</h2>
+  <div class="scenario">
+    <p><b>Brief.</b> A private-sector Indian bank wants a relationship-manager copilot for 6,000 RMs serving 2 million customers. It should remember each RM's working preferences and, per customer, the commitments made in past meetings ("promised a callback on the FD rate next week"), draft meeting briefs, and answer product-policy questions. Azure is the strategic cloud. All customer data must stay in India, the bank's network has no public internet egress, the CISO wants every memory read logged, and DR must recover within 4 hours with at most 15 minutes of data loss.</p>
+    <p><b>Your deliverable:</b> the memory model (what is per RM, what is per customer, who can read it), the network and identity layout, the residency and DR story, three NFRs with numbers, and one ADR.</p>
+    <div class="diagram" role="img" aria-label="RM copilot on Azure Central India. RMs reach an internal front door over ExpressRoute. Inside a spoke VNet: API Management as AI gateway, the agent runtime on Container Apps in a delegated subnet, and a data subnet with Postgres plus pgvector for memory and checkpoints, AI Search for policy documents, and Key Vault with customer-managed keys. The agent calls Azure OpenAI through a private endpoint using a regional deployment. Egress goes through Azure Firewall to an allow-list of core-banking and CRM APIs. Logs go to Log Analytics in India. A warm standby in South India receives Postgres replication and index rebuilds.">
+      <svg viewBox="0 0 700 340" xmlns="http://www.w3.org/2000/svg" font-family="Source Sans 3, system-ui, sans-serif" font-size="13">
+        <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker></defs>
+        <rect x="10" y="40" width="80" height="56" rx="6" fill="var(--surface)" stroke="var(--line)"/>
+        <text x="50" y="64" text-anchor="middle" fill="var(--fg)" font-weight="700">RMs</text><text x="50" y="81" text-anchor="middle" fill="var(--muted)">ExpressRoute</text>
+        <rect x="110" y="10" width="440" height="270" rx="10" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="5 4"/>
+        <text x="122" y="30" fill="var(--accent)" font-size="12" font-weight="700" letter-spacing="1">AZURE CENTRAL INDIA · SPOKE VNET · NO PUBLIC ACCESS</text>
+        <rect x="125" y="42" width="110" height="52" rx="6" fill="var(--surface)" stroke="var(--line)"/>
+        <text x="180" y="64" text-anchor="middle" fill="var(--fg)" font-weight="700">APIM</text><text x="180" y="81" text-anchor="middle" fill="var(--muted)">AI gateway · quotas</text>
+        <rect x="255" y="42" width="150" height="52" rx="6" fill="var(--accent-soft)" stroke="var(--accent)"/>
+        <text x="330" y="64" text-anchor="middle" fill="var(--fg)" font-weight="700">Agent runtime</text><text x="330" y="81" text-anchor="middle" fill="var(--muted)">Container Apps · MI</text>
+        <rect x="425" y="42" width="112" height="52" rx="6" fill="var(--surface)" stroke="var(--line)"/>
+        <text x="481" y="64" text-anchor="middle" fill="var(--fg)" font-weight="700">Azure OpenAI</text><text x="481" y="81" text-anchor="middle" fill="var(--muted)">regional · PE</text>
+        <text x="125" y="128" fill="var(--muted)" font-size="12" font-weight="700" letter-spacing="1">DATA SUBNET (PRIVATE ENDPOINTS, CMK)</text>
+        <rect x="125" y="138" width="150" height="60" rx="6" fill="var(--warn-soft)" stroke="var(--warn)"/>
+        <text x="200" y="161" text-anchor="middle" fill="var(--fg)" font-weight="700">Postgres + pgvector</text><text x="200" y="179" text-anchor="middle" fill="var(--fg)">memory · checkpoints · RLS</text>
+        <rect x="290" y="138" width="120" height="60" rx="6" fill="var(--surface)" stroke="var(--line)"/>
+        <text x="350" y="161" text-anchor="middle" fill="var(--fg)" font-weight="700">AI Search</text><text x="350" y="179" text-anchor="middle" fill="var(--muted)">policy docs</text>
+        <rect x="425" y="138" width="112" height="60" rx="6" fill="var(--surface)" stroke="var(--line)"/>
+        <text x="481" y="161" text-anchor="middle" fill="var(--fg)" font-weight="700">Key Vault</text><text x="481" y="179" text-anchor="middle" fill="var(--muted)">CMK per tenant</text>
+        <rect x="125" y="216" width="200" height="50" rx="6" fill="var(--bad-soft)" stroke="var(--bad)"/>
+        <text x="225" y="237" text-anchor="middle" fill="var(--fg)" font-weight="700">Azure Firewall (egress)</text><text x="225" y="254" text-anchor="middle" fill="var(--fg)">allow-list: CRM, core banking</text>
+        <rect x="340" y="216" width="197" height="50" rx="6" fill="var(--surface)" stroke="var(--line)"/>
+        <text x="438" y="237" text-anchor="middle" fill="var(--fg)" font-weight="700">Log Analytics (India)</text><text x="438" y="254" text-anchor="middle" fill="var(--muted)">memory read audit · traces</text>
+        <rect x="575" y="138" width="115" height="60" rx="6" fill="var(--ok-soft)" stroke="var(--ok)"/>
+        <text x="632" y="161" text-anchor="middle" fill="var(--fg)" font-weight="700">South India</text><text x="632" y="179" text-anchor="middle" fill="var(--fg)">warm standby</text>
+        <g stroke="var(--muted)" fill="none">
+          <line x1="90" y1="68" x2="123" y2="68" marker-end="url(#ar)"/>
+          <line x1="235" y1="68" x2="253" y2="68" marker-end="url(#ar)"/>
+          <line x1="405" y1="68" x2="423" y2="68" marker-end="url(#ar)"/>
+          <line x1="300" y1="94" x2="210" y2="136" marker-end="url(#ar)"/>
+          <line x1="335" y1="94" x2="345" y2="136" marker-end="url(#ar)"/>
+          <line x1="275" y1="94" x2="225" y2="214" marker-end="url(#ar)"/>
+          <line x1="537" y1="168" x2="573" y2="168" marker-end="url(#ar)" stroke-dasharray="4 3"/>
+        </g>
+        <text x="555" y="214" fill="var(--muted)" font-size="12">async replica</text>
+        <text x="555" y="228" fill="var(--muted)" font-size="12">RPO ≤ 15 min</text>
+        <text x="10" y="310" fill="var(--muted)" font-size="12">PE = private endpoint · MI = managed identity · RLS = row-level security · CMK = customer-managed key</text>
+      </svg>
+    </div>
+    <p class="small">One possible shape, for checking your answer after you sketch your own.</p>
+    <details><summary>What a strong answer covers</summary>
+      <ul>
+        <li><b>Memory model:</b> per-RM profile (preferences, language, products they cover); per-customer commitments as structured records (<code>customer_id, rm_id, commitment, due_date, status, source_meeting</code>), not free-text vectors, so they can be listed, closed and audited. Access follows the CRM's relationship mapping: when a customer is reassigned, the new RM sees the commitments and the old one stops seeing them. That is an authorisation lookup at read time, not a copy.</li>
+        <li><b>Why structured beats "remember everything":</b> commitments have due dates and owners; the copilot's best feature is "you have 3 open promises with this customer", which a vector store does badly.</li>
+        <li><b>Network and identity:</b> no public endpoints; Foundry or Azure OpenAI reached through a private endpoint; agent runtime in a delegated subnet; egress only through the firewall to CRM and core-banking APIs; on-behalf-of tokens so CRM calls run as the RM, and Postgres RLS on <code>rm_id</code> plus a relationship check.</li>
+        <li><b>Residency:</b> regional deployments only (no Global or cross-geography routing), evaluation and LLM-as-judge on the same regional deployment, tracing self-hosted in India (Langfuse on the same platform) or Azure Monitor in-region, abuse-monitoring terms reviewed in the contract.</li>
+        <li><b>DR:</b> Postgres asynchronous replica in South India meets RPO 15 min; AI Search is rebuilt from source documents in the standby (an index is derived data, so rebuild rather than replicate); model deployments pre-created in South India with quota reserved, because quota is the item that fails a DR drill; run the drill quarterly.</li>
+        <li><b>NFR examples:</b> p95 brief generation ≤ 8 s; 100% of memory reads written to the audit log within 60 s (alert on gaps); erasure completed across all stores within 7 days with an audit record; RTO 4 h, RPO 15 min, verified by drill.</li>
+        <li><b>ADR candidate:</b> the one below: managed agent memory versus your own Postgres memory store.</li>
+      </ul>
+    </details>
+  </div>
+</section>
+
+<section>
+  <h2>Architect's lens: one ADR</h2>
+  <div class="scenario">
+    <h3>ADR-035: Agent memory on self-managed Postgres + pgvector, behind a MemoryStore interface</h3>
+    <p><b>Context.</b> The RM copilot needs per-RM and per-customer memory with India residency, per-read audit, structured commitments, erasure within 7 days, and a 15-minute RPO. Azure is the strategic cloud; the bank wants to avoid lock-in on customer data.</p>
+    <p><b>Options.</b> (A) Foundry Agent Service threads and memory (managed, but memory is preview and data lives in service-shaped stores); (B) Mem0 self-hosted (good extraction and consolidation, an extra component to secure); (C) Azure Database for PostgreSQL with pgvector, accessed through LangGraph's <code>PostgresStore</code> and a thin MemoryStore interface; (D) Cosmos DB with vector search.</p>
+    <p><b>Decision.</b> C. It is GA, in-region with an asynchronous cross-region replica, supports row-level security and customer-managed keys, holds structured commitments and vectors in one database, and the same Postgres already holds LangGraph checkpoints, so one erasure job covers both.</p>
+    <p><b>Consequences.</b> We build extraction and consolidation ourselves (borrowing prompts from LangMem and Mem0). We own vacuum, index tuning and capacity. The interface lets us move to a managed memory service later if it becomes GA with the controls we need; the exit cost is a data migration, written down here. Revisit in 6 months or when Foundry memory goes GA.</p>
+  </div>
+</section>
+
+<section>
+  <h2>Repos to revisit (10 min each)</h2>
+  <ul>
+    <li><a href="https://github.com/langchain-ai/langgraph" target="_blank" rel="noopener">langchain-ai/langgraph</a> — <code>libs/checkpoint/langgraph/store/base</code> for the Store API (namespaces, TTL, index config), and the Postgres store in <code>libs/checkpoint-postgres</code>.</li>
+    <li><a href="https://github.com/mem0ai/mem0" target="_blank" rel="noopener">mem0ai/mem0</a> — the update step that decides ADD / UPDATE / DELETE / NOOP against existing memories (Q2).</li>
+    <li><a href="https://github.com/aws/bedrock-agentcore-sdk-python" target="_blank" rel="noopener">aws/bedrock-agentcore-sdk-python</a> — the memory client: how <code>actorId</code>, sessions and strategies map to namespaces.</li>
+    <li><a href="https://github.com/langchain-ai/langmem" target="_blank" rel="noopener">langchain-ai/langmem</a> — reference only (no release since Oct 2025): read the memory-manager extraction prompts.</li>
+  </ul>
+</section>
+
+<section>
+  <h2>Read before tomorrow (optional, 20 min)</h2>
+  <ul>
+    <li><a href="https://docs.langchain.com/oss/python/langgraph/memory" target="_blank" rel="noopener">LangGraph docs: memory</a> — semantic, episodic and procedural memory; hot-path vs background writes; profile vs collection.</li>
+    <li><a href="https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/memory-strategies.html" target="_blank" rel="noopener">AWS: AgentCore Memory strategies</a> — built-in, override and self-managed extraction pipelines.</li>
+    <li><a href="https://learn.microsoft.com/azure/foundry/agents/how-to/virtual-networks" target="_blank" rel="noopener">Microsoft Learn: private networking for Foundry Agent Service</a> — the BYO VNet and BYO resources requirements behind Q5.</li>
+    <li><a href="https://docs.cloud.google.com/agent-builder/agent-engine/memory-bank/overview" target="_blank" rel="noopener">Google Cloud: Memory Bank overview</a> — Google's managed long-term memory, for the GCP column of Q7.</li>
+  </ul>
+</section>
+
+<section>
+  <h2>Tomorrow</h2>
+  <p>Day 36 drill: tool and function calling across providers (Day 16) with security, governance and responsible AI (Day 28).</p>
+</section>
+</div>
+
+<script>
+document.querySelectorAll('.copy').forEach(function(b){
+  b.addEventListener('click',function(){
+    var code=b.parentElement.querySelector('code');
+    var t=code.innerText;
+    var done=function(){b.textContent='Copied';setTimeout(function(){b.textContent='Copy'},1500)};
+    var fallback=function(){var r=document.createRange();r.selectNodeContents(code);var s=getSelection();s.removeAllRanges();s.addRange(r);b.textContent='Selected, press Ctrl+C'};
+    try{navigator.clipboard.writeText(t).then(done,fallback)}catch(e){fallback()}
+  });
+});
+</script>
+
+</body></html>

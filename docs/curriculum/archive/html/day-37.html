@@ -1,0 +1,413 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>GenAI Prep · Day 37 — Revision Drill: LangChain Core & Containerizing</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: single reading column (~72ch) with a left "drill gauge" meta strip; code and tables scroll in place. */
+:root{
+  --bg:#f6f8fa; --surface:#ffffff; --fg:#1b2430; --muted:#5a6878; --line:#dbe2ea;
+  --accent:#0f62a8; --accent-soft:#e3eef9; --ok:#1d7a4a; --warn:#a35b00; --code-bg:#0f1b2a; --code-fg:#dce6f2;
+  --display:"IBM Plex Sans Condensed","Arial Narrow",system-ui,sans-serif;
+  --body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0d131b; --surface:#141c26; --fg:#e3e9f0; --muted:#97a6b8; --line:#26323f;
+  --accent:#6cb2f5; --accent-soft:#16283b; --ok:#5fcf93; --warn:#f0b35a; --code-bg:#08101a; --code-fg:#dce6f2; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0d131b; --surface:#141c26; --fg:#e3e9f0; --muted:#97a6b8; --line:#26323f;
+  --accent:#6cb2f5; --accent-soft:#16283b; --ok:#5fcf93; --warn:#f0b35a; --code-bg:#08101a; --code-fg:#dce6f2; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font:16px/1.62 var(--body);margin:0}
+.wrap{max-width:860px;margin:0 auto;padding-block:40px 80px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:44px}
+header{display:grid;gap:14px}
+.eyebrow{font:500 12px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--accent)}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;line-height:1.15;margin:0}
+h1{font-size:clamp(30px,5vw,44px);font-weight:700}
+h2{font-size:26px;font-weight:600;display:flex;gap:10px;align-items:baseline}
+h2 .n{font:500 13px var(--mono);color:var(--muted)}
+h3{font-size:19px;font-weight:600}
+p{margin:0;max-width:68ch}
+.lede{color:var(--muted);font-size:17px}
+.meta{display:flex;flex-wrap:wrap;gap:8px}
+.chip{font:500 12px/1 var(--mono);padding:7px 10px;border:1px solid var(--line);border-radius:4px;background:var(--surface);color:var(--muted)}
+.chip b{color:var(--fg);font-weight:500}
+section{display:grid;gap:16px;min-width:0}
+ul,ol{margin:0;padding-left:22px;display:grid;gap:6px;max-width:70ch}
+code{font-family:var(--mono);font-size:.88em;background:var(--accent-soft);padding:1px 5px;border-radius:3px}
+a{color:var(--accent);text-underline-offset:3px}
+a:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.pre{position:relative;min-width:0}
+pre{margin:0;background:var(--code-bg);color:var(--code-fg);font:13.5px/1.55 var(--mono);padding:16px 18px;border-radius:6px;overflow-x:auto}
+pre code{background:none;padding:0;font-size:inherit;color:inherit}
+.label{font:500 12px var(--mono);color:var(--muted);margin-bottom:-8px}
+.copy{position:absolute;top:8px;right:8px;font:500 12px var(--mono);background:#ffffff1a;color:var(--code-fg);border:1px solid #ffffff33;border-radius:4px;padding:4px 9px;cursor:pointer}
+.copy:hover{background:#ffffff33}
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:6px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:14.5px;min-width:620px}
+th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font:600 12px var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+tr:last-child td{border-bottom:0}
+.qa{display:grid;gap:0;border-top:1px solid var(--line)}
+.q{display:grid;grid-template-columns:44px 1fr;gap:4px 12px;padding:18px 0;border-bottom:1px solid var(--line)}
+.q .num{font:600 20px var(--display);color:var(--accent)}
+.q .tag{font:500 11px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.q h3{grid-column:2}
+.q .ans{grid-column:2;display:grid;gap:8px;min-width:0}
+body.hide-ans .q .ans{display:none}
+.toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.btn{font:500 13px var(--body);background:var(--surface);color:var(--fg);border:1px solid var(--line);border-radius:5px;padding:7px 12px;cursor:pointer}
+.btn:hover{border-color:var(--accent)}
+.scenario{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:22px;display:grid;gap:14px}
+.adr{display:grid;grid-template-columns:130px 1fr;gap:10px 18px;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:20px}
+.adr dt{font:600 12px var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);padding-top:3px}
+.adr dd{margin:0;min-width:0}
+.note{border-left:3px solid var(--warn);padding:6px 0 6px 14px;color:var(--fg)}
+.note b{color:var(--warn)}
+svg text{font-family:var(--mono)}
+.diagram{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:14px}
+footer{color:var(--muted);font-size:14px;border-top:1px solid var(--line);padding-top:18px}
+@media (max-width:560px){.adr{grid-template-columns:1fr}.q{grid-template-columns:32px 1fr}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+<header>
+  <div class="eyebrow">GenAI Architect prep · revision drill</div>
+  <h1>Day 37 — LangChain core &amp; containerizing GenAI services</h1>
+  <p class="lede">Two topics from Weeks 3–4 that meet in one place: the LCEL chain you write (Day 15) and the streaming FastAPI container that ships it (Day 24). Eight hard questions, one design scenario, a 60-minute drill.</p>
+  <div class="meta">
+    <span class="chip">Revisits <b>Day 15</b> + <b>Day 24</b></span>
+    <span class="chip">langchain <b>1.5.0</b> · core <b>1.8.0</b></span>
+    <span class="chip">fastapi <b>0.163.0</b> (native SSE since 0.135)</span>
+    <span class="chip">langchain-ollama <b>1.1.0</b></span>
+  </div>
+</header>
+
+<section>
+  <h2><span class="n">01</span>Why this matters for the JD</h2>
+  <ul>
+    <li><b>Agentic frameworks:</b> "LangChain, LangGraph, tool calling" — you must say which parts of LangChain v1 you'd use in production and which you'd keep out.</li>
+    <li><b>CI/CD &amp; productionization:</b> "Docker, API deployment, model endpoints, observability, rollback, scaling" — a streaming LLM API is the most common thing you'll be asked to containerize and defend.</li>
+    <li><b>Python backend/APIs + security:</b> secrets out of images, non-root containers, health probes that don't burn tokens.</li>
+  </ul>
+</section>
+
+<section>
+  <h2><span class="n">02</span>Recap in one picture</h2>
+  <p>Where tokens travel, and every place that can silently buffer or kill a stream.</p>
+  <div class="diagram">
+  <svg viewBox="0 0 820 250" width="820" height="250" role="img" aria-label="Request path from client through gateway to FastAPI pod with LCEL chain and model endpoint">
+    <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0L10,5L0,10z" fill="var(--muted)"/></marker></defs>
+    <g font-size="12" fill="var(--fg)">
+      <rect x="10" y="80" width="110" height="60" rx="6" fill="var(--accent-soft)" stroke="var(--accent)"/>
+      <text x="65" y="106" text-anchor="middle">Client</text><text x="65" y="124" text-anchor="middle" fill="var(--muted)">EventSource</text>
+      <rect x="160" y="80" width="140" height="60" rx="6" fill="var(--surface)" stroke="var(--line)"/>
+      <text x="230" y="106" text-anchor="middle">API gateway / LB</text><text x="230" y="124" text-anchor="middle" fill="var(--muted)">idle timeout, gzip</text>
+      <rect x="340" y="30" width="300" height="170" rx="8" fill="none" stroke="var(--accent)" stroke-dasharray="5 4"/>
+      <text x="352" y="50" fill="var(--accent)">container (non-root, 1 uvicorn proc)</text>
+      <rect x="360" y="80" width="120" height="60" rx="6" fill="var(--surface)" stroke="var(--line)"/>
+      <text x="420" y="106" text-anchor="middle">FastAPI</text><text x="420" y="124" text-anchor="middle" fill="var(--muted)">EventSourceResp.</text>
+      <rect x="500" y="80" width="125" height="60" rx="6" fill="var(--surface)" stroke="var(--line)"/>
+      <text x="562" y="100" text-anchor="middle">LCEL chain</text><text x="562" y="118" text-anchor="middle" fill="var(--muted)">prompt|llm|</text><text x="562" y="133" text-anchor="middle" fill="var(--muted)">parser .astream()</text>
+      <rect x="360" y="160" width="265" height="28" rx="4" fill="var(--bg)" stroke="var(--line)"/>
+      <text x="492" y="179" text-anchor="middle" fill="var(--muted)">/healthz (liveness) · /readyz (backend)</text>
+      <rect x="680" y="80" width="130" height="60" rx="6" fill="var(--surface)" stroke="var(--line)"/>
+      <text x="745" y="106" text-anchor="middle">Model endpoint</text><text x="745" y="124" text-anchor="middle" fill="var(--muted)">Ollama / watsonx</text>
+    </g>
+    <g stroke="var(--muted)" stroke-width="1.5" fill="none" marker-end="url(#ar)">
+      <line x1="120" y1="110" x2="158" y2="110"/><line x1="300" y1="110" x2="358" y2="110"/>
+      <line x1="480" y1="110" x2="498" y2="110"/><line x1="625" y1="110" x2="678" y2="110"/>
+    </g>
+    <g font-size="11" fill="var(--warn)">
+      <text x="160" y="160">⚠ buffering / 60s idle cut</text>
+      <text x="10" y="235">⚠ sync SDK call inside async def blocks the event loop</text>
+      <text x="420" y="235">⚠ non-streaming step (RunnableLambda) flushes all at end</text>
+    </g>
+  </svg>
+  </div>
+</section>
+
+<section>
+  <h2><span class="n">03</span>Eight hard questions</h2>
+  <div class="toolbar">
+    <button class="btn" id="toggle-ans" type="button">Hide answers for self-test</button>
+    <span class="chip">Answer out loud in ≤ 90 s each, then compare</span>
+  </div>
+  <div class="qa">
+    <div class="q"><div class="num">1</div><div class="tag">LangChain · scope</div>
+      <h3>LangChain v1 slimmed the package and pushed legacy chains into <code>langchain-classic</code>. In a design review, what do you allow from LangChain and what do you ban?</h3>
+      <div class="ans"><p><b>Allow:</b> <code>langchain-core</code> primitives (messages, prompt templates, chat-model interface, LCEL composition, <code>with_structured_output</code>, <code>with_fallbacks</code>, callbacks/tracing) and provider packages (<code>langchain-ollama</code>, <code>langchain-ibm</code>, <code>langchain-openai</code>). For agents, <code>create_agent</code> with middleware, or LangGraph directly when you need explicit state, checkpoints and human-in-the-loop.</p>
+      <p><b>Ban or justify:</b> <code>langchain-classic</code> chains (opaque prompts, hard to version), deep custom subclassing of framework internals, and LangServe (archived May 2026 — serve with your own FastAPI instead). The rule: the framework is an adapter layer at the edge; your domain logic, prompts and contracts stay in plain Python you own.</p></div></div>
+
+    <div class="q"><div class="num">2</div><div class="tag">Streaming · debugging</div>
+      <h3>The chain streams token-by-token in a notebook, but through the deployed API the user sees nothing for 8 s and then the full answer. Walk the diagnosis.</h3>
+      <div class="ans"><ol>
+        <li><b>Code path:</b> is the endpoint calling <code>.ainvoke()</code> instead of <code>.astream()</code>? Is there a <code>RunnableLambda</code> or a parser that needs the full output (e.g. a JSON parser without partial mode) in the chain? Any non-streaming step forces aggregation.</li>
+        <li><b>Event loop:</b> a sync SDK call in <code>async def</code> stalls every stream on that worker.</li>
+        <li><b>Middleware:</b> <code>GZipMiddleware</code> or a response-logging middleware that reads the body buffers it.</li>
+        <li><b>Proxy:</b> Nginx <code>proxy_buffering on</code>, an API gateway that buffers responses, or a CDN. FastAPI's native SSE already sends <code>X-Accel-Buffering: no</code> and <code>Cache-Control: no-cache</code>; check the gateway honours them.</li>
+        <li><b>Prove it</b> with <code>curl -N</code> at each hop (pod IP → service → ingress → gateway) and measure time-to-first-token at each one.</li></ol></div></div>
+
+    <div class="q"><div class="num">3</div><div class="tag">Resilience</div>
+      <h3>You add <code>.with_retry()</code> and <code>.with_fallbacks()</code> to every chain. What can go wrong at scale?</h3>
+      <div class="ans"><p><b>Retry storms:</b> a 429 from the provider multiplied by client retries × gateway retries × chain retries. Retry in exactly one layer, with jittered backoff and a budget, and treat 429 as "shed or queue", not "retry harder".</p>
+      <p><b>Mid-stream failure:</b> once tokens have reached the user you cannot transparently fail over; the fallback restarts the answer. Fail over only before the first token, and emit an explicit SSE event if you restart.</p>
+      <p><b>Silent quality change:</b> the fallback model behaves differently (format, refusals, context limit). Tag every response with the model that served it, include fallback rate on the dashboard, and run the eval suite against the fallback model too. <b>Cost:</b> retries on long prompts double spend; cap with token budgets per request.</p></div></div>
+
+    <div class="q"><div class="num">4</div><div class="tag">Change management</div>
+      <h3>LangChain ships minor releases almost weekly. How do you keep upgrades from breaking production?</h3>
+      <div class="ans"><ul>
+        <li>Lock the full dependency tree (<code>uv.lock</code> or hashed <code>requirements.txt</code>); <code>langchain-core</code> is the compatibility anchor for every provider package.</li>
+        <li>Contract tests with <code>GenericFakeChatModel</code>: assert prompt rendering, stream shape and parser behaviour without a model call — fast and deterministic in CI.</li>
+        <li>An eval gate on a golden set against the real model for any dependency or prompt change; block on regression of faithfulness/format-validity, alert on latency.</li>
+        <li>Renovate/Dependabot PRs batched weekly, deployed canary-first with the version in a response header and trace attribute so you can correlate incidents.</li></ul></div></div>
+
+    <div class="q"><div class="num">5</div><div class="tag">Protocol choice</div>
+      <h3>SSE, WebSocket, or plain chunked HTTP for streaming LLM tokens to an enterprise web app? Defend your pick.</h3>
+      <div class="ans"><p><b>Default to SSE.</b> It is plain HTTP, passes through corporate proxies and API gateways (Azure APIM, AWS API Gateway HTTP APIs, Kong), works with standard auth headers, and gives you event types, ids and <code>Last-Event-ID</code> resume for free. FastAPI now supports it natively. Use POST-based SSE when the request body is large (a fetch-based client rather than browser <code>EventSource</code>, which is GET-only).</p>
+      <p><b>WebSocket</b> only when the channel is truly bidirectional (voice, barge-in, collaborative agents): it costs you sticky sessions, custom auth on upgrade, and weaker gateway support. <b>Chunked JSON-lines</b> is fine service-to-service. Whatever you pick, set gateway idle timeouts above your worst TTFT and send keep-alive pings (FastAPI's SSE sends one every 15 s).</p></div></div>
+
+    <div class="q"><div class="num">6</div><div class="tag">Concurrency &amp; scaling</div>
+      <h3>One Uvicorn process per container, or <code>--workers 4</code>? And what actually limits concurrency in an LLM proxy service?</h3>
+      <div class="ans"><p>On Kubernetes: <b>one process per container</b> and let HPA/KEDA scale replicas. Probes, memory limits and OOM-kills then map to one process, and scaling is visible to the scheduler. Multiple workers make sense on a single VM or Docker Compose.</p>
+      <p>A thin LLM proxy is I/O-bound: one async process holds hundreds of open streams. The real limits are open connections and file descriptors, the provider's TPM/RPM quota, memory per stream if you buffer for logging, and any CPU-bound work in-process (tokenization, PII masking, reranking) that should move to a thread pool or separate service. Scale on <b>concurrent streams or queue depth</b>, not CPU — CPU stays low while users wait.</p></div></div>
+
+    <div class="q"><div class="num">7</div><div class="tag">Health probes</div>
+      <h3>Design liveness, readiness and startup probes for a GenAI API that depends on an external model endpoint.</h3>
+      <div class="ans"><ul>
+        <li><b>Liveness</b> (<code>/healthz</code>): process and event loop respond. No dependency calls. If it checks the model, a provider outage restarts every pod and makes things worse.</li>
+        <li><b>Readiness</b> (<code>/readyz</code>): cheap dependency check (model endpoint's list/health route, vector DB ping) with a 1–2 s timeout and a cached result. Never a real completion: probes every 10 s × N pods is real token spend.</li>
+        <li><b>Startup:</b> covers slow warm-up (loading an embedding model, a reranker, or a local vLLM pulling weights) so liveness doesn't kill the pod mid-load.</li>
+        <li>Graceful shutdown: <code>preStop</code> sleep + Uvicorn <code>--timeout-graceful-shutdown</code> longer than a typical answer, so rolling deploys don't cut streams mid-sentence.</li></ul></div></div>
+
+    <div class="q"><div class="num">8</div><div class="tag">Image security</div>
+      <h3>A security reviewer finds an API key in layer 4 of your image. Fix it, and list the image-hardening controls you'd make mandatory.</h3>
+      <div class="ans"><p><b>Fix:</b> rotate the key now (deleting it in a later layer doesn't remove it from history), rebuild, purge the old tags from the registry. Runtime secrets come from the platform (Kubernetes Secret via CSI driver from Key Vault / Secrets Manager / IBM Secrets Manager, or workload identity so there is no key at all). Build-time secrets (private package index) use BuildKit <code>RUN --mount=type=secret</code>, which never lands in a layer.</p>
+      <p><b>Mandatory:</b> multi-stage build, slim or distroless base pinned by digest, non-root UID, read-only root filesystem, <code>.dockerignore</code> excluding <code>.env</code>/<code>.git</code>, SBOM + vulnerability scan (Trivy/Grype) as a CI gate, signed images (cosign) verified by admission policy, and no shell in the final image where you can manage it.</p></div></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="n">04</span>Design scenario</h2>
+  <div class="scenario">
+    <h3>Streaming support copilot for 4,000 concurrent agents</h3>
+    <p>A contact-centre copilot drafts replies for live support agents. Peak: 4,000 concurrent agents, about 1 request per agent per 90 s, answers of ~350 output tokens streamed. Traffic enters through the bank's existing API gateway (60 s idle timeout, response buffering on by default). Model: watsonx.ai Granite primary, Azure OpenAI fallback. Data must stay in India regions. The team wants to "just use LangChain for everything".</p>
+    <p><b>Your 15-minute whiteboard answer should cover:</b></p>
+    <ol>
+      <li>Throughput math: ~44 req/s at peak; with ~6 s average stream time that's ~270 concurrent streams. Size pods for it and add headroom for retries.</li>
+      <li>Gateway changes: buffering off for the route, idle timeout ≥ 120 s, SSE keep-alive pings, auth at the gateway with per-tenant rate limits.</li>
+      <li>Service shape: FastAPI + native SSE, one Uvicorn process per pod, HPA on concurrent-stream metric, PodDisruptionBudget, graceful drain.</li>
+      <li>LangChain boundary: LCEL for prompt → model → parser with <code>with_fallbacks</code> (only before first token); no classic chains; prompts versioned in the repo.</li>
+      <li>Residency for the fallback: a regional (not Global) Azure OpenAI deployment in an India region, if your model is offered there; otherwise fail closed or degrade to a smaller self-hosted model.</li>
+      <li>Observability: TTFT, tokens/s, fallback rate, cost per conversation, with OpenTelemetry GenAI attributes into Langfuse or Instana.</li>
+      <li>Rollback: image tag + prompt version + model id pinned per release; canary 5% with eval gate on draft acceptance rate.</li>
+    </ol>
+  </div>
+</section>
+
+<section>
+  <h2><span class="n">05</span>Hands-on drill (60–75 min)</h2>
+  <p>Build a streaming LCEL service, measure time-to-first-token, then containerize it properly. Part A runs natively on Windows. Part B needs <b>Docker Desktop with the WSL2 backend</b>.</p>
+  <p class="note"><b>Model choice:</b> <code>qwen2.5:3b</code> (~2 GB Q4) fits comfortably in the RTX 3050's 6 GB. Swap in <code>llama3.2:3b</code> if you prefer.</p>
+
+  <h3>Part A — streaming service (PowerShell)</h3>
+  <div class="label">setup</div>
+  <div class="pre"><pre><code>ollama pull qwen2.5:3b
+mkdir genai-stream-svc; cd genai-stream-svc; mkdir app
+py -3.13 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install fastapi==0.163.0 "uvicorn[standard]==0.54.0" langchain-core==1.8.0 langchain-ollama==1.1.0 httpx
+python -m pip freeze &gt; requirements.txt
+New-Item app\__init__.py -ItemType File</code></pre></div>
+
+  <div class="label">app/main.py</div>
+  <div class="pre"><pre><code>import os
+from collections.abc import AsyncIterable
+
+import httpx
+from fastapi import FastAPI, Request, Response
+from fastapi.sse import EventSourceResponse, ServerSentEvent
+from langchain_core.output_parsers import StrOutputParser
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_ollama import ChatOllama
+from pydantic import BaseModel, Field
+
+OLLAMA_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+MODEL = os.getenv("MODEL", "qwen2.5:3b")
+
+llm = ChatOllama(model=MODEL, base_url=OLLAMA_URL, temperature=0, num_predict=256)
+prompt = ChatPromptTemplate.from_messages([
+    ("system", "You are a concise enterprise assistant. Answer in at most 120 words."),
+    ("human", "{question}"),
+])
+# LCEL: prompt -&gt; model -&gt; parser. Every step is a Runnable, so .astream() works end to end.
+chain = (prompt | llm | StrOutputParser()).with_config(run_name="ask_chain")
+
+app = FastAPI(title="genai-stream-svc")
+
+
+class Ask(BaseModel):
+    question: str = Field(min_length=3, max_length=2000)
+
+
+@app.get("/healthz")  # liveness: the process is up
+async def healthz() -&gt; dict:
+    return {"status": "ok"}
+
+
+@app.get("/readyz")  # readiness: the model backend answers
+async def readyz(response: Response) -&gt; dict:
+    try:
+        async with httpx.AsyncClient(timeout=2) as client:
+            r = await client.get(f"{OLLAMA_URL}/api/tags")
+            r.raise_for_status()
+        return {"status": "ready", "model": MODEL}
+    except Exception as exc:
+        response.status_code = 503
+        return {"status": "not-ready", "error": type(exc).__name__}
+
+
+@app.post("/ask/stream", response_class=EventSourceResponse)
+async def ask_stream(body: Ask, request: Request) -&gt; AsyncIterable[ServerSentEvent]:
+    n = 0
+    async for chunk in chain.astream({"question": body.question}):
+        if await request.is_disconnected():  # stop paying for tokens nobody reads
+            break
+        n += 1
+        yield ServerSentEvent(data={"token": chunk}, event="token", id=str(n))
+    yield ServerSentEvent(raw_data="[DONE]", event="done")</code></pre></div>
+
+  <div class="label">client.py — measures time-to-first-token</div>
+  <div class="pre"><pre><code>import json
+import sys
+import time
+
+import httpx
+
+url = sys.argv[1] if len(sys.argv) &gt; 1 else "http://localhost:8000/ask/stream"
+q = {"question": "Explain RAG vs fine-tuning to a CFO in 3 bullets."}
+t0, first, event = time.perf_counter(), None, None
+with httpx.stream("POST", url, json=q, timeout=120) as r:
+    for line in r.iter_lines():
+        if line.startswith("event:"):
+            event = line[6:].strip()
+        elif line.startswith("data:") and event == "token":
+            first = first or time.perf_counter() - t0
+            print(json.loads(line[5:])["token"], end="", flush=True)
+print(f"\n\nTTFT: {first:.2f}s   total: {time.perf_counter() - t0:.2f}s")</code></pre></div>
+
+  <div class="label">run (two terminals)</div>
+  <div class="pre"><pre><code># terminal 1
+uvicorn app.main:app --port 8000
+# terminal 2
+python client.py
+curl.exe -s http://localhost:8000/readyz</code></pre></div>
+  <p><b>Expected:</b> three bullets appear word by word, then a line like <code>TTFT: 0.6s   total: 4.1s</code> (first call is slower while Ollama loads the model to GPU). <code>/readyz</code> returns <code>{"status":"ready","model":"qwen2.5:3b"}</code>; stop Ollama and it returns 503 while <code>/healthz</code> stays 200.</p>
+
+  <h3>Part B — production-shaped container (Docker Desktop)</h3>
+  <div class="label">Dockerfile</div>
+  <div class="pre"><pre><code># syntax=docker/dockerfile:1
+FROM python:3.13-slim AS builder
+ENV PIP_NO_CACHE_DIR=1 PIP_DISABLE_PIP_VERSION_CHECK=1
+RUN python -m venv /opt/venv
+ENV PATH=/opt/venv/bin:$PATH
+COPY requirements.txt .
+RUN pip install -r requirements.txt
+
+FROM python:3.13-slim AS runtime
+ENV PATH=/opt/venv/bin:$PATH PYTHONUNBUFFERED=1 PYTHONDONTWRITEBYTECODE=1
+RUN useradd --create-home --uid 10001 app
+COPY --from=builder /opt/venv /opt/venv
+WORKDIR /srv
+COPY --chown=app:app app ./app
+USER 10001
+EXPOSE 8000
+HEALTHCHECK --interval=15s --timeout=3s --start-period=10s --retries=3 \
+  CMD python -c "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/healthz', timeout=2).status == 200 else 1)"
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--proxy-headers", "--timeout-graceful-shutdown", "20"]</code></pre></div>
+
+  <div class="label">.dockerignore</div>
+  <div class="pre"><pre><code>.venv
+.git
+.env
+__pycache__
+*.pyc
+client.py</code></pre></div>
+
+  <div class="label">build &amp; run (PowerShell)</div>
+  <div class="pre"><pre><code># remove Windows-only packages from the freeze if pip complains (e.g. pywin32, colorama is fine)
+docker build -t genai-stream-svc:0.1 .
+docker run --rm -p 8000:8000 -e OLLAMA_BASE_URL=http://host.docker.internal:11434 --read-only --tmpfs /tmp genai-stream-svc:0.1
+python client.py
+docker ps        # STATUS should show (healthy) after ~15 s
+docker image ls genai-stream-svc</code></pre></div>
+  <p><b>Expected:</b> the same streamed answer through the container, the container reports <code>(healthy)</code>, it runs as UID 10001 with a read-only root filesystem, and the image is in the low hundreds of MB.</p>
+
+  <h3>Stretch goals</h3>
+  <ol>
+    <li><b>Fallback before first token:</b> wrap <code>llm</code> as <code>ChatOllama(model="qwen2.5:3b").with_fallbacks([ChatOllama(model="llama3.2:1b")])</code>, point the primary at a model you haven't pulled, and emit a first SSE event <code>event: meta</code> naming the model that served the answer. Explain why you would not fail over after tokens have been sent.</li>
+    <li><b>Contract test without a GPU:</b> write a pytest that swaps <code>chain</code> for <code>prompt | GenericFakeChatModel(...) | StrOutputParser()</code> (from <code>langchain_core.language_models</code>) and asserts the SSE content type, ordered ids and the final <code>[DONE]</code>. This is the test that would gate a LangChain upgrade in CI.</li>
+  </ol>
+</section>
+
+<section>
+  <h2><span class="n">06</span>GitHub repos to study</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>Repo</th><th>What to look at</th></tr></thead>
+    <tbody>
+      <tr><td><a href="https://github.com/langchain-ai/langchain" target="_blank" rel="noopener">langchain-ai/langchain</a></td><td><code>libs/core/langchain_core/runnables/</code> — how <code>astream</code>, fallbacks and retry are implemented; <code>libs/partners/ollama</code> for a provider package's shape.</td></tr>
+      <tr><td><a href="https://github.com/fastapi/full-stack-fastapi-template" target="_blank" rel="noopener">fastapi/full-stack-fastapi-template</a></td><td>Backend Dockerfile, compose files and CI workflows: a reference layout for config, migrations, tests and image builds.</td></tr>
+      <tr><td><a href="https://github.com/astral-sh/uv-docker-example" target="_blank" rel="noopener">astral-sh/uv-docker-example</a></td><td>Multi-stage Dockerfile with cached <code>uv sync</code> layers — the faster alternative to the pip builder used above.</td></tr>
+      <tr><td><a href="https://github.com/docker/genai-stack" target="_blank" rel="noopener">docker/genai-stack</a></td><td>Compose wiring of Ollama, a vector store and LangChain apps; compare its service health and model-pull steps with your probes.</td></tr>
+    </tbody>
+  </table></div>
+  <p class="note"><b>Avoid:</b> <code>langchain-ai/langserve</code> is archived (May 2026) and deprecated; don't cite it as a serving option in interviews.</p>
+</section>
+
+<section>
+  <h2><span class="n">07</span>Read / watch</h2>
+  <ul>
+    <li><a href="https://docs.langchain.com/oss/python/migrate/langchain-v1" target="_blank" rel="noopener">LangChain v1 migration guide</a> — what moved to <code>langchain-classic</code>, <code>create_agent</code> and middleware replacing hooks.</li>
+    <li><a href="https://fastapi.tiangolo.com/tutorial/server-sent-events/" target="_blank" rel="noopener">FastAPI: Server-Sent Events</a> — native <code>EventSourceResponse</code>, keep-alive pings, <code>Last-Event-ID</code> resume, POST SSE.</li>
+    <li><a href="https://fastapi.tiangolo.com/deployment/docker/" target="_blank" rel="noopener">FastAPI in Containers</a> and <a href="https://docs.docker.com/build/building/best-practices/" target="_blank" rel="noopener">Docker building best practices</a> — one process per container on Kubernetes, exec-form CMD, multi-stage, pinned bases.</li>
+  </ul>
+</section>
+
+<section>
+  <h2><span class="n">08</span>Architect's lens — ADR-037</h2>
+  <dl class="adr">
+    <dt>Title</dt><dd>LangChain usage boundary and streaming transport for GenAI APIs</dd>
+    <dt>Context</dt><dd>Multiple teams ship LLM APIs. LangChain v1 changes fast and LangServe is archived. Traffic crosses a corporate API gateway; users expect token streaming.</dd>
+    <dt>Options</dt><dd>(a) LangChain end to end incl. classic chains; (b) <code>langchain-core</code> LCEL + provider packages at the model edge, own FastAPI service; (c) raw provider SDKs with a thin in-house abstraction.</dd>
+    <dt>Decision</dt><dd><b>(b).</b> LCEL for prompt → model → parser, fallbacks and tracing; LangGraph only where state or human approval is needed. FastAPI native SSE as the streaming contract. One Uvicorn process per pod, hardened multi-stage image, liveness without dependency calls.</dd>
+    <dt>Consequences</dt><dd>+ Provider swap (watsonx ↔ Azure OpenAI ↔ Ollama) is a config change; + contract tests with fake models make upgrades safe. − Weekly dependency churn needs Renovate + an eval gate; − teams must hand-write serving code LangServe used to give them (mitigated by a shared service template).</dd>
+  </dl>
+</section>
+
+<section>
+  <h2><span class="n">09</span>Tomorrow</h2>
+  <p>Day 38 revision drill: Architect deliverables (HLD/NFRs/token-cost model) + semantic and prompt caching.</p>
+</section>
+
+<footer>Versions checked on PyPI on 15 Nov 2026. The drill code was run against a fake chat model; run it locally against Ollama for real latencies.</footer>
+</div>
+
+<script>
+document.querySelectorAll('.pre').forEach(function(box){
+  var b=document.createElement('button');b.type='button';b.className='copy';b.textContent='Copy';
+  b.addEventListener('click',function(){
+    var t=box.querySelector('code').innerText;
+    var done=function(){b.textContent='Copied';setTimeout(function(){b.textContent='Copy'},1400)};
+    try{navigator.clipboard.writeText(t).then(done,function(){sel(box)});}catch(e){sel(box)}
+  });
+  box.appendChild(b);
+});
+function sel(box){var r=document.createRange();r.selectNodeContents(box.querySelector('code'));var s=getSelection();s.removeAllRanges();s.addRange(r);}
+document.getElementById('toggle-ans').addEventListener('click',function(){
+  var h=document.body.classList.toggle('hide-ans');this.textContent=h?'Show answers':'Hide answers for self-test';
+});
+</script>
+
+</body></html>

@@ -1,0 +1,504 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>GenAI Prep · Day 11 — RAG Evaluation</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: single reading column (~72ch) with a sticky section rail on wide screens; tables and code scroll in place. */
+:root{
+  --bg:#f5f6f8; --surface:#ffffff; --ink:#18202b; --muted:#566173; --line:#dde1e8;
+  --accent:#1f4fbf; --accent-soft:#e6ecfa; --code-bg:#f0f2f6; --warn:#a4570a; --warn-soft:#fbefe0; --ok:#1d7a4c;
+  --display:"IBM Plex Sans Condensed","Arial Narrow",system-ui,sans-serif;
+  --body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f1319; --surface:#161b23; --ink:#e3e7ee; --muted:#98a2b3; --line:#2a313d;
+  --accent:#8aa8ff; --accent-soft:#1c2740; --code-bg:#1b212b; --warn:#f0b26a; --warn-soft:#2e2316; --ok:#5fcf98; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f1319; --surface:#161b23; --ink:#e3e7ee; --muted:#98a2b3; --line:#2a313d;
+  --accent:#8aa8ff; --accent-soft:#1c2740; --code-bg:#1b212b; --warn:#f0b26a; --warn-soft:#2e2316; --ok:#5fcf98; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:16px/1.65 var(--body);margin:0}
+.wrap{max-width:1120px;margin:0 auto;padding-block:40px 80px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;grid-template-columns:200px minmax(0,1fr);gap:48px}
+nav.rail{position:sticky;top:calc(env(safe-area-inset-top,0px) + 24px);align-self:start;font-size:13px}
+nav.rail ol{list-style:none;margin:0;padding:0;display:grid;gap:2px;counter-reset:s}
+nav.rail a{display:block;padding:5px 10px;color:var(--muted);text-decoration:none;border-radius:6px}
+nav.rail a:hover,nav.rail a:focus-visible{background:var(--accent-soft);color:var(--ink);outline:none}
+main{min-width:0;max-width:760px}
+header.top{margin-bottom:36px}
+.eyebrow{font:600 12px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--accent)}
+h1{font:700 clamp(30px,5vw,44px)/1.1 var(--display);margin:12px 0 14px;text-wrap:balance;letter-spacing:-.01em}
+.dek{color:var(--muted);font-size:17px;max-width:62ch;margin:0}
+.meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
+.chip{font:500 12px/1 var(--mono);padding:6px 9px;border:1px solid var(--line);border-radius:999px;color:var(--muted);background:var(--surface)}
+section{padding-top:28px;margin-top:28px;border-top:1px solid var(--line)}
+h2{font:600 24px/1.2 var(--display);margin:0 0 14px;text-wrap:balance;display:flex;gap:10px;align-items:baseline}
+h2 .n{font:500 13px var(--mono);color:var(--accent)}
+h3{font:600 17px/1.3 var(--body);margin:26px 0 8px}
+p,li{max-width:70ch}
+ul,ol{padding-left:22px}
+li{margin:4px 0}
+a{color:var(--accent);text-underline-offset:2px}
+code{font:13.5px var(--mono);background:var(--code-bg);padding:1px 5px;border-radius:4px}
+strong{font-weight:600}
+.callout{background:var(--accent-soft);border-radius:10px;padding:14px 18px;margin:18px 0}
+.callout.warn{background:var(--warn-soft)}
+.callout p{margin:.3em 0}
+.callout .lbl{font:600 11px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--accent)}
+.callout.warn .lbl{color:var(--warn)}
+.tbl{overflow-x:auto;margin:16px 0;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:14px;min-width:640px}
+th,td{text-align:left;vertical-align:top;padding:10px 12px;border-bottom:1px solid var(--line)}
+th{font:600 12px var(--mono);letter-spacing:.04em;text-transform:uppercase;color:var(--muted);background:var(--code-bg)}
+tr:last-child td{border-bottom:0}
+td:first-child{font-weight:600;white-space:nowrap}
+.fig{margin:20px 0;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;overflow-x:auto}
+.fig svg{display:block;width:100%;min-width:620px;height:auto}
+.fig figcaption{font-size:13px;color:var(--muted);margin-top:8px}
+svg .box{fill:var(--surface);stroke:var(--line);stroke-width:1.5}
+svg .box.k{fill:var(--accent-soft);stroke:var(--accent)}
+svg .t{fill:var(--ink);font:600 13px var(--body)}
+svg .s{fill:var(--muted);font:12px var(--body)}
+svg .m{fill:var(--accent);font:600 12px var(--mono)}
+svg .mw{fill:var(--warn);font:600 12px var(--mono)}
+svg .ln{stroke:var(--muted);stroke-width:1.5;fill:none}
+svg .ma{stroke:var(--accent);stroke-width:1.5;fill:none;stroke-dasharray:5 4}
+svg .mwl{stroke:var(--warn);stroke-width:1.5;fill:none;stroke-dasharray:5 4}
+svg .ah{fill:var(--muted)}
+.code{position:relative;margin:14px 0;background:var(--code-bg);border:1px solid var(--line);border-radius:10px}
+.code .bar{display:flex;justify-content:space-between;align-items:center;padding:6px 8px 6px 14px;border-bottom:1px solid var(--line);font:500 12px var(--mono);color:var(--muted)}
+.code pre{margin:0;padding:14px;overflow-x:auto;font:13px/1.55 var(--mono);tab-size:4}
+.copy{font:500 12px var(--mono);background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:5px 10px;cursor:pointer}
+.copy:hover{border-color:var(--accent)}
+.copy:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.repos{display:grid;gap:10px;padding:0;list-style:none}
+.repos li{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 16px;max-width:none}
+.repos a{font:500 14px var(--mono)}
+.qa{border:1px solid var(--line);border-radius:10px;background:var(--surface);margin:10px 0}
+.qa summary{cursor:pointer;padding:12px 16px;font-weight:600;list-style:none;display:flex;gap:10px}
+.qa summary::-webkit-details-marker{display:none}
+.qa summary::before{content:"+";font:600 15px var(--mono);color:var(--accent);flex:none;width:12px}
+.qa[open] summary::before{content:"−"}
+.qa summary:focus-visible{outline:2px solid var(--accent);outline-offset:-2px;border-radius:10px}
+.qa .a{padding:0 16px 14px 38px;color:var(--ink)}
+.qa .a p{margin:.4em 0}
+.adr{display:grid;grid-template-columns:130px minmax(0,1fr);gap:0;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--surface)}
+.adr>div{padding:12px 16px;border-bottom:1px solid var(--line)}
+.adr>div:nth-last-child(-n+2){border-bottom:0}
+.adr .k{font:600 12px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:var(--code-bg)}
+.adr p{margin:.2em 0 .5em}
+.tomorrow{font:600 18px var(--display)}
+.out{font:13px/1.5 var(--mono);white-space:pre;overflow-x:auto;background:var(--surface);border:1px dashed var(--line);border-radius:10px;padding:12px 14px;margin:12px 0}
+.toast{position:fixed;right:calc(16px + env(safe-area-inset-right,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);font:500 13px var(--mono);padding:8px 12px;border-radius:8px}
+@media (max-width:860px){.wrap{grid-template-columns:minmax(0,1fr);gap:0}nav.rail{display:none}}
+@media (max-width:520px){.adr{grid-template-columns:minmax(0,1fr)}.adr>div:nth-last-child(2){border-bottom:1px solid var(--line)}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+<nav class="rail" aria-label="Sections"><ol>
+<li><a href="#why">Why it matters</a></li>
+<li><a href="#concept">Concept brief</a></li>
+<li><a href="#tradeoffs">Trade-offs</a></li>
+<li><a href="#handson">Hands-on</a></li>
+<li><a href="#repos">Repos</a></li>
+<li><a href="#read">Read / watch</a></li>
+<li><a href="#interview">Interview Qs</a></li>
+<li><a href="#adr">Architect's lens</a></li>
+<li><a href="#tomorrow">Tomorrow</a></li>
+</ol></nav>
+
+<main>
+<header class="top">
+<div class="eyebrow">Week 2 · Production retrieval · Day 11 of 30</div>
+<h1>RAG evaluation: proving the system works, and catching it when it stops</h1>
+<p class="dek">Faithfulness, context precision and recall, golden sets, and why an LLM judge is a measuring instrument you have to calibrate before you trust it.</p>
+<div class="meta"><span class="chip">Tue 20 Oct 2026</span><span class="chip">ragas 0.4.3</span><span class="chip">deepeval 4.3.1</span><span class="chip">trulens 2.16.0</span><span class="chip">~75 min hands-on</span></div>
+</header>
+
+<section id="why">
+<h2><span class="n">1</span>Why this matters for the JD</h2>
+<p>The JD names <strong>evaluation (groundedness, relevance, faithfulness, latency/cost)</strong> as a must-have, and lists <strong>RAG optimisation with feedback loops</strong>, <strong>eval dashboards</strong> and <strong>testing in CI/CD</strong> as preferred. Every one of those depends on a metric you can defend. Without an eval harness, a chunking or reranker change is an opinion. With one, it is a measured decision you can put in an ADR.</p>
+</section>
+
+<section id="concept">
+<h2><span class="n">2</span>Concept brief</h2>
+
+<h3>Evaluate the stages separately, then end to end</h3>
+<p>A RAG answer can fail in two places: the retriever brought the wrong evidence, or the generator misused good evidence. One end-to-end score can't tell you which, so it can't tell you what to fix. Put metrics on each edge of the pipeline.</p>
+
+<figure class="fig">
+<svg viewBox="0 0 760 330" role="img" aria-label="RAG pipeline with metrics attached to each edge">
+  <defs><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah"/></marker></defs>
+  <!-- pipeline -->
+  <rect class="box" x="20" y="130" width="120" height="56" rx="8"/><text class="t" x="80" y="155" text-anchor="middle">Query</text><text class="s" x="80" y="173" text-anchor="middle">user_input</text>
+  <rect class="box k" x="200" y="130" width="130" height="56" rx="8"/><text class="t" x="265" y="155" text-anchor="middle">Retriever</text><text class="s" x="265" y="173" text-anchor="middle">top-k chunks</text>
+  <rect class="box" x="390" y="130" width="130" height="56" rx="8"/><text class="t" x="455" y="155" text-anchor="middle">Contexts</text><text class="s" x="455" y="173" text-anchor="middle">retrieved_contexts</text>
+  <rect class="box k" x="580" y="130" width="160" height="56" rx="8"/><text class="t" x="660" y="155" text-anchor="middle">Generator → Answer</text><text class="s" x="660" y="173" text-anchor="middle">response</text>
+  <path class="ln" d="M140 158 H196" marker-end="url(#arr)"/><path class="ln" d="M330 158 H386" marker-end="url(#arr)"/><path class="ln" d="M520 158 H576" marker-end="url(#arr)"/>
+  <!-- reference -->
+  <rect class="box" x="300" y="262" width="160" height="50" rx="8"/><text class="t" x="380" y="284" text-anchor="middle">Golden reference</text><text class="s" x="380" y="301" text-anchor="middle">answer + relevant doc spans</text>
+  <!-- reference-free (top, accent) -->
+  <path class="ma" d="M80 130 V70 H425 V126"/><text class="m" x="252" y="62" text-anchor="middle">context relevance (query ↔ contexts)</text>
+  <path class="ma" d="M485 130 V100 H640 V126"/><text class="m" x="562" y="92" text-anchor="middle">faithfulness / groundedness</text>
+  <path class="ma" d="M60 130 V30 H690 V126"/><text class="m" x="375" y="22" text-anchor="middle">answer relevance (query ↔ answer)</text>
+  <!-- reference-based (bottom, warn) -->
+  <path class="mwl" d="M300 287 H265 V190"/><text class="mw" x="150" y="232" text-anchor="start">hit@k · MRR · context</text><text class="mw" x="150" y="248" text-anchor="start">precision &amp; recall</text>
+  <path class="mwl" d="M460 287 H660 V190"/><text class="mw" x="560" y="232" text-anchor="start">answer correctness</text>
+</svg>
+<figcaption>Blue, top: reference-free metrics (the TruLens “RAG triad”). These can run on sampled production traffic. Amber, bottom: reference-based metrics. These need a golden set, so they run offline and in CI.</figcaption>
+</figure>
+
+<h3>The metrics, and what each one actually computes</h3>
+<ul>
+<li><strong>hit@k / recall@k / MRR / nDCG</strong>: deterministic, cheap, and repeatable. They need labelled relevant documents. Run these first, since they cost nothing per run.</li>
+<li><strong>Context precision</strong> (Ragas): an LLM marks each retrieved chunk as useful or not against the reference, then takes a rank-weighted average. It tells you whether the good evidence sits at the top, which matters because models attend unevenly to long contexts.</li>
+<li><strong>Context recall</strong>: the reference answer is split into claims, and each claim is checked for support in the retrieved contexts. This is your “did retrieval bring everything needed” metric.</li>
+<li><strong>Faithfulness</strong>: the response is split into atomic claims, an NLI-style verdict is made per claim against the contexts, and the score is supported ÷ total. This is the hallucination metric. It ignores whether the answer is <em>correct</em>, only whether it is <em>supported</em>.</li>
+<li><strong>Answer relevancy</strong>: the judge writes questions the answer would satisfy, then measures their embedding similarity to the real question. It catches evasive or off-topic answers.</li>
+<li><strong>Answer correctness / factual correctness</strong>: the answer is compared with the reference by claim overlap. It needs a golden set.</li>
+</ul>
+
+<div class="callout warn"><div class="lbl">Common failure</div>
+<p>A faithful answer can still be wrong (the retriever fetched a superseded policy and the model quoted it accurately). A correct answer can still be unfaithful (the model answered from its parametric memory). You need both axes. Abstentions (“I don't know”) make faithfulness undefined, so score them separately as abstention accuracy on the unanswerable slice.</p></div>
+
+<h3>Golden sets that survive contact with production</h3>
+<ul>
+<li><strong>Size and stratification.</strong> Aim for 150–300 items stratified by intent, document type, difficulty (single-hop, multi-hop, comparison, numeric) and user role. Include 10–15% unanswerable questions and a few adversarial ones (prompt injection inside documents).</li>
+<li><strong>Source.</strong> Start from real query logs and SME-written questions. Synthetic generation (Ragas testset, DeepEval Synthesizer) helps coverage, but an SME must review every synthetic item, or you end up measuring the generator's own blind spots.</li>
+<li><strong>Label relevance at document/span level, not chunk ID.</strong> Chunk IDs change every time you re-chunk. Store <code>doc_id + char offsets</code> and map to chunks at eval time, so retrieval labels survive Day 6-style chunking experiments.</li>
+<li><strong>Version it like code.</strong> Freeze it, hash it, keep a hold-out slice nobody tunes against, and refresh it quarterly from production failures. Production failures are the feedback loop the JD asks for.</li>
+<li><strong>Know the noise floor.</strong> With 100 items and a score of 0.85, the 95% CI is about ±7 pp (1.96·√(0.85·0.15/100)). Compare configs <em>paired</em> on the same items with a bootstrap, and never gate a release on a 1–2 pp delta.</li>
+</ul>
+
+<h3>LLM-as-judge: a measuring instrument with known biases</h3>
+<div class="tbl"><table>
+<thead><tr><th>Bias / pitfall</th><th>What happens</th><th>Mitigation</th></tr></thead>
+<tbody>
+<tr><td>Position bias</td><td>In pairwise comparisons the judge prefers the first (or second) option</td><td>Score both orders; count only consistent verdicts</td></tr>
+<tr><td>Verbosity bias</td><td>Longer answers score higher</td><td>Claim-level metrics; length-controlled rubrics</td></tr>
+<tr><td>Self-preference</td><td>A judge rates outputs from its own model family higher</td><td>Use a judge from a different family than the generator</td></tr>
+<tr><td>Scale drift</td><td>1–10 scores are unstable across runs and judge versions</td><td>Binary pass/fail per claim or criterion; pin the judge model version</td></tr>
+<tr><td>Leniency</td><td>Partial support counted as support</td><td>Few-shot rubric with borderline examples; calibrate against human labels</td></tr>
+<tr><td>Non-determinism</td><td>Same input, different score</td><td>temperature 0, response caching, report variance over 3 runs</td></tr>
+<tr><td>Cost</td><td>Faithfulness is roughly 2–3 judge calls per answer</td><td>Sample production traffic (1–5%); cheap deterministic checks first</td></tr>
+</tbody></table></div>
+<p>The rule that holds this together: <strong>a judge earns the right to gate a release only after it agrees with humans</strong>. Have SMEs label 50–100 items, compute Cohen's κ, and target ≥ 0.6. Raw agreement alone misleads. In this exercise, a judge that passes everything can show 70% agreement and κ = 0.</p>
+
+<h3>Tools, and the platform equivalents</h3>
+<div class="tbl"><table>
+<thead><tr><th>Tool</th><th>Shape</th><th>Strength</th><th>Watch out for</th></tr></thead>
+<tbody>
+<tr><td>Ragas 0.4</td><td>Metric library</td><td>Research-backed RAG metrics; new <code>ragas.metrics.collections</code> API with <code>llm_factory</code></td><td>The 0.3 → 0.4 migration broke APIs; telemetry is on by default (<code>RAGAS_DO_NOT_TRACK=true</code>); dependency pins (see the exercise)</td></tr>
+<tr><td>DeepEval</td><td>pytest-style test framework</td><td><code>assert_test</code> in CI, G-Eval custom metrics, synthesizer, red-teaming</td><td>Pushes you toward the Confident AI cloud for dashboards</td></tr>
+<tr><td>TruLens</td><td>Tracing + feedback functions</td><td>RAG triad on live traces, OpenTelemetry-based, Snowflake-backed</td><td>Heavier footprint; best paired with its own tracing</td></tr>
+<tr><td>Arize Phoenix</td><td>Observability + evals</td><td>OTel/OpenInference tracing, eval dashboards, self-hostable</td><td>A platform to run, not just a library</td></tr>
+<tr><td>Cloud-native</td><td>Managed</td><td>watsonx.governance (faithfulness, answer/context relevance), Azure AI Foundry RAG evaluators, Bedrock RAG evaluation, Vertex Gen AI eval</td><td>Lock-in; judge prompts are opaque, so check whether you can calibrate them</td></tr>
+</tbody></table></div>
+</section>
+
+<section id="tradeoffs">
+<h2><span class="n">3</span>Trade-offs &amp; decision table</h2>
+<div class="tbl"><table>
+<thead><tr><th>Approach</th><th>Pick when</th><th>Failure modes</th><th>Cost / latency</th></tr></thead>
+<tbody>
+<tr><td>Deterministic IR metrics</td><td>Always, as the first layer; tuning chunking, k, embeddings, reranker</td><td>Needs relevance labels; blind to generation quality</td><td>~free; milliseconds</td></tr>
+<tr><td>String / regex checks</td><td>Citation format, abstention phrase, PII leaks, JSON validity</td><td>Brittle to wording changes</td><td>~free</td></tr>
+<tr><td>Reference-based LLM judge</td><td>Offline regression in CI against a golden set</td><td>Golden set staleness; judge bias</td><td>2–4 judge calls per item; minutes per run</td></tr>
+<tr><td>Reference-free LLM judge</td><td>Online monitoring on sampled traffic</td><td>Can't detect “confidently wrong but grounded”</td><td>Pay per sampled trace; run async, off the request path</td></tr>
+<tr><td>Small/local judge (7–8B)</td><td>Dev loop, data-residency constraints, high volume</td><td>Invalid JSON, low κ on nuanced claims</td><td>No per-token cost; GPU-bound</td></tr>
+<tr><td>Frontier judge</td><td>Release gates, calibration baseline</td><td>Cost; data leaving the boundary</td><td>Higher per-token cost; rate limits</td></tr>
+<tr><td>Fine-tuned evaluator / Granite Guardian-style model</td><td>Very high volume, stable domain</td><td>Needs labelled data; drifts with the domain</td><td>Cheap at inference; up-front training cost</td></tr>
+<tr><td>Human review</td><td>Calibration sets, high-risk domains (legal, medical, compliance)</td><td>Slow; inter-annotator disagreement</td><td>Most expensive; days</td></tr>
+</tbody></table></div>
+</section>
+
+<section id="handson">
+<h2><span class="n">4</span>Hands-on: a layered eval harness on your laptop</h2>
+<p><strong>Goal (75 min):</strong> evaluate a small BM25 RAG over 10 policy chunks with a 12-item golden set (two paraphrased traps, two unanswerable). Compare <code>k=1</code> and <code>k=3</code> using deterministic metrics plus Ragas faithfulness, context precision and context recall, judged by a <em>different</em> local model family. Then calibrate the judge against your own labels.</p>
+
+<h3>Setup (PowerShell, no WSL needed)</h3>
+<div class="code"><div class="bar"><span>PowerShell</span><button class="copy" type="button">Copy</button></div><pre># 1. Install Ollama for Windows from https://ollama.com/download, then pull the models
+ollama pull llama3.2:3b      # generator (system under test)
+ollama pull qwen2.5:7b       # judge - deliberately a different model family
+
+# 2. Project + venv (Python 3.13)
+mkdir day11-rag-eval; cd day11-rag-eval
+py -3.13 -m venv .venv
+.\.venv\Scripts\Activate.ps1   # if blocked: Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
+python -m pip install --upgrade pip
+python -m pip install &quot;ragas==0.4.3&quot; &quot;langchain-community==0.4.1&quot; rank-bm25 openai
+
+# 3. Optional: make sure Ollama is serving
+curl.exe http://localhost:11434/v1/models</pre></div>
+<div class="callout"><div class="lbl">Why the pin</div><p>I tested this on 20 Oct 2026: <code>ragas 0.4.3</code> fails to import with the newest <code>langchain-community 0.4.2</code> (<code>No module named 'langchain_community.chat_models.vertexai'</code>). Pinning <code>0.4.1</code> fixes it. Fragile eval-tool dependencies are themselves an architecture concern, so isolate the eval toolchain in its own environment or container, separate from the serving image.</p></div>
+<p>VRAM: <code>qwen2.5:7b</code> at Q4 is about 4.7 GB and fits your 6 GB RTX 3050. Ollama swaps models between the generate and judge steps, which costs a few seconds per row. If it's too slow, set <code>$env:JUDGE_MODEL="qwen2.5:3b"</code> and watch what that does to κ in stretch 1. To use a free-tier API instead, set <code>LLM_BASE_URL</code>, <code>LLM_API_KEY</code> and the model names to any OpenAI-compatible endpoint.</p>
+
+<h3>rag_eval.py</h3>
+<div class="code"><div class="bar"><span>rag_eval.py</span><button class="copy" type="button">Copy</button></div><pre>&quot;&quot;&quot;
+Day 11 - RAG evaluation harness (runs locally on Ollama, or any OpenAI-compatible endpoint).
+
+Layers, cheapest first:
+  1. Deterministic retrieval metrics  -&gt; hit@k, MRR (needs labelled relevant chunk ids)
+  2. Deterministic answer checks      -&gt; citation validity, abstention correctness
+  3. LLM-as-judge (Ragas 0.4)         -&gt; faithfulness, context precision, context recall
+
+Two retriever configs (k=1 vs k=3) are compared so you see the metrics move.
+&quot;&quot;&quot;
+import asyncio
+import csv
+import os
+import re
+import statistics as st
+import time
+
+os.environ.setdefault(&quot;RAGAS_DO_NOT_TRACK&quot;, &quot;true&quot;)  # Ragas sends usage telemetry by default; off for enterprise use
+
+from openai import AsyncOpenAI, OpenAI
+from rank_bm25 import BM25Okapi
+from ragas.llms import llm_factory
+from ragas.metrics.collections import ContextPrecision, ContextRecall, Faithfulness
+
+BASE_URL = os.getenv(&quot;LLM_BASE_URL&quot;, &quot;http://localhost:11434/v1&quot;)  # Ollama&#x27;s OpenAI-compatible API
+API_KEY = os.getenv(&quot;LLM_API_KEY&quot;, &quot;ollama&quot;)                       # Ollama ignores it
+GEN_MODEL = os.getenv(&quot;GEN_MODEL&quot;, &quot;llama3.2:3b&quot;)                  # the system under test
+JUDGE_MODEL = os.getenv(&quot;JUDGE_MODEL&quot;, &quot;qwen2.5:7b&quot;)               # different family -&gt; less self-preference
+
+# --- 1. A tiny, fictional policy corpus -------------------------------------------------
+CORPUS = {
+    &quot;hr-01&quot;: &quot;Employees accrue 1.75 days of paid leave per month, capped at 30 days carried over into the next calendar year.&quot;,
+    &quot;hr-02&quot;: &quot;Unused leave above the 30-day cap lapses on 31 March. Leave encashment is allowed only at resignation or retirement.&quot;,
+    &quot;hr-03&quot;: &quot;Parental leave is 26 weeks for the primary caregiver and 4 weeks for the secondary caregiver, available after 80 days of service.&quot;,
+    &quot;it-01&quot;: &quot;Laptops must use full-disk encryption (BitLocker on Windows). Lost devices must be reported to the IT service desk within 4 hours.&quot;,
+    &quot;it-02&quot;: &quot;Production database access requires a ticket approved by the data owner and expires automatically after 72 hours.&quot;,
+    &quot;it-03&quot;: &quot;Passwords must be at least 14 characters. MFA is mandatory for VPN, email and all SaaS tools that support SSO.&quot;,
+    &quot;fin-01&quot;: &quot;Travel claims must be submitted within 30 days of the trip with itemised receipts. Claims above INR 50,000 need VP approval.&quot;,
+    &quot;fin-02&quot;: &quot;Domestic economy airfare is the default. Business class is allowed for flights over 6 hours with director approval.&quot;,
+    &quot;sec-01&quot;: &quot;Customer PII may not be pasted into public AI tools. Approved internal assistants mask PII before any model call.&quot;,
+    &quot;sec-02&quot;: &quot;Security incidents must be reported to the SOC hotline immediately; the SOC triages within 15 minutes for P1 events.&quot;,
+}
+
+# --- 2. Golden set: question, reference answer, relevant chunk ids, answerable? ------------
+GOLDEN = [
+    (&quot;How many days of leave can I carry over into next year?&quot;, &quot;Up to 30 days can be carried over.&quot;, [&quot;hr-01&quot;], True),
+    (&quot;When does leave above the carry-over cap lapse?&quot;, &quot;Leave above the 30-day cap lapses on 31 March.&quot;, [&quot;hr-02&quot;], True),
+    (&quot;How long is parental leave for a secondary caregiver?&quot;, &quot;4 weeks, after 80 days of service.&quot;, [&quot;hr-03&quot;], True),
+    (&quot;How quickly must I report a lost laptop?&quot;, &quot;Within 4 hours, to the IT service desk.&quot;, [&quot;it-01&quot;], True),
+    (&quot;How long does production DB access last once approved?&quot;, &quot;It expires automatically after 72 hours.&quot;, [&quot;it-02&quot;], True),
+    (&quot;Who approves a travel claim of INR 80,000?&quot;, &quot;A VP must approve claims above INR 50,000.&quot;, [&quot;fin-01&quot;], True),
+    (&quot;Can I fly business class on a 7-hour flight?&quot;, &quot;Yes, flights over 6 hours allow business class with director approval.&quot;, [&quot;fin-02&quot;], True),
+    (&quot;Can I paste customer data into ChatGPT?&quot;, &quot;No. Customer PII may not be pasted into public AI tools.&quot;, [&quot;sec-01&quot;], True),
+    # paraphrased on purpose: no keyword overlap, so BM25 should miss these (that&#x27;s the lesson)
+    (&quot;If my notebook goes missing, who do I tell and how fast?&quot;, &quot;The IT service desk, within 4 hours.&quot;, [&quot;it-01&quot;], True),
+    (&quot;Is two-factor needed to connect remotely?&quot;, &quot;Yes, MFA is mandatory for VPN.&quot;, [&quot;it-03&quot;], True),
+    (&quot;What is the company&#x27;s dental insurance limit?&quot;, &quot;Not covered by the provided policies.&quot;, [], False),
+    (&quot;How many sick days do contractors get?&quot;, &quot;Not covered by the provided policies.&quot;, [], False),
+]
+
+IDS = list(CORPUS)
+tok = lambda s: re.findall(r&quot;[a-z0-9]+&quot;, s.lower())
+BM25 = BM25Okapi([tok(CORPUS[i]) for i in IDS])
+
+
+def retrieve(q: str, k: int) -&gt; list[str]:
+    scores = BM25.get_scores(tok(q))
+    return [IDS[i] for i in sorted(range(len(IDS)), key=lambda i: -scores[i])[:k]]
+
+
+SYSTEM = (
+    &quot;Answer ONLY from the context. Cite every fact with its chunk id in square brackets, e.g. [hr-01]. &quot;
+    &quot;If the context does not contain the answer, reply exactly: I don&#x27;t know.&quot;
+)
+gen_client = OpenAI(base_url=BASE_URL, api_key=API_KEY)
+
+
+def generate(q: str, ids: list[str]) -&gt; tuple[str, float]:
+    ctx = &quot;\n&quot;.join(f&quot;[{i}] {CORPUS[i]}&quot; for i in ids)
+    t0 = time.perf_counter()
+    r = gen_client.chat.completions.create(
+        model=GEN_MODEL,
+        temperature=0,
+        messages=[{&quot;role&quot;: &quot;system&quot;, &quot;content&quot;: SYSTEM},
+                  {&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: f&quot;Context:\n{ctx}\n\nQuestion: {q}&quot;}],
+    )
+    return r.choices[0].message.content.strip(), time.perf_counter() - t0
+
+
+# --- 3. Deterministic metrics ------------------------------------------------------------
+def hit_and_rr(retrieved: list[str], relevant: list[str]) -&gt; tuple[float, float]:
+    for rank, cid in enumerate(retrieved, 1):
+        if cid in relevant:
+            return 1.0, 1.0 / rank
+    return 0.0, 0.0
+
+
+def citation_ok(answer: str, retrieved: list[str]) -&gt; bool:
+    cited = set(re.findall(r&quot;\[([a-z]+-\d+)\]&quot;, answer))
+    return cited &lt;= set(retrieved)  # never cite a chunk the model was not shown
+
+
+def abstained(answer: str) -&gt; bool:
+    return &quot;i don&#x27;t know&quot; in answer.lower() or &quot;i do not know&quot; in answer.lower()
+
+
+# --- 4. LLM-as-judge (Ragas 0.4 collections API) ------------------------------------------
+judge = llm_factory(JUDGE_MODEL, client=AsyncOpenAI(base_url=BASE_URL, api_key=API_KEY),
+                    temperature=0, max_tokens=2048)
+faith, cprec, crec = Faithfulness(llm=judge), ContextPrecision(llm=judge), ContextRecall(llm=judge)
+
+
+async def judge_row(q, ref, ans, ctxs, answerable):
+    out = {&quot;faithfulness&quot;: None, &quot;context_precision&quot;: None, &quot;context_recall&quot;: None}
+    if abstained(ans):
+        return out  # faithfulness is undefined for an abstention; score abstention separately
+    try:
+        out[&quot;faithfulness&quot;] = (await faith.ascore(user_input=q, response=ans, retrieved_contexts=ctxs)).value
+        if answerable:
+            out[&quot;context_precision&quot;] = (await cprec.ascore(user_input=q, reference=ref, retrieved_contexts=ctxs)).value
+            out[&quot;context_recall&quot;] = (await crec.ascore(user_input=q, retrieved_contexts=ctxs, reference=ref)).value
+    except Exception as e:  # small local judges sometimes emit invalid JSON - count it, don&#x27;t crash
+        print(f&quot;   judge error on &#x27;{q[:40]}...&#x27;: {type(e).__name__}&quot;)
+    return out
+
+
+def mean(xs):
+    xs = [x for x in xs if x is not None]
+    return round(st.mean(xs), 3) if xs else float(&quot;nan&quot;)
+
+
+async def run_config(k: int) -&gt; list[dict]:
+    rows = []
+    for q, ref, rel, answerable in GOLDEN:
+        ids = retrieve(q, k)
+        ans, lat = generate(q, ids)
+        hit, rr = hit_and_rr(ids, rel) if answerable else (None, None)
+        scores = await judge_row(q, ref, ans, [CORPUS[i] for i in ids], answerable)
+        rows.append({&quot;k&quot;: k, &quot;question&quot;: q, &quot;retrieved&quot;: &quot;|&quot;.join(ids), &quot;answer&quot;: ans,
+                     &quot;answerable&quot;: answerable, &quot;hit&quot;: hit, &quot;rr&quot;: rr,
+                     &quot;citation_ok&quot;: citation_ok(ans, ids),
+                     &quot;abstain_correct&quot;: abstained(ans) == (not answerable),
+                     &quot;latency_s&quot;: round(lat, 2), **scores})
+        print(f&quot;k={k} | {q[:45]:45} | hit={hit} | {ans[:60]!r}&quot;)
+    return rows
+
+
+async def main():
+    all_rows = []
+    for k in (1, 3):
+        all_rows += await run_config(k)
+
+    print(&quot;\n=== Summary ===&quot;)
+    print(f&quot;{&#x27;k&#x27;:&gt;2} {&#x27;hit@k&#x27;:&gt;6} {&#x27;MRR&#x27;:&gt;6} {&#x27;cite&#x27;:&gt;6} {&#x27;abst&#x27;:&gt;6} {&#x27;faith&#x27;:&gt;6} {&#x27;cprec&#x27;:&gt;6} {&#x27;crec&#x27;:&gt;6} {&#x27;p50 s&#x27;:&gt;6}&quot;)
+    for k in (1, 3):
+        r = [x for x in all_rows if x[&quot;k&quot;] == k]
+        print(f&quot;{k:&gt;2} {mean([x[&#x27;hit&#x27;] for x in r]):&gt;6} {mean([x[&#x27;rr&#x27;] for x in r]):&gt;6} &quot;
+              f&quot;{mean([float(x[&#x27;citation_ok&#x27;]) for x in r]):&gt;6} {mean([float(x[&#x27;abstain_correct&#x27;]) for x in r]):&gt;6} &quot;
+              f&quot;{mean([x[&#x27;faithfulness&#x27;] for x in r]):&gt;6} {mean([x[&#x27;context_precision&#x27;] for x in r]):&gt;6} &quot;
+              f&quot;{mean([x[&#x27;context_recall&#x27;] for x in r]):&gt;6} {st.median([x[&#x27;latency_s&#x27;] for x in r]):&gt;6}&quot;)
+
+    with open(&quot;eval_results.csv&quot;, &quot;w&quot;, newline=&quot;&quot;, encoding=&quot;utf-8&quot;) as f:
+        w = csv.DictWriter(f, fieldnames=list(all_rows[0]) + [&quot;human_faithful&quot;])
+        w.writeheader()
+        for row in all_rows:
+            w.writerow({**row, &quot;human_faithful&quot;: &quot;&quot;})  # fill 1/0 by hand for the calibration step
+    print(&quot;\nWrote eval_results.csv&quot;)
+
+
+if __name__ == &quot;__main__&quot;:
+    asyncio.run(main())</pre></div>
+
+<h3>Run it</h3>
+<div class="code"><div class="bar"><span>PowerShell</span><button class="copy" type="button">Copy</button></div><pre>python rag_eval.py</pre></div>
+<p><strong>Expected output</strong> (your numbers will differ; the shape will look like this):</p>
+<div class="out">k=1 | How many days of leave can I carry over into  | hit=1.0 | 'You can carry over up to 30 days [hr-01].'
+...
+k=3 | If my notebook goes missing, who do I tell an | hit=0.0 | "I don't know."
+k=3 | What is the company's dental insurance limit? | hit=None | "I don't know."
+
+=== Summary ===
+ k  hit@k    MRR   cite   abst  faith  cprec   crec  p50 s
+ 1    0.8    0.8   ~0.9   ~1.0  ~0.9   ~0.8   ~0.8   ~1.5
+ 3    0.8    0.8   ~0.9   ~0.9  ~0.8   ~0.6   ~0.8   ~2.0
+
+Wrote eval_results.csv</div>
+<p><strong>What to notice.</strong> BM25 gets hit@k = 0.8 at both k values, because the two paraphrased questions (“notebook goes missing”, “two-factor… remotely”) share no keywords with the chunks. Raising k does not fix a vocabulary gap. Context precision should <em>drop</em> at k=3, since more noise sits in the window, while recall stays flat. That is the precision/recall trade-off reranking addresses on Day 9. Look at any row where faithfulness is below 1.0 and decide for yourself whether the judge was right.</p>
+
+<h3>Stretch goals</h3>
+<ol>
+<li><strong>Calibrate the judge.</strong> Open <code>eval_results.csv</code>, fill <code>human_faithful</code> with 1 or 0 for every answered row by your own reading, then run the script below. If κ &lt; 0.6, try the 3B judge and a frontier free-tier judge, and record which one you would let gate CI.
+<div class="code"><div class="bar"><span>calibrate.py</span><button class="copy" type="button">Copy</button></div><pre>&quot;&quot;&quot;Stretch 1 - is your judge trustworthy? Compare Ragas faithfulness with your own 1/0 labels.&quot;&quot;&quot;
+import csv
+
+rows = [r for r in csv.DictReader(open(&quot;eval_results.csv&quot;, encoding=&quot;utf-8&quot;))
+        if r[&quot;faithfulness&quot;] and r[&quot;human_faithful&quot;] in (&quot;0&quot;, &quot;1&quot;)]
+judge = [1 if float(r[&quot;faithfulness&quot;]) &gt;= 0.8 else 0 for r in rows]   # threshold = your release bar
+human = [int(r[&quot;human_faithful&quot;]) for r in rows]
+
+n = len(rows)
+po = sum(j == h for j, h in zip(judge, human)) / n                    # observed agreement
+pj, ph = sum(judge) / n, sum(human) / n
+pe = pj * ph + (1 - pj) * (1 - ph)                                    # agreement expected by chance
+kappa = (po - pe) / (1 - pe) if pe &lt; 1 else float(&quot;nan&quot;)
+fp = sum(j == 1 and h == 0 for j, h in zip(judge, human))             # judge passed a hallucination
+
+print(f&quot;n={n}  agreement={po:.2f}  Cohen&#x27;s kappa={kappa:.2f}  judge-passed-but-human-failed={fp}&quot;)
+print(&quot;Rule of thumb: kappa &gt;= 0.6 before you let this judge gate a release.&quot;)</pre></div></li>
+<li><strong>Fix the misses and prove it.</strong> Run <code>ollama pull nomic-embed-text</code>, add a dense retriever via <code>client.embeddings.create(model="nomic-embed-text", input=[...])</code>, fuse it with BM25 using RRF (score = Σ 1/(60 + rank)), and re-run. The paraphrase rows should flip to hit = 1. Then add a paired-bootstrap delta (1,000 resamples) so you can say whether the improvement is real at n = 12. At this size it usually isn't, which is the lesson about golden-set size.</li>
+</ol>
+</section>
+
+<section id="repos">
+<h2><span class="n">5</span>GitHub repos to study</h2>
+<ul class="repos">
+<li><a href="https://github.com/vibrantlabsai/ragas" target="_blank" rel="noopener">vibrantlabsai/ragas</a><br>Formerly explodinggradients/ragas. Read <code>src/ragas/metrics/collections/faithfulness</code> to see the claim-decomposition and NLI prompts you are trusting, and the testset generator.</li>
+<li><a href="https://github.com/confident-ai/deepeval" target="_blank" rel="noopener">confident-ai/deepeval</a><br>Look at the pytest integration (<code>assert_test</code>, <code>deepeval test run</code>) and G-Eval. This is the pattern for eval gates on Day 26.</li>
+<li><a href="https://github.com/truera/trulens" target="_blank" rel="noopener">truera/trulens</a><br>Study the RAG-triad feedback functions and how they attach to OpenTelemetry spans. This is online evaluation on real traces.</li>
+<li><a href="https://github.com/Arize-ai/phoenix" target="_blank" rel="noopener">Arize-ai/phoenix</a><br>Look at <code>phoenix.evals</code> and the experiments/datasets feature: versioned golden sets plus eval runs in a dashboard (Day 27 preview).</li>
+</ul>
+</section>
+
+<section id="read">
+<h2><span class="n">6</span>Read / watch</h2>
+<ul>
+<li><a href="https://docs.ragas.io/en/latest/howtos/migrations/migrate_from_v03_to_v04/" target="_blank" rel="noopener">Ragas: migrate from v0.3 to v0.4</a>: the current metric API (collections, <code>llm_factory</code>, <code>ascore</code>). Read this before trusting any older tutorial.</li>
+<li><a href="https://arxiv.org/abs/2411.15594" target="_blank" rel="noopener">A Survey on LLM-as-a-Judge</a> (Gu et al.): the bias taxonomy and reliability strategies. Pair it with <a href="https://arxiv.org/abs/2410.21819" target="_blank" rel="noopener">Self-Preference Bias in LLM-as-a-Judge</a>.</li>
+<li><a href="https://learn.microsoft.com/azure/foundry/concepts/evaluation-evaluators/rag-evaluators" target="_blank" rel="noopener">Azure AI Foundry: RAG evaluators</a> and <a href="https://aws.amazon.com/blogs/machine-learning/evaluating-rag-applications-with-amazon-bedrock-knowledge-base-evaluation/" target="_blank" rel="noopener">AWS: Bedrock knowledge base evaluation</a>: how the hyperscalers package the same metrics. Useful for client conversations about managed versus open-source evaluation.</li>
+</ul>
+</section>
+
+<section id="interview">
+<h2><span class="n">7</span>Interview questions</h2>
+<details class="qa"><summary>Your faithfulness score is 0.94 but users still complain about wrong answers. What's going on and how do you diagnose it?</summary><div class="a"><p>Faithfulness only measures <em>support by the retrieved context</em>, not correctness. A high score with wrong answers means the retriever is fetching wrong-but-plausible evidence: stale policy versions, the wrong region's document, or a near-duplicate. Check context recall and answer correctness on a golden set, slice by document freshness and metadata, and check whether ACL or metadata filters are missing. The fix is usually in retrieval (filters, dedup, versioning), not the prompt.</p></div></details><details class="qa"><summary>How do you build a golden set for a new domain with no query logs?</summary><div class="a"><p>Seed it with SME-written questions per document type and intent, augment with synthetic generation (Ragas testset / DeepEval Synthesizer) for coverage of multi-hop and comparison cases, and have SMEs review every synthetic item. Include 10–15% unanswerable and some adversarial items. Label relevance at doc + span level so it survives re-chunking. Version and freeze it, keep a hidden hold-out, and replace synthetic items with real failures once traffic starts.</p></div></details><details class="qa"><summary>Would you let an LLM judge gate production releases? Defend it.</summary><div class="a"><p>Yes, conditionally. The judge is an instrument and has to be calibrated: binary per-claim verdicts, a different model family from the generator, a pinned model version and prompt hash, temperature 0, and κ ≥ 0.6 against 50–100 human labels, re-checked whenever the judge changes. Gate on <em>paired deltas</em> against main with a threshold above the noise floor, not on absolute scores. Keep deterministic checks as the first gate and humans in the loop for high-risk domains.</p></div></details><details class="qa"><summary>Offline vs online evaluation: what runs where, and why?</summary><div class="a"><p>Offline: reference-based metrics (hit@k, context precision/recall, correctness) on a versioned golden set in CI. It's deterministic in scope, comparable across commits, and acts as a merge gate. Online: reference-free metrics (groundedness, context and answer relevance) computed asynchronously on 1–5% of sampled traces, plus user feedback and escalation signals. That catches drift and new query types the golden set doesn't cover. Online failures are triaged into the golden set, which closes the loop.</p></div></details><details class="qa"><summary>Retrieval changes improved context recall by 6 pp on 80 questions. Do you ship?</summary><div class="a"><p>Not on that number alone. At n = 80 the 95% CI on a proportion near 0.8 is about ±9 pp, so run a paired bootstrap on per-item scores to see whether the delta's interval excludes zero. Also check that faithfulness, latency p95 and cost per query didn't regress, and look at per-slice results, since an aggregate gain can hide a loss on one business unit. If it's still ambiguous, grow the golden set or run a shadow / A-B test with online metrics.</p></div></details>
+</section>
+
+<section id="adr">
+<h2><span class="n">8</span>Architect's lens: ADR-011</h2>
+<div class="adr">
+<div class="k">Title</div><div><p><strong>Layered evaluation with a calibrated judge as the release gate for the enterprise knowledge assistant</strong></p></div>
+<div class="k">Context</div><div><p>The RAG assistant serves HR, IT and finance policy to around 20k users. Teams change chunking, embeddings and prompts weekly, and two regressions reached production last quarter unnoticed. Data residency rules out sending documents to external judge APIs for some business units. The eval budget is under 5% of serving cost.</p></div>
+<div class="k">Options</div><div><p>A) Manual spot checks before each release. B) A managed platform evaluator (watsonx.governance / Azure AI Foundry) only. C) Layered: deterministic IR and format checks, then a Ragas/DeepEval judge on a versioned golden set in CI, then a reference-free triad on 2% of sampled production traces, with a self-hosted judge from a different family than the generator, calibrated quarterly against SME labels.</p></div>
+<div class="k">Decision</div><div><p><strong>C.</strong> The CI gate blocks a merge if faithfulness drops by more than 3 pp or hit@5 by more than 2 pp against main, paired on a 250-item golden set. The judge is pinned by model version and prompt hash, and must hold κ ≥ 0.6 against 100 SME-labelled items to stay the gate. Production failures flow into the golden set every month.</p></div>
+<div class="k">Consequences</div><div><p>Positive: regressions get caught pre-merge, metrics map directly to the fix (retriever versus generator), and it stays residency-compliant. Negative: SME labelling effort (~2 days per quarter), GPU capacity for the judge, and a golden-set curation owner is required. Risks: the judge drifts on upgrade (mitigated by re-calibrating before any judge change), and over-fitting to the golden set (mitigated by a hidden hold-out slice). Managed evaluators remain an option for business units without residency limits.</p></div>
+</div>
+</section>
+
+<section id="tomorrow">
+<h2><span class="n">9</span>Tomorrow</h2>
+<p class="tomorrow">Day 12 · Multimodal RAG: tables, images, scanned docs, vision LLMs, and document parsers (Docling, Unstructured).</p>
+</section>
+</main>
+</div>
+<div class="toast" id="toast" hidden>Copied</div>
+<script>
+document.querySelectorAll('.copy').forEach(function(b){
+  b.addEventListener('click',function(){
+    var pre=b.closest('.code').querySelector('pre'); var txt=pre.innerText;
+    var done=function(){b.textContent='Copied';var t=document.getElementById('toast');t.hidden=false;setTimeout(function(){b.textContent='Copy';t.hidden=true},1400)};
+    var fallback=function(){var r=document.createRange();r.selectNodeContents(pre);var s=getSelection();s.removeAllRanges();s.addRange(r);b.textContent='Press Ctrl+C';setTimeout(function(){b.textContent='Copy'},1800)};
+    try{navigator.clipboard.writeText(txt).then(done,fallback)}catch(e){fallback()}
+  });
+});
+</script>
+
+</body></html>

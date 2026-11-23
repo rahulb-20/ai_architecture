@@ -1,0 +1,593 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>GenAI Prep · Day 24 — Containerizing GenAI Services</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@500;700&family=IBM+Plex+Sans:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: single reading column, wide blocks (code, tables, diagram) break out to 960px; sticky section index on desktop */
+:root{
+  --bg:#f5f7f8; --surface:#ffffff; --fg:#15202b; --muted:#56636f; --line:#d9e0e5;
+  --accent:#0b6e8a; --accent-soft:#e2f1f5; --warn:#a4570a; --warn-soft:#fbefe1; --ok:#2f7d4f;
+  --code-bg:#0f1b24; --code-fg:#dbe7ee; --code-dim:#7f95a3;
+  --f-display:"IBM Plex Sans Condensed","Arial Narrow",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0d151b; --surface:#131f27; --fg:#e3ebf0; --muted:#93a4b0; --line:#25343e;
+  --accent:#4fb8d6; --accent-soft:#12303a; --warn:#e2a35c; --warn-soft:#33240f; --ok:#6cc391;
+  --code-bg:#081016; --code-fg:#dbe7ee; --code-dim:#6f8593; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0d151b; --surface:#131f27; --fg:#e3ebf0; --muted:#93a4b0; --line:#25343e;
+  --accent:#4fb8d6; --accent-soft:#12303a; --warn:#e2a35c; --warn-soft:#33240f; --ok:#6cc391;
+  --code-bg:#081016; --code-fg:#dbe7ee; --code-dim:#6f8593; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font:16px/1.65 var(--f-body);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 64px}
+.wrap{max-width:960px;margin:0 auto}
+.prose{max-width:70ch}
+header.hero{padding-block:40px 28px;border-bottom:1px solid var(--line);margin-bottom:8px}
+.eyebrow{font:500 12px/1.3 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+h1{font:700 clamp(30px,5vw,46px)/1.08 var(--f-display);margin:10px 0 12px;text-wrap:balance;letter-spacing:-.01em}
+h2{font:700 26px/1.2 var(--f-display);margin:0 0 14px;text-wrap:balance}
+h3{font:600 17px/1.35 var(--f-body);margin:22px 0 8px}
+.lede{color:var(--muted);font-size:18px;max-width:62ch;margin:0}
+.meta{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:18px;font:13px var(--f-mono);color:var(--muted)}
+.meta b{color:var(--fg);font-weight:500}
+nav.toc{display:flex;flex-wrap:wrap;gap:6px;padding-block:14px;border-bottom:1px solid var(--line)}
+nav.toc a{font:500 13px var(--f-mono);color:var(--muted);text-decoration:none;padding:4px 10px;border:1px solid var(--line);border-radius:999px}
+nav.toc a:hover,nav.toc a:focus-visible{color:var(--accent);border-color:var(--accent)}
+section{padding-block:34px;border-bottom:1px solid var(--line)}
+section > .num{font:500 12px var(--f-mono);color:var(--muted);letter-spacing:.08em}
+p{margin:0 0 12px}
+a{color:var(--accent)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+code{font:0.88em var(--f-mono);background:var(--accent-soft);padding:1px 5px;border-radius:4px}
+ul,ol{padding-left:22px;margin:0 0 12px}
+li{margin-bottom:6px}
+.callout{background:var(--warn-soft);border-left:3px solid var(--warn);padding:12px 16px;border-radius:0 6px 6px 0;margin:14px 0;max-width:78ch}
+.callout b{color:var(--warn)}
+.note{background:var(--accent-soft);padding:12px 16px;border-radius:6px;margin:14px 0;max-width:78ch}
+.fig{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:16px;margin:18px 0;overflow-x:auto}
+.fig svg{display:block;min-width:720px;width:100%;height:auto}
+.fig figcaption{font-size:13px;color:var(--muted);margin-top:8px}
+.tbl{overflow-x:auto;margin:14px 0;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;min-width:760px;font-size:14px}
+th,td{text-align:left;vertical-align:top;padding:10px 12px;border-bottom:1px solid var(--line)}
+th{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);background:var(--bg)}
+tr:last-child td{border-bottom:0}
+td:first-child{font-weight:600;white-space:nowrap}
+.code{position:relative;margin:12px 0 18px;border-radius:8px;background:var(--code-bg);overflow:hidden}
+.code .bar{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 8px 6px 14px;font:12px var(--f-mono);color:var(--code-dim);border-bottom:1px solid #ffffff14}
+.code pre{margin:0;padding:14px;overflow-x:auto;font:13px/1.55 var(--f-mono);color:var(--code-fg);tab-size:4}
+.code pre code{background:none;padding:0;font:inherit;color:inherit}
+.copy{font:500 12px var(--f-mono);background:transparent;color:var(--code-fg);border:1px solid #ffffff30;border-radius:5px;padding:3px 10px;cursor:pointer}
+.copy:hover{border-color:#ffffff70}
+.copy.done{color:#7fd3a0;border-color:#7fd3a0}
+.steps{counter-reset:s;list-style:none;padding:0}
+.steps > li{counter-increment:s;position:relative;padding-left:38px;margin-bottom:14px}
+.steps > li::before{content:counter(s);position:absolute;left:0;top:1px;width:26px;height:26px;border-radius:50%;background:var(--accent);color:var(--surface);font:600 13px/26px var(--f-mono);text-align:center}
+.repos{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:12px}
+.repo{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:14px 16px;min-width:0}
+.repo a{font:500 14px var(--f-mono);word-break:break-word}
+.repo p{margin:6px 0 0;font-size:14.5px;color:var(--muted)}
+.repo .tag{font:12px var(--f-mono);color:var(--muted)}
+details.qa{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:12px 16px;margin-bottom:10px;max-width:84ch}
+details.qa summary{cursor:pointer;font-weight:600}
+details.qa[open] summary{margin-bottom:8px}
+details.qa p:last-child{margin-bottom:0}
+.adr{display:grid;grid-template-columns:150px 1fr;gap:0;border:1px solid var(--line);border-radius:8px;background:var(--surface);overflow:hidden}
+.adr > div{padding:12px 16px;border-bottom:1px solid var(--line);min-width:0}
+.adr > div:nth-last-child(-n+2){border-bottom:0}
+.adr .k{font:600 12px var(--f-mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);background:var(--bg)}
+@media (max-width:640px){.adr{grid-template-columns:1fr}.adr .k{border-bottom:0;padding-bottom:2px}}
+.out{font:13px/1.5 var(--f-mono)}
+.tomorrow{font:600 18px var(--f-display);padding-block:28px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+<header class="hero">
+  <div class="eyebrow">GenAI Architect · 30-day plan · Week 4 — Cloud, production &amp; architecture</div>
+  <h1>Day 24 — Containerizing GenAI services</h1>
+  <p class="lede">FastAPI streaming, Docker images that build fast and run safe, and the operational details that decide whether a token stream survives a load balancer, a deploy and a disconnecting client.</p>
+  <div class="meta"><span><b>Mon 2 Nov 2026</b></span><span>Hands-on ≈ 75 min</span><span>Tested on FastAPI 0.162.0 · uvicorn 0.54.0 · ollama-python 0.6.3</span></div>
+</header>
+<nav class="toc" aria-label="Sections">
+  <a href="#why">Why</a><a href="#concept">Concept</a><a href="#tradeoffs">Trade-offs</a><a href="#lab">Lab</a><a href="#repos">Repos</a><a href="#read">Read</a><a href="#qa">Interview</a><a href="#adr">ADR</a>
+</nav>
+
+<section id="why">
+  <div class="num">1 · WHY THIS MATTERS FOR THE JD</div>
+  <h2>The JD's "productionization" line is mostly this day</h2>
+  <div class="prose">
+  <p>The must-have <em>CI/CD &amp; productionization</em> block names Docker, API deployment, model endpoints, observability, scaling and cost controls. All of them start at the container boundary: the image is the unit you scan, version, roll back and autoscale. The good-to-haves (Python backend/APIs, secrets, network segmentation, resilience) are decided in the Dockerfile and compose file too.</p>
+  <p>In a design review you will be asked how the stream behaves behind a proxy, what happens on SIGTERM mid-answer, and how you stop a burst from queueing 200 requests onto 2 GPU slots. Today gives you defensible answers and a working reference.</p>
+  </div>
+</section>
+
+<section id="concept">
+  <div class="num">2 · CONCEPT BRIEF</div>
+  <h2>A GenAI container is a long-lived-request service</h2>
+  <div class="prose">
+  <p>A normal REST pod answers in 50 ms. An LLM call holds a connection for 5–90 s, its cost is set by tokens rather than requests, and the scarce resource (GPU slots or provider TPM quota) sits outside the pod. Nearly every container decision follows from that.</p>
+  </div>
+  <figure class="fig" aria-label="Request lifecycle diagram">
+  <svg viewBox="0 0 920 330" role="img" aria-labelledby="dgt">
+    <title id="dgt">Streaming request path: client, ingress, gateway container with guards and semaphore, model backend, and orchestrator probes</title>
+    <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0L10,5L0,10z" fill="var(--muted)"/></marker></defs>
+    <rect x="10" y="120" width="110" height="70" rx="8" fill="var(--surface)" stroke="var(--line)"/>
+    <text x="65" y="150" text-anchor="middle" font-family="var(--f-body)" font-size="14" font-weight="600" fill="var(--fg)">Client</text>
+    <text x="65" y="170" text-anchor="middle" font-family="var(--f-mono)" font-size="11" fill="var(--muted)">EventSource / httpx</text>
+    <rect x="150" y="120" width="120" height="70" rx="8" fill="var(--surface)" stroke="var(--line)"/>
+    <text x="210" y="148" text-anchor="middle" font-family="var(--f-body)" font-size="14" font-weight="600" fill="var(--fg)">Ingress / LB</text>
+    <text x="210" y="166" text-anchor="middle" font-family="var(--f-mono)" font-size="11" fill="var(--muted)">idle timeout ≥ 120s</text>
+    <text x="210" y="180" text-anchor="middle" font-family="var(--f-mono)" font-size="11" fill="var(--muted)">buffering off</text>
+    <rect x="300" y="40" width="430" height="240" rx="10" fill="var(--accent-soft)" stroke="var(--accent)" stroke-dasharray="5 4"/>
+    <text x="316" y="62" font-family="var(--f-mono)" font-size="11" fill="var(--accent)">CONTAINER · non-root · read-only FS · uvicorn PID 1</text>
+    <g font-family="var(--f-mono)" font-size="12">
+      <rect x="318" y="120" width="90" height="70" rx="6" fill="var(--surface)" stroke="var(--line)"/>
+      <text x="363" y="150" text-anchor="middle" fill="var(--fg)">auth</text><text x="363" y="168" text-anchor="middle" fill="var(--muted)" font-size="11">401</text>
+      <rect x="420" y="120" width="90" height="70" rx="6" fill="var(--surface)" stroke="var(--line)"/>
+      <text x="465" y="150" text-anchor="middle" fill="var(--fg)">admit</text><text x="465" y="168" text-anchor="middle" fill="var(--warn)" font-size="11">429 Retry-After</text>
+      <rect x="522" y="120" width="96" height="70" rx="6" fill="var(--surface)" stroke="var(--line)"/>
+      <text x="570" y="150" text-anchor="middle" fill="var(--fg)">semaphore</text><text x="570" y="168" text-anchor="middle" fill="var(--muted)" font-size="11">N GPU slots</text>
+      <rect x="630" y="120" width="88" height="70" rx="6" fill="var(--surface)" stroke="var(--line)"/>
+      <text x="674" y="146" text-anchor="middle" fill="var(--fg)">SSE gen</text><text x="674" y="163" text-anchor="middle" fill="var(--muted)" font-size="10">timeouts</text><text x="674" y="177" text-anchor="middle" fill="var(--muted)" font-size="10">aclose()</text>
+      <rect x="318" y="220" width="190" height="42" rx="6" fill="var(--surface)" stroke="var(--line)"/>
+      <text x="413" y="246" text-anchor="middle" fill="var(--fg)">/healthz  /readyz</text>
+      <rect x="522" y="220" width="196" height="42" rx="6" fill="var(--surface)" stroke="var(--line)"/>
+      <text x="620" y="246" text-anchor="middle" fill="var(--fg)">JSON logs → stdout</text>
+    </g>
+    <rect x="770" y="110" width="140" height="90" rx="8" fill="var(--surface)" stroke="var(--line)"/>
+    <text x="840" y="140" text-anchor="middle" font-family="var(--f-body)" font-size="14" font-weight="600" fill="var(--fg)">Model backend</text>
+    <text x="840" y="160" text-anchor="middle" font-family="var(--f-mono)" font-size="11" fill="var(--muted)">Ollama · vLLM</text>
+    <text x="840" y="176" text-anchor="middle" font-family="var(--f-mono)" font-size="11" fill="var(--muted)">watsonx.ai · Bedrock</text>
+    <text x="840" y="192" text-anchor="middle" font-family="var(--f-mono)" font-size="11" fill="var(--muted)">Azure OpenAI</text>
+    <rect x="300" y="295" width="430" height="28" rx="6" fill="var(--surface)" stroke="var(--line)"/>
+    <text x="515" y="314" text-anchor="middle" font-family="var(--f-mono)" font-size="11" fill="var(--muted)">orchestrator: liveness → /healthz · readiness → /readyz · SIGTERM → drain</text>
+    <g stroke="var(--muted)" stroke-width="1.5" fill="none" marker-end="url(#ar)">
+      <path d="M120 155H148"/><path d="M270 155H316"/><path d="M408 155H418"/><path d="M510 155H520"/><path d="M618 155H628"/><path d="M718 155H768"/>
+      <path d="M413 293V264"/>
+    </g>
+    <path d="M768 175 H735 V210 H140 V192" stroke="var(--accent)" stroke-width="1.5" fill="none" marker-end="url(#ar)" stroke-dasharray="4 3"/>
+    <text x="745" y="96" font-family="var(--f-mono)" font-size="11" fill="var(--muted)">prompt →</text>
+    <text x="150" y="226" font-family="var(--f-mono)" font-size="11" fill="var(--accent)">← tokens as SSE events (meta · token… · done | error)</text>
+  </svg>
+  <figcaption>Guards run before the stream opens, so they can still return real HTTP status codes. Once the first byte is sent, failures can only be reported in-band as an <code>error</code> event.</figcaption>
+  </figure>
+  <div class="prose">
+  <h3>Five ideas to own</h3>
+  <ol>
+    <li><b>Status codes only exist before the first byte.</b> After headers go out with 200, a mid-stream failure must be an in-band <code>event: error</code>. So auth, validation, quota and load-shedding go in dependencies that run before the generator. Clients must treat a stream without <code>done</code> as failed.</li>
+    <li><b>SSE over WebSockets for token streaming.</b> It is plain HTTP, so it passes through API gateways, WAFs and APIM policies, it reconnects natively with <code>Last-Event-ID</code>, and it is one-directional, which matches generation. FastAPI ships it natively since 0.135.0 (<code>fastapi.sse.EventSourceResponse</code>), with a 15 s keep-alive ping and <code>X-Accel-Buffering: no</code> set for you. Pick WebSockets only for duplex use cases such as voice or barge-in.</li>
+    <li><b>Concurrency is a GPU property.</b> Uvicorn workers and async give you thousands of open sockets, but the backend has N decode slots (Ollama's <code>OLLAMA_NUM_PARALLEL</code>, vLLM's batch budget, a provider's TPM). Cap in-flight generations per replica, shed load with 429 and <code>Retry-After</code>, and scale on in-flight count or queue depth, not CPU.</li>
+    <li><b>Cancellation saves money.</b> When the user closes the tab, close the upstream call (<code>aclose()</code> on the stream). If you don't, the GPU keeps generating tokens nobody reads, and on a paid API you are billed for them.</li>
+    <li><b>Liveness ≠ readiness, and draining is a feature.</b> Liveness checks the process only. If it checks the model backend, a backend blip restarts every pod at once. Readiness checks dependencies and flips to 503 on SIGTERM. The grace period must be longer than your longest stream (<code>stop_grace_period</code> / <code>terminationGracePeriodSeconds</code> &gt; uvicorn <code>--timeout-graceful-shutdown</code>).</li>
+  </ol>
+  <h3>Image hygiene that reviewers check</h3>
+  <ul>
+    <li>Multi-stage build: uv in the builder with a cache mount and <code>uv sync --locked</code>; the runtime gets only <code>.venv</code> and code. There's no compiler or package manager to exploit, and the image is smaller and faster to pull during scale-out.</li>
+    <li>Gateway images are small. Model weights never go in the API image: they live on a volume, a model registry or a separate serving image (KServe storage-initializer, vLLM with a PVC). If you put a 5 GB model inside a 300 MB API image, every deploy and cold start pays for pulling it.</li>
+    <li>Non-root UID, read-only root FS, <code>cap_drop: ALL</code>, <code>no-new-privileges</code>. Secrets arrive as mounted files (<code>/run/secrets</code>, CSI Secrets Store, IBM Secrets Manager) or as BuildKit <code>--mount=type=secret</code> at build time. Never use <code>ENV</code> or <code>ARG</code> for secrets: those land in image history.</li>
+    <li>Exec-form <code>CMD</code> so uvicorn is PID 1 and gets SIGTERM. Logs go to stdout as one JSON object per line, with request id, TTFT and token counts, so cost and latency can be reconstructed later.</li>
+  </ul>
+  <p class="note"><b>Cloud mapping.</b> The same image runs on Azure Container Apps / AKS (in front of Azure OpenAI via private endpoint), AWS ECS Fargate / EKS (Bedrock via VPC endpoint), GCP Cloud Run / GKE (Vertex AI), and IBM Cloud Code Engine / Red Hat OpenShift (watsonx.ai). On OpenShift, the non-root and arbitrary-UID rules are enforced by default SCCs, so build images that run under any UID and keep files group-0 writable where needed.</p>
+  </div>
+</section>
+
+<section id="tradeoffs">
+  <div class="num">3 · TRADE-OFFS &amp; DECISION TABLE</div>
+  <h2>Choices you will defend</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>Decision</th><th>Options</th><th>Pick when</th><th>Failure mode</th><th>Cost / latency impact</th></tr></thead>
+    <tbody>
+    <tr><td>Streaming transport</td><td>SSE · WebSocket · chunked NDJSON · no streaming</td><td>SSE for chat UIs and APIs; WS for duplex/voice; NDJSON for service-to-service; non-streaming for batch and tool-call steps</td><td>Proxy buffering holds the whole answer (nginx, some APIM tiers); LB idle timeout cuts long streams at 60 s</td><td>Same tokens, but perceived latency drops to TTFT. Streaming makes post-hoc output guardrails harder.</td></tr>
+    <tr><td>Base image</td><td><code>python:3.13-slim</code> · distroless · Chainguard/Wolfi · UBI9 · alpine</td><td>slim as the default; distroless/Chainguard for low-CVE mandates; UBI on OpenShift/IBM estates</td><td>alpine's musl breaks or slows wheels (numpy, tokenizers); distroless has no shell for debugging</td><td>Image size drives pull time, which drives scale-out latency</td></tr>
+    <tr><td>Dependency install</td><td>uv + lockfile · pip + requirements hash · poetry</td><td>uv: 10–100× faster, lockfile-first, official Docker guide</td><td>Unlocked installs drift: "worked yesterday" and LangChain minor-version breaks</td><td>Build minutes in CI; layer cache hit rate</td></tr>
+    <tr><td>Process model</td><td>1 uvicorn proc/container · gunicorn + N uvicorn workers · <code>--workers N</code></td><td>One process per container on Kubernetes, scaled by replicas; multiple workers on single VMs</td><td>Per-worker semaphores multiply the real concurrency cap; in-memory caches split across workers</td><td>Memory × workers; GPU contention is unchanged</td></tr>
+    <tr><td>Backpressure</td><td>Queue unbounded · bounded semaphore + 429 · external queue (Redis/SQS) + async job</td><td>Semaphore + 429 for interactive; queue + webhook/poll for long jobs over 60 s</td><td>Unbounded queue: TTFT grows without limit, then everything times out at once</td><td>429s cost a retry; queues cost infrastructure but smooth GPU utilisation</td></tr>
+    <tr><td>Model location</td><td>In API image · separate serving container · managed API</td><td>Separate serving (vLLM/KServe/Ollama) or managed API. Almost never inside the API image.</td><td>Multi-GB images, 5-minute cold starts, CPU pods requesting GPUs</td><td>Managed: per-token cost, zero idle. Self-host: GPU-hours, pays off at sustained utilisation.</td></tr>
+    <tr><td>Secrets</td><td>ENV · mounted file · secret manager SDK at boot · workload identity</td><td>Workload identity (no secret at all) &gt; mounted file &gt; SDK fetch. ENV only for non-sensitive config.</td><td>ENV leaks via <code>docker inspect</code>, crash dumps and child processes; ARG leaks via image history</td><td>Negligible; workload identity removes rotation toil</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="lab">
+  <div class="num">4 · HANDS-ON EXERCISE · 60–90 MIN</div>
+  <h2>Build a streaming LLM gateway and containerize it properly</h2>
+  <div class="prose">
+  <p>You will build a FastAPI service that streams tokens from a local Ollama model over SSE. It has auth from a mounted secret, load-shedding with 429, first-token and inter-token timeouts, upstream cancellation on disconnect, liveness and readiness probes, and JSON logs. Then you'll ship it as a hardened multi-stage image.</p>
+  <div class="callout"><b>Windows note.</b> Steps 1–4 run natively in PowerShell. Steps 5–6 need <b>Docker Desktop with the WSL2 backend</b>. Ollama stays native on Windows, so it uses your RTX 3050 directly and the container reaches it at <code>host.docker.internal:11434</code>. That avoids NVIDIA-in-WSL2 GPU passthrough setup for today.</div>
+  </div>
+
+  <ol class="steps">
+  <li><b>Model + project setup</b> (PowerShell). <code>qwen2.5:1.5b</code> is about 1 GB and leaves VRAM headroom for 2 parallel streams.
+<div class="code"><div class="bar"><span>PowerShell</span><button class="copy" type="button">Copy</button></div><pre><code>ollama pull qwen2.5:1.5b
+mkdir genai-gateway; cd genai-gateway; mkdir app, secrets
+New-Item app\__init__.py -ItemType File
+py -3.13 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+python -m pip install "fastapi>=0.135" "uvicorn[standard]>=0.54" "ollama>=0.6.3" "httpx>=0.28" uv</code></pre></div></li>
+  <li><b>Create <code>app/main.py</code></b>. This is the whole service:
+<div class="code"><div class="bar"><span>app/main.py</span><button class="copy" type="button">Copy</button></div><pre><code>&quot;&quot;&quot;Day 24 — streaming LLM gateway: FastAPI SSE + Ollama, container-ready.&quot;&quot;&quot;
+import asyncio
+import json
+import logging
+import os
+import time
+import uuid
+from collections.abc import AsyncIterable
+from contextlib import asynccontextmanager
+from pathlib import Path
+
+from fastapi import Depends, FastAPI, Header, HTTPException, Request
+from fastapi.responses import JSONResponse
+from fastapi.sse import EventSourceResponse, ServerSentEvent
+from ollama import AsyncClient, ResponseError
+from pydantic import BaseModel, Field
+
+# ---- config: 12-factor, env only ------------------------------------------
+OLLAMA_HOST = os.getenv(&quot;OLLAMA_HOST&quot;, &quot;http://localhost:11434&quot;)
+MODEL = os.getenv(&quot;MODEL&quot;, &quot;qwen2.5:1.5b&quot;)
+MAX_CONCURRENCY = int(os.getenv(&quot;MAX_CONCURRENCY&quot;, &quot;2&quot;))      # GPU slots, not CPU cores
+FIRST_TOKEN_TIMEOUT_S = float(os.getenv(&quot;FIRST_TOKEN_TIMEOUT_S&quot;, &quot;30&quot;))
+INTER_TOKEN_TIMEOUT_S = float(os.getenv(&quot;INTER_TOKEN_TIMEOUT_S&quot;, &quot;15&quot;))
+MAX_STREAM_S = float(os.getenv(&quot;MAX_STREAM_S&quot;, &quot;120&quot;))
+API_KEY_FILE = Path(os.getenv(&quot;API_KEY_FILE&quot;, &quot;/run/secrets/api_key&quot;))
+
+logging.basicConfig(level=logging.INFO, format=&quot;%(message)s&quot;)
+log = logging.getLogger(&quot;gateway&quot;)
+logging.getLogger(&quot;httpx&quot;).setLevel(logging.WARNING)  # no per-call noise
+
+
+def jlog(**kv) -&gt; None:
+    &quot;&quot;&quot;One JSON object per line on stdout: the container runtime ships it.&quot;&quot;&quot;
+    log.info(json.dumps({&quot;ts&quot;: round(time.time(), 3), **kv}))
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    app.state.llm = AsyncClient(host=OLLAMA_HOST)
+    app.state.sem = asyncio.Semaphore(MAX_CONCURRENCY)
+    app.state.inflight = 0
+    app.state.draining = False
+    app.state.api_key = API_KEY_FILE.read_text().strip() if API_KEY_FILE.exists() else None
+    jlog(evt=&quot;startup&quot;, model=MODEL, ollama=OLLAMA_HOST, auth=bool(app.state.api_key))
+    yield
+    app.state.draining = True          # SIGTERM -&gt; readyz goes 503, LB stops routing
+    jlog(evt=&quot;shutdown&quot;, inflight=app.state.inflight)
+
+
+app = FastAPI(title=&quot;genai-gateway&quot;, lifespan=lifespan)
+
+
+class ChatIn(BaseModel):
+    prompt: str = Field(min_length=1, max_length=4000)
+    max_tokens: int = Field(256, ge=1, le=1024)
+
+
+# ---- probes ----------------------------------------------------------------
+@app.get(&quot;/healthz&quot;)
+async def healthz():
+    &quot;&quot;&quot;Liveness: is THIS process alive? Never call dependencies here.&quot;&quot;&quot;
+    return {&quot;status&quot;: &quot;ok&quot;}
+
+
+@app.get(&quot;/readyz&quot;)
+async def readyz(request: Request):
+    &quot;&quot;&quot;Readiness: can we serve traffic right now? Checks the model backend.&quot;&quot;&quot;
+    if request.app.state.draining:
+        return JSONResponse({&quot;status&quot;: &quot;draining&quot;}, status_code=503)
+    try:
+        await asyncio.wait_for(request.app.state.llm.show(MODEL), timeout=2)
+    except Exception as e:  # noqa: BLE001
+        return JSONResponse({&quot;status&quot;: &quot;unready&quot;, &quot;reason&quot;: type(e).__name__}, status_code=503)
+    return {&quot;status&quot;: &quot;ready&quot;, &quot;model&quot;: MODEL, &quot;inflight&quot;: request.app.state.inflight}
+
+
+# ---- guards (run BEFORE the stream opens, so they can return real HTTP codes)
+def require_key(request: Request, authorization: str | None = Header(default=None)):
+    key = request.app.state.api_key
+    if key and authorization != f&quot;Bearer {key}&quot;:
+        raise HTTPException(401, &quot;missing or bad bearer token&quot;)
+
+
+def admit(request: Request):
+    &quot;&quot;&quot;Load-shed instead of queueing forever: 429 + Retry-After when GPU slots are full.&quot;&quot;&quot;
+    if request.app.state.sem.locked():
+        raise HTTPException(429, &quot;busy&quot;, headers={&quot;Retry-After&quot;: &quot;2&quot;})
+
+
+# ---- the streaming endpoint -------------------------------------------------
+@app.post(&quot;/v1/chat/stream&quot;, response_class=EventSourceResponse,
+          dependencies=[Depends(require_key), Depends(admit)])
+async def chat_stream(body: ChatIn, request: Request) -&gt; AsyncIterable[ServerSentEvent]:
+    rid = uuid.uuid4().hex[:8]
+    t0 = time.perf_counter()
+    ttft_ms, n_chunks, usage, outcome = None, 0, {}, &quot;ok&quot;
+    st = request.app.state
+    async with st.sem:
+        st.inflight += 1
+        stream = None
+        try:
+            yield ServerSentEvent(event=&quot;meta&quot;, data={&quot;request_id&quot;: rid, &quot;model&quot;: MODEL})
+            stream = await st.llm.chat(
+                model=MODEL,
+                messages=[{&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: body.prompt}],
+                stream=True,
+                options={&quot;num_predict&quot;: body.max_tokens},
+            )
+            async with asyncio.timeout(MAX_STREAM_S):              # hard wall-clock cap
+                while True:
+                    budget = FIRST_TOKEN_TIMEOUT_S if ttft_ms is None else INTER_TOKEN_TIMEOUT_S
+                    try:
+                        part = await asyncio.wait_for(anext(stream), timeout=budget)
+                    except StopAsyncIteration:
+                        break
+                    if await request.is_disconnected():
+                        outcome = &quot;client_disconnected&quot;
+                        break
+                    tok = part.message.content
+                    if tok:
+                        if ttft_ms is None:
+                            ttft_ms = round((time.perf_counter() - t0) * 1000)
+                        n_chunks += 1
+                        yield ServerSentEvent(event=&quot;token&quot;, data=tok, id=str(n_chunks))
+                    if part.done:
+                        usage = {&quot;prompt_tokens&quot;: part.prompt_eval_count,
+                                 &quot;completion_tokens&quot;: part.eval_count}
+            if outcome == &quot;ok&quot;:
+                yield ServerSentEvent(event=&quot;done&quot;, data={
+                    &quot;request_id&quot;: rid, &quot;ttft_ms&quot;: ttft_ms, &quot;chunks&quot;: n_chunks,
+                    &quot;total_ms&quot;: round((time.perf_counter() - t0) * 1000), **usage})
+        except TimeoutError:
+            outcome = &quot;timeout&quot;
+            yield ServerSentEvent(event=&quot;error&quot;, data={&quot;code&quot;: &quot;upstream_timeout&quot;, &quot;request_id&quot;: rid})
+        except ResponseError as e:
+            outcome = &quot;upstream_error&quot;
+            yield ServerSentEvent(event=&quot;error&quot;, data={&quot;code&quot;: &quot;upstream_error&quot;,
+                                                       &quot;status&quot;: e.status_code, &quot;request_id&quot;: rid})
+        except (asyncio.CancelledError, GeneratorExit):
+            outcome = &quot;cancelled&quot;   # client went away mid-yield
+            raise
+        finally:
+            if stream is not None:
+                await stream.aclose()   # closes the HTTP call -&gt; Ollama stops generating
+            st.inflight -= 1
+            jlog(evt=&quot;chat&quot;, rid=rid, outcome=outcome, ttft_ms=ttft_ms, chunks=n_chunks,
+                 total_ms=round((time.perf_counter() - t0) * 1000), **usage)</code></pre></div></li>
+  <li><b>Run it natively</b> and probe it. Without a secret file, auth is off.
+<div class="code"><div class="bar"><span>PowerShell</span><button class="copy" type="button">Copy</button></div><pre><code>$env:API_KEY_FILE = "secrets\api_key.txt"   # doesn't exist yet → auth disabled
+uvicorn app.main:app --port 8000
+# second terminal:
+curl.exe -s localhost:8000/healthz
+curl.exe -s localhost:8000/readyz
+curl.exe -N -X POST localhost:8000/v1/chat/stream -H "Content-Type: application/json" -d '{\"prompt\":\"Say hi in 5 words\"}'</code></pre></div>
+  <p>Use <code>curl.exe</code>, not <code>curl</code> (PowerShell's alias for Invoke-WebRequest buffers the response). <code>-N</code> disables curl's buffering so you see tokens arrive.</p></li>
+  <li><b>Create <code>loadtest.py</code></b> and run <code>python loadtest.py 4</code>. It sends 4 concurrent streams against <code>MAX_CONCURRENCY=2</code>, then aborts one stream after 3 chunks.
+<div class="code"><div class="bar"><span>loadtest.py</span><button class="copy" type="button">Copy</button></div><pre><code>&quot;&quot;&quot;Fire N concurrent streams; report TTFT, 429s, and test a mid-stream disconnect.&quot;&quot;&quot;
+import asyncio
+import json
+import sys
+import time
+
+import httpx
+
+URL = &quot;http://localhost:8000/v1/chat/stream&quot;
+HEADERS = {}  # e.g. {&quot;Authorization&quot;: &quot;Bearer &lt;key&gt;&quot;} when the secret is mounted
+
+
+async def one(client: httpx.AsyncClient, i: int, abort_after: int | None = None):
+    t0 = time.perf_counter()
+    ttft, text, event = None, [], None
+    async with client.stream(&quot;POST&quot;, URL, headers=HEADERS,
+                             json={&quot;prompt&quot;: &quot;In 3 sentences, why do containers help LLM apps?&quot;,
+                                   &quot;max_tokens&quot;: 120}) as r:
+        if r.status_code != 200:
+            return {&quot;i&quot;: i, &quot;status&quot;: r.status_code, &quot;retry_after&quot;: r.headers.get(&quot;retry-after&quot;)}
+        async for line in r.aiter_lines():
+            if line.startswith(&quot;event:&quot;):
+                event = line.split(&quot;:&quot;, 1)[1].strip()
+            elif line.startswith(&quot;data:&quot;):
+                data = json.loads(line[5:].strip())
+                if event == &quot;token&quot;:
+                    ttft = ttft or round((time.perf_counter() - t0) * 1000)
+                    text.append(data)
+                    if abort_after and len(text) &gt;= abort_after:
+                        return {&quot;i&quot;: i, &quot;status&quot;: &quot;aborted_by_client&quot;, &quot;chunks&quot;: len(text)}
+                elif event in (&quot;done&quot;, &quot;error&quot;):
+                    return {&quot;i&quot;: i, &quot;status&quot;: 200, &quot;event&quot;: event, &quot;client_ttft_ms&quot;: ttft,
+                            &quot;server&quot;: data, &quot;preview&quot;: &quot;&quot;.join(text)[:60]}
+    return {&quot;i&quot;: i, &quot;status&quot;: &quot;stream_ended_without_done&quot;}
+
+
+async def main(n: int):
+    async with httpx.AsyncClient(timeout=httpx.Timeout(10, read=60)) as c:
+        results = await asyncio.gather(*(one(c, i) for i in range(n)))
+        for r in results:
+            print(r)
+        print(&quot;--- disconnect test ---&quot;)
+        print(await one(c, 99, abort_after=3))
+
+
+if __name__ == &quot;__main__&quot;:
+    asyncio.run(main(int(sys.argv[1]) if len(sys.argv) &gt; 1 else 4))</code></pre></div></li>
+  <li><b>Containerize.</b> Add <code>pyproject.toml</code>, <code>Dockerfile</code>, <code>.dockerignore</code>, <code>compose.yaml</code>, then lock the dependencies.
+<div class="code"><div class="bar"><span>pyproject.toml</span><button class="copy" type="button">Copy</button></div><pre><code>[project]
+name = &quot;genai-gateway&quot;
+version = &quot;0.1.0&quot;
+requires-python = &quot;&gt;=3.13&quot;
+dependencies = [
+    &quot;fastapi&gt;=0.135&quot;,        # fastapi.sse landed in 0.135.0; tested on 0.162.0
+    &quot;uvicorn[standard]&gt;=0.54&quot;,
+    &quot;ollama&gt;=0.6.3&quot;,
+]
+
+[dependency-groups]
+dev = [&quot;httpx&gt;=0.28&quot;]</code></pre></div>
+<div class="code"><div class="bar"><span>Dockerfile</span><button class="copy" type="button">Copy</button></div><pre><code># syntax=docker/dockerfile:1
+# ---------- stage 1: build the venv with uv (cached, reproducible) ----------
+FROM python:3.13-slim AS builder
+COPY --from=ghcr.io/astral-sh/uv:0.13.6 /uv /uvx /bin/
+ENV UV_COMPILE_BYTECODE=1 \
+    UV_LINK_MODE=copy \
+    UV_PYTHON_DOWNLOADS=0 \
+    UV_NO_DEV=1
+WORKDIR /app
+# deps layer: only re-runs when the lockfile changes; cache mount survives builds
+RUN --mount=type=cache,target=/root/.cache/uv \
+    --mount=type=bind,source=uv.lock,target=uv.lock \
+    --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
+    uv sync --locked --no-install-project
+
+# ---------- stage 2: runtime (no uv, no compilers, non-root) ----------
+FROM python:3.13-slim AS runtime
+RUN groupadd --system --gid 10001 app \
+ &amp;&amp; useradd --system --uid 10001 --gid app --no-create-home app
+WORKDIR /app
+COPY --from=builder --chown=app:app /app/.venv /app/.venv
+COPY --chown=app:app app ./app
+ENV PATH=&quot;/app/.venv/bin:$PATH&quot; \
+    PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1
+USER app
+EXPOSE 8000
+# slim has no curl: use the stdlib. Liveness only -&gt; /healthz, never /readyz.
+HEALTHCHECK --interval=15s --timeout=3s --start-period=20s --retries=3 \
+  CMD [&quot;python&quot;, &quot;-c&quot;, &quot;import urllib.request,sys; sys.exit(0 if urllib.request.urlopen(&#x27;http://127.0.0.1:8000/healthz&#x27;, timeout=2).status == 200 else 1)&quot;]
+# exec form = uvicorn is PID 1 and receives SIGTERM directly
+CMD [&quot;uvicorn&quot;, &quot;app.main:app&quot;, &quot;--host&quot;, &quot;0.0.0.0&quot;, &quot;--port&quot;, &quot;8000&quot;, \
+     &quot;--timeout-graceful-shutdown&quot;, &quot;25&quot;, &quot;--proxy-headers&quot;, &quot;--no-access-log&quot;]</code></pre></div>
+<div class="code"><div class="bar"><span>.dockerignore</span><button class="copy" type="button">Copy</button></div><pre><code>.venv
+__pycache__
+*.pyc
+.git
+secrets/
+.env
+*.log</code></pre></div>
+<div class="code"><div class="bar"><span>compose.yaml</span><button class="copy" type="button">Copy</button></div><pre><code>services:
+  api:
+    build: .
+    image: genai-gateway:dev
+    ports: [&quot;8000:8000&quot;]
+    environment:
+      OLLAMA_HOST: http://host.docker.internal:11434   # Ollama runs natively on Windows (GPU stays simple)
+      MODEL: qwen2.5:1.5b
+      MAX_CONCURRENCY: &quot;2&quot;
+      API_KEY_FILE: /run/secrets/api_key
+    secrets: [api_key]
+    read_only: true                 # immutable root FS
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    security_opt: [&quot;no-new-privileges:true&quot;]
+    stop_grace_period: 30s          # &gt; uvicorn&#x27;s 25s graceful drain
+    deploy:
+      resources:
+        limits: { cpus: &quot;1.0&quot;, memory: 512M }
+secrets:
+  api_key:
+    file: ./secrets/api_key.txt</code></pre></div>
+<div class="code"><div class="bar"><span>PowerShell (Docker Desktop running)</span><button class="copy" type="button">Copy</button></div><pre><code>uv lock
+# random API key into the mounted secret (never in compose env)
+-join ((48..57)+(97..122) | Get-Random -Count 32 | % {[char]$_}) | Set-Content -NoNewline secrets\api_key.txt
+docker compose up --build -d
+docker compose ps            # STATUS should become "healthy" within ~20s
+docker image ls genai-gateway:dev
+docker compose logs -f api</code></pre></div></li>
+  <li><b>Prove the hardening.</b> Set <code>HEADERS = {"Authorization": "Bearer &lt;key&gt;"}</code> in <code>loadtest.py</code> (key from <code>secrets\api_key.txt</code>), then run:
+<div class="code"><div class="bar"><span>PowerShell</span><button class="copy" type="button">Copy</button></div><pre><code>python loadtest.py 4
+docker compose exec api id                         # uid=10001(app) — not root
+docker compose exec api sh -c "touch /app/x"       # Read-only file system
+docker inspect genai-gateway-api-1 --format "{{json .Config.Env}}"   # no API key in here
+docker compose stop api                            # watch logs: shutdown waits for in-flight streams</code></pre></div></li>
+  </ol>
+
+  <h3>Expected output</h3>
+  <p class="prose">The output below comes from a run of this exact code against a stub model server. Your TTFT and text will differ with the real model, but the shape is the same:</p>
+<div class="code"><div class="bar"><span>python loadtest.py 4</span><button class="copy" type="button">Copy</button></div><pre class="out"><code>{'i': 0, 'status': 200, 'event': 'done', 'client_ttft_ms': 282, 'server': {'request_id': '1ee83b64', 'ttft_ms': 227, 'chunks': 7, 'total_ms': 1438, 'prompt_tokens': 5, 'completion_tokens': 7}, ...}
+{'i': 1, 'status': 200, 'event': 'done', 'client_ttft_ms': 242, ...}
+{'i': 2, 'status': 200, 'event': 'done', 'client_ttft_ms': 1658, 'server': {'ttft_ms': 1636, ...}}   &lt;- admitted, then waited on the semaphore
+{'i': 3, 'status': 429, 'retry_after': '2'}
+--- disconnect test ---
+{'i': 99, 'status': 'aborted_by_client', 'chunks': 3}
+
+# server log (stdout, JSON lines)
+{"evt": "chat", "rid": "1ee83b64", "outcome": "ok", "ttft_ms": 227, "chunks": 7, "total_ms": 1439, "prompt_tokens": 5, "completion_tokens": 7}
+{"evt": "chat", "rid": "b454a0d0", "outcome": "cancelled", "ttft_ms": 204, "chunks": 3, "total_ms": 609}</code></pre></div>
+  <div class="prose">
+  <p><b>Look at request 2.</b> It passed <code>admit()</code>, because the other two had not yet acquired the semaphore, and then it queued: TTFT went from ~230 ms to ~1.6 s. That is the check-then-acquire race. It is harmless here, but under real load it lets queues build behind a "429 guard". Stretch goal 1 fixes it.</p>
+  <p><b>If <code>/readyz</code> returns 503 inside the container</b> with ConnectError, Ollama is listening on 127.0.0.1 only. Set a user environment variable <code>OLLAMA_HOST=0.0.0.0:11434</code>, restart Ollama, and allow it only on the Private network profile in Windows Firewall.</p>
+  <h3>Stretch goals</h3>
+  <ol>
+    <li><b>Atomic admission.</b> Replace <code>sem.locked()</code> plus <code>async with</code> with a counter that is checked and incremented in one step in the dependency (or <code>asyncio.wait_for(sem.acquire(), 0.05)</code>). Release it in the generator's <code>finally</code>. Then re-run the load test and confirm the queued request turns into a 429. Also explain why the limit still holds only per replica, and what you'd use across replicas (a Redis token bucket, or gateway rate-limits in LiteLLM / APIM / API Connect).</li>
+    <li><b>Resumable streams + image budget.</b> Buffer events per <code>request_id</code> (an in-memory dict is fine here) and honour the <code>Last-Event-ID</code> header so a reconnecting client resumes from chunk N. Then run <code>docker scout cves genai-gateway:dev</code> (or Trivy). Try <code>gcr.io/distroless/python3-debian12</code> or a UBI9 Python base for the runtime stage, and record size, CVE count and cold-start time in a 3-row table.</li>
+  </ol>
+  </div>
+</section>
+
+<section id="repos">
+  <div class="num">5 · GITHUB REPOS TO STUDY</div>
+  <h2>Read the code, not the README</h2>
+  <div class="repos">
+    <div class="repo"><a href="https://github.com/astral-sh/uv-docker-example">astral-sh/uv-docker-example</a> <span class="tag">· Astral · ~0.8k★</span><p>Compare <code>Dockerfile</code> with <code>multistage.Dockerfile</code>: cache mounts, bind-mounted lockfile, and why the project is installed after its dependencies.</p></div>
+    <div class="repo"><a href="https://github.com/fastapi/full-stack-fastapi-template">fastapi/full-stack-fastapi-template</a> <span class="tag">· ~46k★</span><p><code>backend/Dockerfile</code> and <code>compose*.yml</code>: the official uv-based image, the prestart pattern for migrations, and Traefik health and labels.</p></div>
+    <div class="repo"><a href="https://github.com/ollama/ollama-python">ollama/ollama-python</a> <span class="tag">· ~10.6k★</span><p><code>ollama/_client.py</code>: how <code>AsyncClient</code> streams NDJSON over httpx, and so why closing the iterator closes the upstream request.</p></div>
+    <div class="repo"><a href="https://github.com/docker/genai-stack">docker/genai-stack</a> <span class="tag">· Docker · ~5.4k★</span><p><code>docker-compose.yml</code>: a multi-service GenAI stack (LLM, Neo4j vector store, API, UI) with healthcheck-gated <code>depends_on</code>. Note its trade-offs too: it is a demo, so look at what it doesn't harden.</p></div>
+  </div>
+</section>
+
+<section id="read">
+  <div class="num">6 · READ / WATCH</div>
+  <h2>Three primary sources</h2>
+  <ul class="prose">
+    <li><a href="https://fastapi.tiangolo.com/tutorial/server-sent-events/">FastAPI — Server-Sent Events</a>. The native <code>EventSourceResponse</code>/<code>ServerSentEvent</code> API, keep-alive pings, <code>Last-Event-ID</code> resumption. Pair it with <a href="https://fastapi.tiangolo.com/deployment/docker/">FastAPI in Containers</a> for the official guidance on one process per container.</li>
+    <li><a href="https://docs.astral.sh/uv/guides/integration/docker/">uv — Using uv in Docker</a>. Version pinning (tag or sha256), <code>UV_COMPILE_BYTECODE</code>, <code>UV_LINK_MODE=copy</code>, intermediate layers, multi-stage.</li>
+    <li><a href="https://docs.docker.com/build/building/secrets/">Docker — Build secrets</a> and <a href="https://docs.docker.com/build/building/best-practices/">Building best practices</a>. Secret mounts versus ARG/ENV leakage, base image choice, layer ordering, pinning by digest.</li>
+  </ul>
+</section>
+
+<section id="qa">
+  <div class="num">7 · INTERVIEW QUESTIONS</div>
+  <h2>Architect-level, with model answers</h2>
+  <details class="qa"><summary>1. Your chat API streams fine locally but users behind the corporate gateway get the whole answer at once after 40 s. Diagnose and fix.</summary>
+    <p>Something on the path is buffering: nginx/ingress <code>proxy_buffering</code>, an APIM or API gateway response policy, a WAF inspecting bodies, or compression middleware (gzip buffers until a block fills). Fix it hop by hop. Send <code>X-Accel-Buffering: no</code> and <code>Cache-Control: no-cache</code> (FastAPI's SSE response does this), disable gzip for <code>text/event-stream</code>, set the ingress annotation to turn buffering off, and raise LB idle timeouts above your max stream length. Keep-alive comments stop idle cut-offs. Verify with <code>curl -N</code> at each hop. If a hop cannot stream (some WAFs), it needs a bypass route for the stream path, or fall back to polling for that client population.</p></details>
+  <details class="qa"><summary>2. How do you size and autoscale a stateless GenAI gateway in front of a self-hosted vLLM pool?</summary>
+    <p>The gateway is I/O-bound and cheap: a couple of replicas at 0.5–1 vCPU handle thousands of open streams. The constraint is the backend. Cap in-flight requests per gateway replica so that the sum across replicas is at or below the backend's effective concurrency (KV-cache-bound batch size), and shed with 429 above that. Autoscale the gateway on in-flight or open connections (KEDA on a Prometheus metric), not CPU, which stays low while the GPU is saturated. Autoscale vLLM on queue depth, KV-cache utilisation or TTFT p95. Include a cold-start budget: model load takes minutes, so keep a warm minimum and scale ahead on schedule if traffic is predictable.</p></details>
+  <details class="qa"><summary>3. A pod is SIGTERMed mid-deploy while 30 users are mid-answer. What should happen, and how do you configure it?</summary>
+    <p>Readiness flips to 503 immediately, so new traffic routes elsewhere. Existing streams finish within a drain window, and the process exits after that. Configure it like this: exec-form CMD so the app is PID 1 and gets the signal; uvicorn <code>--timeout-graceful-shutdown</code> set to around the p99 stream length; Kubernetes <code>terminationGracePeriodSeconds</code> (or compose <code>stop_grace_period</code>) longer than that; optionally a <code>preStop</code> sleep of a few seconds so endpoint removal propagates before shutdown starts. Streams longer than the window get an <code>error</code> event with a retryable code, and the client re-issues the request (or resumes with <code>Last-Event-ID</code> if you buffer). Rolling updates use <code>maxUnavailable: 0</code>.</p></details>
+  <details class="qa"><summary>4. Why not just bake the model weights into the image so deploys are "atomic"?</summary>
+    <p>It couples two release cadences (code weekly, model monthly), inflates images to many GB so every scale-out and node replacement pays minutes of pull time, multiplies registry storage per tag, and often violates licence or data-handling controls on the registry. The better approach is to version the model separately (registry or object store with a digest), mount it via a PVC, a storage-initializer (KServe) or node-local cache, and pin the model digest in the deployment manifest. You keep atomic, reviewable rollbacks without the image weight. The exception is small edge or air-gapped models where the pull path doesn't exist.</p></details>
+  <details class="qa"><summary>5. Where do secrets for Azure OpenAI or watsonx.ai live in this design, and what does a reviewer check?</summary>
+    <p>Preferably nowhere: use workload identity (AKS Workload Identity to Entra ID, IRSA/EKS Pod Identity, GKE Workload Identity, IBM Cloud trusted profiles) so the pod gets short-lived tokens. Where a key is unavoidable, it comes from a vault (Key Vault, Secrets Manager, IBM Secrets Manager) via the CSI driver as a mounted file, read at startup, never logged, and rotated without a rebuild. The reviewer checks: no secrets in ENV or ARG or image layers (<code>docker history</code>, scanners), build-time credentials only via <code>--mount=type=secret</code>, the egress path to the model endpoint is private (private endpoint or VPC endpoint, no public IP), and logs redact prompts or PII per policy.</p></details>
+</section>
+
+<section id="adr">
+  <div class="num">8 · ARCHITECT'S LENS</div>
+  <h2>ADR-024: Streaming transport and backpressure for the knowledge-assistant API</h2>
+  <div class="adr">
+    <div class="k">Status</div><div>Proposed · 2026-11-02</div>
+    <div class="k">Context</div><div>Chat UI and two internal consumers need token streaming. Traffic passes through corporate APIM and a WAF. The backend is a self-hosted vLLM pool with about 48 concurrent sequences at target latency, plus Azure OpenAI as overflow. Peak demand is about 3× capacity for 20-minute windows (Monday 10:00 IST). Users abandon roughly 15% of answers mid-stream.</div>
+    <div class="k">Options</div><div>(A) WebSockets with an unbounded server queue. (B) SSE over HTTP, with a per-replica semaphore, 429 + Retry-After, and overflow to Azure OpenAI. (C) Async jobs: POST returns a job id, the client polls or subscribes.</div>
+    <div class="k">Decision</div><div><b>B.</b> SSE passes APIM and WAF unchanged and reuses existing HTTP auth and logging. Admission control is enforced before the stream opens. Upstream calls are cancelled on disconnect. Overflow routing lives in the gateway (LiteLLM-style fallback) rather than in clients. C is kept for batch summarisation jobs over 60 s.</div>
+    <div class="k">Consequences</div><div>+ Bounded TTFT under burst; about 15% GPU time recovered from abandoned streams; no new protocol through security review. − Clients must handle 429 and in-band <code>error</code> events (SDK work). Per-replica caps need a shared limiter (Redis) once there are more than 3 replicas. Output guardrails must run incrementally or on the final buffer, not before the first token. Overflow to Azure OpenAI adds per-token cost, so track it as a budget KPI.</div>
+  </div>
+</section>
+
+<div class="tomorrow">Tomorrow · Day 25 — Kubernetes for GenAI: HPA/KEDA autoscaling, GPU scheduling, KServe, Helm and canary releases.</div>
+</div>
+
+<script>
+document.querySelectorAll('.copy').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    const code=btn.closest('.code').querySelector('pre');
+    const text=code.innerText;
+    const ok=()=>{btn.textContent='Copied';btn.classList.add('done');setTimeout(()=>{btn.textContent='Copy';btn.classList.remove('done')},1600)};
+    const fallback=()=>{const r=document.createRange();r.selectNodeContents(code);const s=getSelection();s.removeAllRanges();s.addRange(r);btn.textContent='Press Ctrl+C'};
+    try{navigator.clipboard.writeText(text).then(ok,fallback)}catch(e){fallback()}
+  });
+});
+</script>
+
+</body></html>

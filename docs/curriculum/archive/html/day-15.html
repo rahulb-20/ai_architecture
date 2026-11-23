@@ -1,0 +1,474 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>GenAI Prep · Day 15 — LangChain Core</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: study-notebook — sticky contents rail on wide screens, one reading column (~68ch), code and tables scroll in place */
+:root{
+  --bg:#f4f6f8; --surface:#ffffff; --ink:#15202b; --muted:#56636f; --line:#d9dfe5;
+  --accent:#0d6e63; --accent-soft:#e0f0ed; --warn:#a85a07; --warn-soft:#fbeedd; --code-bg:#eef1f4;
+  --display:"IBM Plex Sans Condensed","Arial Narrow",system-ui,sans-serif;
+  --body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f151b; --surface:#151d25; --ink:#e3e9ee; --muted:#93a1ad; --line:#2a3540;
+  --accent:#4fc2b0; --accent-soft:#163a35; --warn:#e9a253; --warn-soft:#3a2a15; --code-bg:#0b1116; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f151b; --surface:#151d25; --ink:#e3e9ee; --muted:#93a1ad; --line:#2a3540;
+  --accent:#4fc2b0; --accent-soft:#163a35; --warn:#e9a253; --warn-soft:#3a2a15; --code-bg:#0b1116; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:16px/1.62 var(--body);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:32px 64px}
+.wrap{max-width:1120px;margin:0 auto;display:grid;grid-template-columns:200px minmax(0,1fr);gap:48px}
+nav.toc{position:sticky;top:calc(env(safe-area-inset-top,0px) + 24px);align-self:start;font-size:13.5px}
+nav.toc p{font:600 11px/1 var(--body);letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:0 0 12px}
+nav.toc ol{list-style:none;margin:0;padding:0;display:grid;gap:6px;counter-reset:s}
+nav.toc a{color:var(--muted);text-decoration:none;display:flex;gap:8px}
+nav.toc a::before{counter-increment:s;content:counter(s);font:500 12px var(--mono);color:var(--accent);min-width:14px}
+nav.toc a:hover{color:var(--ink)}
+main{min-width:0;max-width:760px}
+header.hero{display:grid;gap:10px;padding-bottom:28px;border-bottom:1px solid var(--line);margin-bottom:12px}
+.eyebrow{font:500 12.5px var(--mono);color:var(--accent);letter-spacing:.04em}
+h1{font:700 clamp(30px,4.6vw,44px)/1.08 var(--display);margin:0;text-wrap:balance;letter-spacing:-.01em}
+.lede{color:var(--muted);margin:0;max-width:62ch}
+.meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+.chip{font:500 12px var(--mono);padding:3px 9px;border-radius:999px;background:var(--accent-soft);color:var(--accent)}
+section{padding-top:40px}
+h2{font:600 26px/1.2 var(--display);margin:0 0 14px;text-wrap:balance;display:flex;gap:12px;align-items:baseline}
+h2 .n{font:500 14px var(--mono);color:var(--accent)}
+h3{font:600 18px/1.3 var(--display);margin:26px 0 8px}
+p,li{max-width:68ch}
+a{color:var(--accent)}
+a:focus-visible,button:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+code{font:0.9em var(--mono);background:var(--code-bg);padding:1px 5px;border-radius:4px}
+.code{position:relative;margin:14px 0;border:1px solid var(--line);border-radius:8px;background:var(--code-bg)}
+.code pre{margin:0;padding:16px;overflow-x:auto;font:13px/1.55 var(--mono)}
+.code pre code{background:none;padding:0;font:inherit}
+.copy{position:absolute;top:8px;right:8px;font:500 12px var(--body);padding:4px 10px;border-radius:6px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+.copy:hover{border-color:var(--accent)}
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:8px;margin:14px 0;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:14px;min-width:680px}
+th,td{text-align:left;vertical-align:top;padding:10px 12px;border-bottom:1px solid var(--line)}
+th{font:600 12px var(--body);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:var(--bg)}
+tr:last-child td{border-bottom:0}
+td:first-child{font-weight:600;white-space:nowrap}
+.note{border-left:3px solid var(--warn);background:var(--warn-soft);padding:12px 16px;border-radius:0 8px 8px 0;margin:16px 0;max-width:68ch}
+.note strong{color:var(--warn)}
+figure{margin:18px 0;overflow-x:auto}
+figure svg{display:block;min-width:640px;width:100%;height:auto}
+figcaption{font-size:13px;color:var(--muted);margin-top:8px}
+.qa{border-top:1px solid var(--line);padding:16px 0}
+.qa summary{cursor:pointer;font-weight:600;list-style:none;display:flex;gap:10px}
+.qa summary::-webkit-details-marker{display:none}
+.qa summary::before{content:"Q";font:600 13px var(--mono);color:var(--accent);padding-top:2px}
+.qa[open] summary{margin-bottom:8px}
+.qa div{padding-left:22px;color:var(--ink)}
+.adr{display:grid;gap:0;border:1px solid var(--line);border-radius:8px;background:var(--surface);overflow:hidden;margin:0}
+.adr>div{display:grid;grid-template-columns:130px minmax(0,1fr);gap:16px;padding:14px 16px;border-bottom:1px solid var(--line)}
+.adr>div:last-child{border-bottom:0}
+.adr dt{font:600 12px var(--body);text-transform:uppercase;letter-spacing:.08em;color:var(--muted);padding-top:3px}
+.adr dd{margin:0}
+.repo{display:grid;gap:2px;padding:12px 0;border-top:1px solid var(--line)}
+.repo a{font:500 14.5px var(--mono)}
+.repo span{color:var(--muted);font-size:14.5px}
+.tomorrow{margin-top:40px;padding:18px 20px;border-radius:8px;background:var(--accent-soft);color:var(--ink)}
+.tomorrow b{color:var(--accent)}
+@media (max-width:860px){.wrap{grid-template-columns:minmax(0,1fr)}nav.toc{display:none}.adr>div{grid-template-columns:minmax(0,1fr);gap:4px}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+<nav class="toc" aria-label="Contents"><p>Day 15</p><ol>
+<li><a href="#why">Why it matters</a></li><li><a href="#concept">Concept brief</a></li><li><a href="#tradeoffs">Trade-offs</a></li>
+<li><a href="#lab">Hands-on lab</a></li><li><a href="#repos">Repos</a></li><li><a href="#read">Read</a></li>
+<li><a href="#interview">Interview</a></li><li><a href="#adr">Architect's lens</a></li><li><a href="#next">Tomorrow</a></li></ol></nav>
+<main>
+<header class="hero">
+  <div class="eyebrow">Week 3 · Agentic systems · Day 15 of 30</div>
+  <h1>LangChain core: LCEL, runnables, retrievers and tools</h1>
+  <p class="lede">What the LangChain 1.x stack actually is in late 2026, which parts earn a place in a production design, and which parts you should keep out of the critical path.</p>
+  <div class="meta"><span class="chip">langchain 1.4.7 · langchain-core 1.7.0</span><span class="chip">75 min lab</span><span class="chip">Runs on Ollama, no Docker</span></div>
+</header>
+
+<section id="why"><h2><span class="n">1</span>Why this matters for the JD</h2>
+<p>The JD lists <b>"agentic frameworks (LangChain, LangGraph, MCP, tool calling, memory, planning, multi-agent, guardrails)"</b> as a must-have and <b>"multi-provider LLM integration"</b> as preferred. In a review you will be asked two things: can your team build on LangChain fast, and can you stop it from becoming an unmaintainable abstraction layer? Today is about answering both.</p>
+</section>
+
+<section id="concept"><h2><span class="n">2</span>Concept brief</h2>
+<h3>The 1.x package map (this changed a lot in the last year)</h3>
+<ul>
+<li><b><code>langchain-core</code></b> is the stable contract: the <code>Runnable</code> protocol, messages, prompt templates, output parsers, the <code>BaseChatModel</code>/<code>Embeddings</code>/<code>VectorStore</code>/<code>BaseRetriever</code> interfaces, <code>@tool</code>, callbacks. LCEL lives here. This is the part with the strongest compatibility promise.</li>
+<li><b><code>langchain</code></b> (1.x) is now slim. Its headline API is <code>create_agent</code>, a tool-calling agent loop that compiles to a LangGraph graph, plus <b>middleware</b> hooks (model/tool retry, model fallback, call limits, summarization, PII redaction, human-in-the-loop, LLM tool selection). <code>langchain[mcp]</code> now pulls in MCP support directly; the old <code>langchain-mcp-adapters</code> repo was archived in September 2026.</li>
+<li><b><code>langchain-classic</code></b> holds the pre-1.0 chains (<code>RetrievalQA</code>, <code>ConversationalRetrievalChain</code>, the old <code>AgentExecutor</code>). Treat imports from it as tech debt in new designs.</li>
+<li><b>Partner packages</b> (<code>langchain-openai</code>, <code>-anthropic</code>, <code>-ollama</code>, <code>-ibm</code> for watsonx, <code>-aws</code>, <code>-google-genai</code>…) version separately. <code>langchain-community</code> (0.4.x) is the long tail with weaker guarantees.</li>
+<li><b>LangGraph</b> is the runtime underneath agents: state, checkpointing, interrupts, streaming. Tomorrow+1 (Day 17) goes deep on it.</li>
+</ul>
+
+<h3>The Runnable protocol is the real abstraction</h3>
+<p>Every component (prompt, model, parser, retriever, tool, your own function) implements the same interface: <code>invoke / ainvoke</code>, <code>batch / abatch</code>, <code>stream / astream</code>, <code>astream_events</code>. Each call takes a <code>RunnableConfig</code> (callbacks, tags, metadata, <code>max_concurrency</code>, <code>run_name</code>, <code>configurable</code>), and that config propagates through the whole tree. LCEL's <code>|</code> builds a <code>RunnableSequence</code>; a dict literal becomes a <code>RunnableParallel</code>. Wrappers add NFR behaviour without touching business code: <code>.with_retry()</code>, <code>.with_fallbacks()</code>, <code>.with_config()</code>, <code>.with_structured_output()</code>, <code>.bind_tools()</code>, <code>configurable_alternatives()</code>.</p>
+
+<figure>
+<svg viewBox="0 0 760 340" role="img" aria-label="LCEL RAG pipeline on top, LangChain 1.x package layers below">
+<defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0L10,5L0,10z" fill="var(--muted)"/></marker></defs>
+<style>.b{fill:var(--surface);stroke:var(--line);stroke-width:1.2}.c{fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.2}.w{fill:var(--warn-soft);stroke:var(--warn);stroke-width:1.2}.t{font:500 12px var(--body);fill:var(--ink)}.s{font:11px var(--mono);fill:var(--muted)}.l{stroke:var(--muted);stroke-width:1.2;fill:none}.h{font:600 11px var(--body);letter-spacing:.1em;fill:var(--muted)}</style>
+<text class="h" x="10" y="18">ONE LCEL CHAIN · TODAY'S LAB</text>
+<rect class="b" x="10" y="34" width="80" height="80" rx="6"/><text class="t" x="50" y="70" text-anchor="middle">question</text><text class="s" x="50" y="88" text-anchor="middle">str</text>
+<rect class="c" x="110" y="30" width="130" height="40" rx="6"/><text class="t" x="175" y="55" text-anchor="middle">retriever (k=3)</text>
+<rect class="c" x="110" y="78" width="130" height="40" rx="6"/><text class="t" x="175" y="103" text-anchor="middle">passthrough</text>
+<text class="s" x="175" y="134" text-anchor="middle">RunnableParallel</text>
+<rect class="b" x="260" y="34" width="110" height="80" rx="6"/><text class="t" x="315" y="66" text-anchor="middle">assign</text><text class="s" x="315" y="84" text-anchor="middle">context=fmt(docs)</text>
+<rect class="b" x="390" y="34" width="86" height="80" rx="6"/><text class="t" x="433" y="70" text-anchor="middle">prompt</text><text class="s" x="433" y="88" text-anchor="middle">template</text>
+<rect class="w" x="496" y="34" width="110" height="80" rx="6"/><text class="t" x="551" y="62" text-anchor="middle">chat model</text><text class="s" x="551" y="80" text-anchor="middle">.with_retry()</text><text class="s" x="551" y="96" text-anchor="middle">.with_fallbacks()</text>
+<rect class="b" x="626" y="34" width="124" height="80" rx="6"/><text class="t" x="688" y="66" text-anchor="middle">answer + sources</text><text class="s" x="688" y="84" text-anchor="middle">dict</text>
+<path class="l" d="M90 64H108" marker-end="url(#ar)"/><path class="l" d="M90 90H108" marker-end="url(#ar)"/>
+<path class="l" d="M240 50H258" marker-end="url(#ar)"/><path class="l" d="M240 98H258" marker-end="url(#ar)"/>
+<path class="l" d="M370 74H388" marker-end="url(#ar)"/><path class="l" d="M476 74H494" marker-end="url(#ar)"/><path class="l" d="M606 74H624" marker-end="url(#ar)"/>
+<text class="s" x="380" y="160" text-anchor="middle">RunnableConfig (callbacks · tags · metadata · max_concurrency) flows through every node →</text>
+<text class="h" x="10" y="196">THE 1.x STACK · WHAT YOU DEPEND ON</text>
+<rect class="c" x="10" y="208" width="740" height="34" rx="6"/><text class="t" x="20" y="230">langchain-core</text><text class="s" x="140" y="230">Runnable · messages · prompts · parsers · Retriever · VectorStore · @tool · callbacks   (stable contract)</text>
+<rect class="b" x="10" y="250" width="360" height="34" rx="6"/><text class="t" x="20" y="272">langchain 1.x</text><text class="s" x="120" y="272">create_agent · middleware · [mcp]</text>
+<rect class="b" x="380" y="250" width="370" height="34" rx="6"/><text class="t" x="390" y="272">partner pkgs</text><text class="s" x="480" y="272">openai · anthropic · ollama · ibm · aws</text>
+<rect class="b" x="10" y="292" width="360" height="34" rx="6"/><text class="t" x="20" y="314">langgraph</text><text class="s" x="100" y="314">state · checkpoints · interrupts</text>
+<rect class="w" x="380" y="292" width="370" height="34" rx="6"/><text class="t" x="390" y="314">langchain-classic</text><text class="s" x="520" y="314">legacy chains: avoid in new code</text>
+</svg>
+<figcaption>Top: the chain you build in the lab. Bottom: the dependency layers. Design rule: business logic depends on <code>langchain-core</code> interfaces; everything else is replaceable.</figcaption>
+</figure>
+
+<h3>Retrievers and tools are just Runnables with a shape</h3>
+<p>A retriever is <code>str → list[Document]</code>. That uniformity is why you can swap FAISS for Azure AI Search or Milvus by changing one line, and why an <code>EnsembleRetriever</code> or a reranking step slots in as a pipe segment. A tool is a Runnable with a name, a description and a JSON schema (built from type hints and the docstring by <code>@tool</code>). The model never runs a tool: it emits <code>tool_calls</code>; your loop (or <code>create_agent</code>) executes them and feeds back <code>ToolMessage</code>s. The tool docstring is a prompt, so it gets versioned and reviewed like one.</p>
+
+<h3>What to use, what to avoid</h3>
+<ul>
+<li><b>Use:</b> core interfaces, chat model wrappers (one place for provider differences), <code>with_structured_output</code>, <code>@tool</code>, retrievers, callbacks into your tracing stack, LCEL for short linear pipelines (≤ ~6 steps, no loops).</li>
+<li><b>Use with care:</b> <code>create_agent</code> + middleware. It is good, but pin versions and wrap it behind your own service interface.</li>
+<li><b>Avoid:</b> legacy chains from <code>langchain-classic</code>; deeply nested LCEL with branching and loops (move that to LangGraph, where state is explicit); <code>RunnableWithMessageHistory</code> for new agents (LangGraph checkpointers replace it); depending on <code>langchain-community</code> classes in the hot path without pinning.</li>
+</ul>
+<p><b>IBM mapping:</b> <code>langchain-ibm</code> gives you <code>ChatWatsonx</code> and <code>WatsonxEmbeddings</code>, so Granite on watsonx.ai drops into the same chain. watsonx Orchestrate and watsonx.ai's agent tooling sit at the layer above; LangChain/LangGraph agents can be deployed behind them. On AWS/Azure/GCP the equivalents are <code>ChatBedrockConverse</code>, <code>AzureChatOpenAI</code> and <code>ChatGoogleGenerativeAI</code>/Vertex.</p>
+</section>
+
+<section id="tradeoffs"><h2><span class="n">3</span>Trade-offs &amp; decision table</h2>
+<div class="tbl"><table>
+<thead><tr><th>Option</th><th>Pick when</th><th>Failure modes</th><th>Cost / latency notes</th></tr></thead>
+<tbody>
+<tr><td>Raw provider SDK</td><td>One provider, simple call, latency-critical path, strict dependency policy</td><td>Re-implementing retry, streaming, tool loops, tracing per provider; lock-in</td><td>Lowest overhead; most engineering time</td></tr>
+<tr><td>langchain-core + LCEL</td><td>Linear RAG/extraction pipelines, multi-provider, need batch/stream/async for free</td><td>Opaque stack traces; nested lambdas become hard to read; dict-shape bugs at runtime</td><td>Framework overhead is milliseconds, negligible next to model latency</td></tr>
+<tr><td>create_agent + middleware</td><td>Standard tool-calling assistant with retries, limits, HITL, PII redaction</td><td>Hidden prompts/loops if not traced; behaviour shifts on minor upgrades</td><td>Unbounded loops cost tokens: set ModelCallLimit / ToolCallLimit</td></tr>
+<tr><td>LangGraph directly</td><td>Branching, cycles, long-running, human approval, durable state</td><td>More code; graph design skills needed</td><td>Checkpointer storage and replay cost; best control of loops</td></tr>
+<tr><td>LiteLLM / AI gateway + thin code</td><td>Platform team owns routing, quotas, keys across many apps</td><td>Duplicate retry/fallback at two layers</td><td>Central caching and budgets; extra network hop</td></tr>
+<tr><td>Legacy chains (classic)</td><td>Only to keep an existing system running during migration</td><td>Deprecated paths, prompt logic hidden in library code</td><td>Hard to observe and tune</td></tr>
+</tbody></table></div>
+<div class="note"><strong>Review trap:</strong> retries in three places (SDK, LangChain <code>with_retry</code>, gateway) multiply. A 3×3×3 stack turns one outage into 27 calls per request. Decide which layer owns retries and which owns fallbacks, and write it down.</div>
+</section>
+
+<section id="lab"><h2><span class="n">4</span>Hands-on lab · 75 min</h2>
+<p><b>Goal:</b> build one RAG chain with LCEL, run it through <code>invoke</code>, <code>batch</code> and <code>astream</code>, add retry and fallback, get typed structured output, then hand the same retriever to a tool-calling agent built with <code>create_agent</code>. A custom callback prints per-stage latency. Everything runs natively on Windows with Ollama.</p>
+<h3>Setup (PowerShell)</h3>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code># PowerShell — one-time setup (no Docker/WSL needed)
+winget install --id Ollama.Ollama -e        # skip if Ollama is already installed
+ollama pull qwen2.5:3b                      # ~1.9 GB, good tool calling for its size
+ollama pull nomic-embed-text
+
+mkdir day15; cd day15
+py -3.13 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+python -m pip install "langchain>=1.4,<2" "langchain-core>=1.7,<2" "langchain-ollama>=1.1,<2" numpy
+# save the script below as day15_lcel.py, then:
+python day15_lcel.py --fake    # plumbing check, no models needed
+python day15_lcel.py           # real run against Ollama</code></pre></div>
+<p>If tool calling is flaky with the 3B model, try <code>llama3.2:3b</code>, or <code>qwen3:4b</code> if VRAM allows (it will spill to CPU and slow down on a 6 GB card).</p>
+<h3>day15_lcel.py</h3>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code>"""Day 15 - LangChain core (LCEL, runnables, retrievers, tools) on a laptop.
+
+Run:  python day15_lcel.py            (uses local Ollama models)
+      python day15_lcel.py --fake     (no Ollama; fake LLM + embeddings to check the plumbing)
+"""
+from __future__ import annotations
+
+import asyncio
+import sys
+import time
+from operator import itemgetter
+
+from pydantic import BaseModel, Field
+from langchain_core.callbacks import BaseCallbackHandler
+from langchain_core.documents import Document
+from langchain_core.output_parsers import StrOutputParser
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.runnables import (
+    RunnableConfig,
+    RunnableLambda,
+    RunnableParallel,
+    RunnablePassthrough,
+)
+from langchain_core.tools import tool
+from langchain_core.vectorstores import InMemoryVectorStore
+
+FAKE = "--fake" in sys.argv
+CHAT_MODEL = "qwen2.5:3b"          # ~1.9 GB, supports tool calling; fits a 6 GB RTX 3050
+EMBED_MODEL = "nomic-embed-text"   # 768-dim, ~274 MB
+
+# ---------------------------------------------------------------- 1. models
+if FAKE:
+    from langchain_core.embeddings import DeterministicFakeEmbedding
+    from langchain_core.language_models import GenericFakeChatModel
+    from langchain_core.messages import AIMessage
+
+    embeddings = DeterministicFakeEmbedding(size=256)
+
+    def make_llm():
+        return GenericFakeChatModel(
+            messages=iter([AIMessage(content="Fake answer [doc-1].")] * 50)
+        )
+else:
+    from langchain_ollama import ChatOllama, OllamaEmbeddings
+
+    embeddings = OllamaEmbeddings(model=EMBED_MODEL)
+
+    def make_llm(**kw):
+        return ChatOllama(model=CHAT_MODEL, temperature=0, num_ctx=4096, **kw)
+
+llm = make_llm()
+
+# ---------------------------------------------------------------- 2. corpus + retriever
+POLICIES = [
+    ("doc-1", "hr", "Employees may work remotely up to 3 days per week with manager approval."),
+    ("doc-2", "hr", "Annual leave is 24 working days; up to 8 days can be carried forward."),
+    ("doc-3", "it", "Laptops must use BitLocker disk encryption and auto-lock after 5 minutes."),
+    ("doc-4", "it", "Production secrets live in Vault; never commit them to Git."),
+    ("doc-5", "finance", "Travel claims above INR 50,000 need VP approval within 30 days."),
+    ("doc-6", "it", "GenAI tools may only be used with Confidential data via the approved gateway."),
+]
+docs = [Document(page_content=t, metadata={"id": i, "dept": d}) for i, d, t in POLICIES]
+store = InMemoryVectorStore.from_documents(docs, embeddings)
+
+# A retriever IS a Runnable: str -&gt; list[Document]
+retriever = store.as_retriever(search_kwargs={"k": 3})
+
+
+def format_docs(ds: list[Document]) -&gt; str:
+    return "\n".join(f"[{d.metadata['id']}] {d.page_content}" for d in ds)
+
+
+# ---------------------------------------------------------------- 3. LCEL RAG chain
+prompt = ChatPromptTemplate.from_messages([
+    ("system",
+     "Answer ONLY from the context. Cite ids like [doc-1]. "
+     "If the context is insufficient, say 'I don't know'.\n\nContext:\n{context}"),
+    ("human", "{question}"),
+])
+
+# Return answer AND sources (architects want provenance, not just text)
+rag_chain = (
+    RunnableParallel(docs=retriever, question=RunnablePassthrough())
+    | RunnablePassthrough.assign(context=itemgetter("docs") | RunnableLambda(format_docs))
+    | RunnablePassthrough.assign(answer=prompt | llm | StrOutputParser())
+    | RunnableLambda(lambda x: {"answer": x["answer"],
+                                "sources": [d.metadata["id"] for d in x["docs"]]})
+).with_config(run_name="policy_rag")
+
+
+# ---------------------------------------------------------------- 4. latency callback
+class StageTimer(BaseCallbackHandler):
+    """Poor-man's tracing: wall time per LLM / retriever call (swap for Langfuse on Day 27)."""
+
+    def __init__(self):
+        self.t0: dict = {}
+        self.rows: list[tuple[str, float]] = []
+
+    def on_retriever_start(self, serialized, query, *, run_id, **kw):
+        self.t0[run_id] = time.perf_counter()
+
+    def on_retriever_end(self, documents, *, run_id, **kw):
+        self.rows.append(("retriever", time.perf_counter() - self.t0.pop(run_id)))
+
+    def on_chat_model_start(self, serialized, messages, *, run_id, **kw):
+        self.t0[run_id] = time.perf_counter()
+
+    def on_llm_end(self, response, *, run_id, **kw):
+        if run_id in self.t0:
+            self.rows.append(("chat_model", time.perf_counter() - self.t0.pop(run_id)))
+
+
+# ---------------------------------------------------------------- 5. structured output
+class Answer(BaseModel):
+    answer: str = Field(description="Short answer grounded in context")
+    citations: list[str] = Field(description="Doc ids used, e.g. ['doc-1']")
+    confident: bool = Field(description="False if the context did not contain the answer")
+
+
+# ---------------------------------------------------------------- 6. tools + agent
+@tool
+def leave_balance(employee_id: str) -&gt; str:
+    """Return remaining annual-leave days for an employee id like 'E123'."""
+    return {"E123": "11 days", "E456": "3 days"}.get(employee_id, "unknown employee")
+
+
+@tool
+def search_policies(query: str) -&gt; str:
+    """Search company HR/IT/finance policies and return the most relevant passages."""
+    return format_docs(retriever.invoke(query))
+
+
+async def main():
+    timer = StageTimer()
+    cfg: RunnableConfig = {"callbacks": [timer], "tags": ["day15"], "metadata": {"user": "rahul"}}
+
+    print("== 1. invoke")
+    print(rag_chain.invoke("How many days can I work from home?", config=cfg))
+
+    print("\n== 2. batch (max_concurrency=2)")
+    qs = ["What disk encryption is required?", "Who approves big travel claims?",
+          "What is the cafeteria menu?"]
+    for q, r in zip(qs, rag_chain.batch(qs, config={**cfg, "max_concurrency": 2})):
+        print(f"- {q} -&gt; {r['answer'][:90]} {r['sources']}")
+
+    print("\n== 3. astream (token streaming of the final answer only)")
+    stream_chain = (
+        {"context": retriever | format_docs, "question": RunnablePassthrough()}
+        | prompt | llm | StrOutputParser()
+    )
+    async for chunk in stream_chain.astream("Where do production secrets live?"):
+        print(chunk, end="", flush=True)
+    print()
+
+    print("\n== 4. retry + fallback (primary model name is deliberately wrong)")
+    if FAKE:
+        broken = RunnableLambda(lambda _: (_ for _ in ()).throw(RuntimeError("model down")))
+    else:
+        broken = ChatOllama(model="does-not-exist:1b")  # Ollama returns 404 -&gt; exception
+    resilient = broken.with_retry(stop_after_attempt=2).with_fallbacks([llm])
+    print((prompt | resilient | StrOutputParser()).invoke(
+        {"context": format_docs(docs[:2]), "question": "How much leave carries forward?"}))
+
+    print("\n== 5. structured output")
+    if not FAKE:
+        structured = (
+            {"context": retriever | format_docs, "question": RunnablePassthrough()}
+            | prompt | llm.with_structured_output(Answer)
+        )
+        print(structured.invoke("Can I paste Confidential data into ChatGPT?"))
+    else:
+        print("(skipped in --fake mode)")
+
+    print("\n== 6. tool-calling agent (langchain 1.x create_agent -&gt; LangGraph under the hood)")
+    if not FAKE:
+        from langchain.agents import create_agent
+        agent = create_agent(
+            model=llm,
+            tools=[leave_balance, search_policies],
+            system_prompt="You are an HR assistant. Use tools; cite policy ids.",
+        )
+        out = agent.invoke({"messages": [{"role": "user", "content":
+              "I'm E123. How many leave days do I have left, and how many can I carry forward?"}]})
+        for m in out["messages"]:
+            calls = getattr(m, "tool_calls", None)
+            print(f"[{m.type}] {calls if calls else str(m.content)[:160]}")
+    else:
+        print("tool schema:", leave_balance.args_schema.model_json_schema()["properties"])
+
+    print("\n== 7. stage timings")
+    for name, secs in timer.rows:
+        print(f"{name:&lt;11} {secs*1000:8.1f} ms")
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
+</code></pre></div>
+<h3>What to do, in order</h3>
+<ol>
+<li><b>Fake run (5 min):</b> <code>--fake</code> swaps in <code>GenericFakeChatModel</code> and <code>DeterministicFakeEmbedding</code>. This is how you unit-test chains in CI without a model.</li>
+<li><b>Real run (15 min):</b> check that the cafeteria question returns "I don't know", that sources come back with every answer, and that the fallback in step 4 kicks in after the bad model fails.</li>
+<li><b>Read the agent trace (15 min):</b> section 6 prints every message. Confirm the model called <code>leave_balance</code> and <code>search_policies</code> (possibly in parallel), and that the final answer cites <code>doc-2</code>.</li>
+<li><b>Measure (15 min):</b> compare stage timings. Retrieval should be single-digit ms in memory; the chat model dominates. Change <code>max_concurrency</code> from 2 to 1 and note the batch wall time.</li>
+<li><b>Write-up (15 min):</b> where would you draw the line between LCEL and LangGraph for your watsonx compliance bot?</li>
+</ol>
+<h3>Expected output (shape)</h3>
+<div class="code"><button class="copy" type="button">Copy</button><pre><code>== 1. invoke
+{'answer': 'You can work remotely up to 3 days per week with manager approval [doc-1].', 'sources': ['doc-1', 'doc-2', 'doc-6']}
+
+== 2. batch (max_concurrency=2)
+- What disk encryption is required? -> Laptops must use BitLocker ... [doc-3] ['doc-3', 'doc-4', 'doc-6']
+- Who approves big travel claims? -> Travel claims above INR 50,000 need VP approval [doc-5] [...]
+- What is the cafeteria menu? -> I don't know. [...]
+
+== 3. astream (token streaming of the final answer only)
+Production secrets live in Vault and must never be committed to Git [doc-4].
+
+== 4. retry + fallback (primary model name is deliberately wrong)
+Up to 8 days of annual leave can be carried forward [doc-2].
+
+== 5. structured output
+answer='No. Confidential data may only be used via the approved gateway.' citations=['doc-6'] confident=True
+
+== 6. tool-calling agent (langchain 1.x create_agent -&gt; LangGraph under the hood)
+[human] I'm E123. How many leave days do I have left, ...
+[ai] [{'name': 'leave_balance', 'args': {'employee_id': 'E123'}, ...}, {'name': 'search_policies', ...}]
+[tool] 11 days
+[tool] [doc-2] Annual leave is 24 working days; ...
+[ai] You have 11 days left, and up to 8 days can be carried forward [doc-2].
+
+== 7. stage timings
+retriever       35.2 ms     # includes the Ollama embedding call
+chat_model    2140.7 ms
+...</code></pre></div>
+<p>Exact wording and timings depend on the model; the first call is slower while Ollama loads the model into VRAM.</p>
+<h3>Stretch goals</h3>
+<ol>
+<li><b>Middleware:</b> pass <code>middleware=[ModelCallLimitMiddleware(run_limit=4), ToolCallLimitMiddleware(run_limit=6), PIIMiddleware("email", strategy="redact")]</code> (from <code>langchain.agents.middleware</code>) to <code>create_agent</code>. Ask a question containing an email address and confirm it never reaches the model.</li>
+<li><b>Provider swap without code changes:</b> wrap the model with <code>configurable_alternatives(ConfigurableField(id="llm"), default_key="ollama", watsonx=ChatWatsonx(...))</code> from <code>langchain-ibm</code> (free watsonx.ai trial or any OpenAI-compatible endpoint) and select it per request with <code>config={"configurable": {"llm": "watsonx"}}</code>. Run both through the same three questions and compare.</li>
+</ol>
+</section>
+
+<section id="repos"><h2><span class="n">5</span>GitHub repos to study</h2>
+<div class="repo"><a href="https://github.com/langchain-ai/langchain">langchain-ai/langchain</a><span>Monorepo. Start with the partner packages under <code>libs/partners/</code> (the Ollama one is small: see how <code>ChatOllama</code> maps tool calls and structured output onto a provider API), then the <code>langchain.agents</code> package for <code>create_agent</code> and the middleware classes.</span></div>
+<div class="repo"><a href="https://github.com/langchain-ai/langgraph">langchain-ai/langgraph</a><span>The runtime under <code>create_agent</code>. Skim the prebuilt <code>ToolNode</code> to see how tool calls, errors and parallel calls are executed.</span></div>
+<div class="repo"><a href="https://github.com/langchain-ai/deepagents">langchain-ai/deepagents</a><span>A full agent harness built on <code>create_agent</code> + middleware (planning, filesystem, sub-agents). Good reference for how far middleware composition goes.</span></div>
+<div class="repo"><a href="https://github.com/langchain-ai/langchain/blob/master/libs/core/langchain_core/runnables/base.py">langchain_core/runnables/base.py</a><span>One file, ~6.7k lines, worth an hour: how <code>|</code> builds a <code>RunnableSequence</code>, how <code>batch</code> fans out under <code>max_concurrency</code>, and how config and callbacks propagate to children.</span></div>
+<p class="note"><strong>Archived in 2026:</strong> <code>langchain-ai/langchain-mcp-adapters</code> (Sep 2026, use <code>langchain[mcp]</code>) and <code>langchain-ai/open_deep_research</code> (Aug 2026). Older tutorials still point to both.</p>
+</section>
+
+<section id="read"><h2><span class="n">6</span>Read / watch</h2>
+<ul>
+<li><a href="https://docs.langchain.com/oss/python/migrate/langchain-v1">LangChain v1 migration guide</a> — what moved to <code>langchain-classic</code>, the <code>create_agent</code> replacement for old agents, content blocks.</li>
+<li><a href="https://docs.langchain.com/oss/python/langchain/middleware">Middleware overview</a> — the built-in middleware list and the hook points (before/after model, wrap model/tool calls).</li>
+<li><a href="https://reference.langchain.com/python/langchain-core/runnables">langchain-core runnables reference</a> — the full Runnable API: <code>RunnableParallel</code>, <code>RunnablePassthrough.assign</code>, fallbacks, retry, configurable fields.</li>
+<li><a href="https://docs.langchain.com/oss/python/integrations/chat/ollama">ChatOllama integration</a> — tool calling and structured output support on local models.</li>
+</ul>
+</section>
+
+<section id="interview"><h2><span class="n">7</span>Interview questions</h2>
+<details class="qa" open><summary>Your team wants to standardise on LangChain. What's your position?</summary><div>Yes to <code>langchain-core</code> interfaces and partner model wrappers as the internal SDK: one Runnable contract, batch/stream/async and tracing for free, provider swaps in config. LangGraph for anything with loops, state or approvals. No to legacy chains, and no direct framework imports in domain code: wrap them behind our own ports (Retriever, Generator, Tool registry) so an upgrade or exit touches one module. Pin versions, track release notes in a monthly upgrade window, and run the eval suite on every bump.</div></details>
+<details class="qa"><summary>When does LCEL stop being the right tool?</summary><div>When you need cycles (retry-until-grounded, agent loops), branching on accumulated state, persistence across turns, human interrupts, or partial resumption after failure. LCEL composes a DAG of stateless steps; once you start passing dicts around to simulate state or nest <code>RunnableBranch</code> inside lambdas, move to LangGraph, where state, edges and checkpoints are explicit and observable.</div></details>
+<details class="qa"><summary>How do you make a tool-calling agent safe and cost-bounded?</summary><div>Least-privilege tools with narrow typed schemas and server-side authorisation (the tool checks the caller's identity, never trusts model-supplied IDs); call limits per run and per thread; timeouts and retries on tools only for idempotent operations; human approval for side-effecting tools; PII redaction before the model; tool results treated as untrusted input (prompt-injection channel); full tracing of every tool call with arguments for audit.</div></details>
+<details class="qa"><summary>How do you test LangChain pipelines in CI?</summary><div>Three layers. Unit tests with fake chat models and fake embeddings to check wiring, prompt variables and output shapes deterministically. Contract tests per tool schema and structured-output model. Then an eval stage on a golden set against the real model (faithfulness, correctness, tool-call accuracy, latency, cost) that gates the merge. Prompts and tool descriptions are versioned artifacts, so a change to a docstring triggers the eval gate too.</div></details>
+<details class="qa"><summary>Explain fallbacks vs retries, and where each belongs.</summary><div>Retry repeats the same call for transient faults (timeouts, 429, 5xx) with backoff and jitter, and only for idempotent work. Fallback switches to a different model, region or provider when the primary is down or over quota, accepting a quality or cost change. Put provider-level retry and cross-region failover in one layer (usually the AI gateway); keep app-level fallbacks for semantic reasons (structured-output parse failure → stronger model). Never stack retries at every layer.</div></details>
+</section>
+
+<section id="adr"><h2><span class="n">8</span>Architect's lens · ADR-015</h2>
+<dl class="adr">
+<div><dt>Title</dt><dd>Orchestration framework boundary for the GenAI platform</dd></div>
+<div><dt>Context</dt><dd>Four teams are building RAG and agent apps across watsonx.ai (Granite), Azure OpenAI and a local Ollama dev loop. Each team currently writes its own provider adapters, retries and tracing. LangChain releases roughly weekly; the 1.0 split moved many APIs.</dd></div>
+<div><dt>Options</dt><dd>(A) Raw SDKs per provider. (B) Full LangChain including legacy chains. (C) <code>langchain-core</code> + partner packages behind internal ports; LangGraph for stateful flows; <code>create_agent</code> allowed for simple tool assistants. (D) In-house framework.</dd></div>
+<div><dt>Decision</dt><dd><b>C.</b> Domain code depends on our ports, implemented with core Runnables. Versions pinned in a shared constraints file; upgrades monthly behind the eval gate. <code>langchain-classic</code> and unpinned <code>langchain-community</code> imports blocked by a lint rule. Retries and provider failover owned by the AI gateway; app code does only semantic fallbacks.</dd></div>
+<div><dt>Consequences</dt><dd>Faster onboarding and uniform tracing; provider swaps become config changes. We accept framework churn (mitigated by pinning and the port layer) and the cost of owning a small adapter library. A was rejected for duplicated effort, B for deprecated surface area, D for maintenance cost.</dd></div>
+</dl>
+</section>
+
+<section id="next" class="tomorrow"><b>Tomorrow · Day 16:</b> Tool and function calling across OpenAI, Anthropic, Gemini and open-source models: parallel tools, schemas and error handling. Keep today's two tools; you'll run them against several providers.</section>
+</main>
+</div>
+<script>
+document.querySelectorAll('.copy').forEach(b=>b.addEventListener('click',()=>{
+  const code=b.parentElement.querySelector('code');
+  const done=t=>{b.textContent=t;setTimeout(()=>b.textContent='Copy',1500)};
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(code.innerText).then(()=>done('Copied'),()=>{sel(code);done('Press Ctrl+C')});
+  }else{sel(code);done('Press Ctrl+C')}
+}));
+function sel(el){const r=document.createRange();r.selectNodeContents(el);const s=getSelection();s.removeAllRanges();s.addRange(r)}
+</script>
+
+</body></html>

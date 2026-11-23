@@ -1,0 +1,31 @@
+<svg font-family="IBM Plex Sans, Segoe UI, Arial, sans-serif" aria-label="Pipeline: query router, BM25 and dense retrieval with ACL filter, RRF fusion, cross-encoder rerank, score gate that either generates, rewrites and loops back, or abstains" role="img" style="min-width:640px;display:block;background:#ffffff" viewbox="0 0 760 230" width="100%" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="ar" markerheight="7" markerwidth="7" orient="auto" refx="9" refy="5" viewbox="0 0 10 10"><path d="M0,0L10,5L0,10z" fill="#555"></path></marker></defs>
+<g fill="none" stroke="#555" stroke-width="1.4">
+<path d="M100 95 L140 60" marker-end="url(#ar)"></path><path d="M100 115 L140 150" marker-end="url(#ar)"></path>
+<path d="M262 50 L300 90" marker-end="url(#ar)"></path><path d="M262 160 L300 120" marker-end="url(#ar)"></path>
+<path d="M390 105 L420 105" marker-end="url(#ar)"></path><path d="M530 105 L560 105" marker-end="url(#ar)"></path>
+<path d="M660 90 L700 50" marker-end="url(#ar)"></path><path d="M660 120 L700 160" marker-end="url(#ar)"></path>
+<path d="M612 140 L612 205 L60 205 L60 135" marker-end="url(#ar)" stroke-dasharray="5 4"></path>
+</g>
+<g stroke="#555" stroke-width="1.2">
+<rect fill="#555" height="50" rx="6" width="90" x="10" y="80"></rect>
+<rect fill="#555" height="50" rx="6" width="122" x="140" y="25"></rect>
+<rect fill="#555" height="50" rx="6" width="122" x="140" y="135"></rect>
+<rect fill="#555" height="50" rx="6" width="90" x="300" y="80"></rect>
+<rect fill="#555" height="50" rx="6" width="110" x="420" y="80"></rect>
+<rect fill="#555" height="60" rx="6" width="100" x="560" y="75"></rect>
+<rect fill="#555" height="40" rx="6" width="56" x="700" y="28"></rect>
+<rect fill="#555" height="40" rx="6" width="56" x="700" y="142"></rect>
+</g>
+<g fill="#555" font-size="11.5" text-anchor="middle">
+<text x="55" y="102">query</text><text fill="#555" font-size="10" x="55" y="117">router</text>
+<text x="201" y="47">BM25 / sparse</text><text fill="#555" font-size="10" x="201" y="62">exact codes, IDs</text>
+<text x="201" y="157">dense ANN</text><text fill="#555" font-size="10" x="201" y="172">paraphrase</text>
+<text x="345" y="102">RRF</text><text fill="#555" font-size="10" x="345" y="117">top 50</text>
+<text x="475" y="102">cross-encoder</text><text fill="#555" font-size="10" x="475" y="117">top 5–8</text>
+<text x="610" y="100">score gate</text><text fill="#555" font-size="10" x="610" y="115">≥ τ ?</text>
+<text x="728" y="52">gen</text><text x="728" y="166">abstain</text>
+<text fill="#555" font-size="10" x="330" y="222">below τ and attempts &lt; max: rewrite query / relax filter, retrieve again</text>
+<text fill="#555" font-size="10" x="201" y="105">ACL filter on both legs</text>
+</g>
+</svg>

@@ -1,0 +1,696 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>GenAI Prep · Day 26 — CI/CD for GenAI</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: single reading column with a sticky section index on wide screens; pipeline-stage chips encode pass/fail state */
+:root{
+  --bg:#f5f7f8; --surface:#ffffff; --ink:#15202b; --muted:#56636f; --line:#d9e0e5;
+  --accent:#0b6e79; --accent-soft:#e2f1f2; --pass:#1f7a3d; --pass-soft:#e3f3e8; --fail:#b42318; --fail-soft:#fbe9e7; --warn:#9a6700; --warn-soft:#fbf1d9;
+  --code-bg:#0f1b24; --code-ink:#dce7ee;
+  --f-display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body:"IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --f-mono:"IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0e161c; --surface:#152029; --ink:#e3eaef; --muted:#9aa9b5; --line:#26343f;
+  --accent:#5cc3cc; --accent-soft:#163238; --pass:#6fcf8e; --pass-soft:#16301f; --fail:#f2877c; --fail-soft:#3a1c19; --warn:#e6b553; --warn-soft:#352a12;
+  --code-bg:#091117; --code-ink:#d4e0e8; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0e161c; --surface:#152029; --ink:#e3eaef; --muted:#9aa9b5; --line:#26343f;
+  --accent:#5cc3cc; --accent-soft:#163238; --pass:#6fcf8e; --pass-soft:#16301f; --fail:#f2877c; --fail-soft:#3a1c19; --warn:#e6b553; --warn-soft:#352a12;
+  --code-bg:#091117; --code-ink:#d4e0e8; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:16px/1.65 var(--f-body);margin:0}
+.wrap{max-width:1120px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:40px 80px;display:grid;grid-template-columns:200px minmax(0,1fr);gap:48px}
+nav.toc{position:sticky;top:calc(env(safe-area-inset-top,0px) + 24px);align-self:start;font-size:13.5px}
+nav.toc ol{list-style:none;margin:0;padding:0;display:grid;gap:6px;counter-reset:s}
+nav.toc a{color:var(--muted);text-decoration:none;display:flex;gap:8px}
+nav.toc a::before{counter-increment:s;content:counter(s);font-family:var(--f-mono);color:var(--accent);min-width:1.2em}
+nav.toc a:hover,nav.toc a:focus-visible{color:var(--ink)}
+main{min-width:0}
+header.hero{display:grid;gap:14px;padding-bottom:28px;border-bottom:1px solid var(--line);margin-bottom:8px}
+.eyebrow{font:500 12.5px/1 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+h1{font:700 clamp(30px,5vw,46px)/1.08 var(--f-display);margin:0;text-wrap:balance;letter-spacing:-.01em}
+.lede{color:var(--muted);max-width:66ch;margin:0;font-size:17px}
+.stages{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+.chip{font:500 12.5px/1 var(--f-mono);padding:7px 10px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--muted)}
+.chip.p{background:var(--pass-soft);color:var(--pass);border-color:transparent}
+.chip.f{background:var(--fail-soft);color:var(--fail);border-color:transparent}
+.chip.w{background:var(--warn-soft);color:var(--warn);border-color:transparent}
+section{padding-block:36px 8px;scroll-margin-top:16px}
+h2{font:700 26px/1.2 var(--f-display);margin:0 0 14px;text-wrap:balance;display:flex;gap:12px;align-items:baseline}
+h2 .n{font:500 14px/1 var(--f-mono);color:var(--accent)}
+h3{font:600 17px/1.35 var(--f-body);margin:26px 0 8px}
+p,li{max-width:70ch}
+p{margin:0 0 12px}
+ul,ol{padding-left:22px;margin:0 0 14px}
+li{margin-bottom:6px}
+a{color:var(--accent)}
+code{font:0.88em var(--f-mono);background:var(--accent-soft);padding:1px 5px;border-radius:4px}
+strong{font-weight:600}
+.callout{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:16px 18px;margin:16px 0;max-width:74ch}
+.callout.warn{background:var(--warn-soft);border-color:transparent}
+.callout p:last-child,.callout ul:last-child{margin-bottom:0}
+.fig{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px;margin:18px 0;overflow-x:auto}
+.fig svg{display:block;min-width:720px;width:100%;height:auto}
+.fig figcaption{font-size:13.5px;color:var(--muted);margin-top:10px}
+.tbl{overflow-x:auto;margin:14px 0 18px;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:14.5px;min-width:760px}
+th,td{text-align:left;vertical-align:top;padding:11px 13px;border-bottom:1px solid var(--line)}
+th{font:600 12.5px/1.3 var(--f-mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);background:var(--bg)}
+tr:last-child td{border-bottom:0}
+td:first-child{font-weight:600;white-space:nowrap}
+.code{position:relative;margin:12px 0 18px;border-radius:10px;background:var(--code-bg);overflow:hidden}
+.code .bar{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border-bottom:1px solid rgba(255,255,255,.08);font:500 12.5px/1 var(--f-mono);color:#8fa3b1}
+.code pre{margin:0;padding:14px 16px;overflow-x:auto;color:var(--code-ink);font:13.5px/1.55 var(--f-mono);tab-size:4}
+.copy{font:500 12px/1 var(--f-mono);background:transparent;color:#bcd0dc;border:1px solid rgba(255,255,255,.18);border-radius:6px;padding:6px 10px;cursor:pointer}
+.copy:hover,.copy:focus-visible{background:rgba(255,255,255,.08);outline:none}
+.copy.done{color:#8fe0a8;border-color:#8fe0a8}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin:12px 0}
+.card{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:16px;min-width:0}
+.card h4{margin:0 0 6px;font:600 15px/1.35 var(--f-mono);word-break:break-word}
+.card p{margin:0;font-size:14.5px;color:var(--muted)}
+details{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:0;margin:10px 0}
+summary{cursor:pointer;padding:14px 16px;font-weight:600;list-style:none;display:flex;gap:10px}
+summary::-webkit-details-marker{display:none}
+summary::before{content:"Q" counter(q);counter-increment:q;font:500 13px/1.6 var(--f-mono);color:var(--accent);min-width:2em}
+.qs{counter-reset:q}
+details .ans{padding:0 16px 14px 50px;color:var(--ink)}
+details .ans p{font-size:15px}
+.adr{display:grid;grid-template-columns:140px minmax(0,1fr);border:1px solid var(--line);border-radius:10px;background:var(--surface);overflow:hidden}
+.adr>div{padding:12px 16px;border-bottom:1px solid var(--line)}
+.adr>div:nth-last-child(-n+2){border-bottom:0}
+.adr .k{font:600 12.5px/1.6 var(--f-mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);background:var(--bg)}
+.adr p{margin:0 0 8px}.adr p:last-child{margin:0}
+.tomorrow{margin-top:20px;padding:16px 18px;border-radius:10px;background:var(--accent-soft);font-weight:500}
+.sources{font-size:13.5px;color:var(--muted)}
+.sources li{word-break:break-all}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+@media (max-width:860px){.wrap{grid-template-columns:minmax(0,1fr);gap:0}nav.toc{display:none}.adr{grid-template-columns:minmax(0,1fr)}.adr .k{border-bottom:0;padding-bottom:4px}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+<nav class="toc" aria-label="Sections"><ol>
+<li><a href="#why">Why it matters</a></li>
+<li><a href="#concept">Concept brief</a></li>
+<li><a href="#tradeoffs">Trade-offs</a></li>
+<li><a href="#exercise">Hands-on</a></li>
+<li><a href="#repos">Repos</a></li>
+<li><a href="#read">Read</a></li>
+<li><a href="#interview">Interview</a></li>
+<li><a href="#adr">Architect's lens</a></li>
+<li><a href="#tomorrow">Tomorrow</a></li>
+</ol></nav>
+
+<main>
+<header class="hero">
+  <div class="eyebrow">Day 26 of 30 · Week 4 — Cloud, production &amp; architecture</div>
+  <h1>CI/CD for GenAI: eval gates, versioned prompts, safe rollback</h1>
+  <p class="lede">A prompt edit is a production change with no compiler to catch it. Today is about treating prompts, models and retrieval config as release artefacts: test them in the pipeline, promote them by pointer, and roll back in seconds.</p>
+  <div class="stages" aria-label="Pipeline stages covered today">
+    <span class="chip p">unit tests</span><span class="chip p">replay eval gate</span><span class="chip w">nightly live eval</span><span class="chip p">blue-green / canary</span><span class="chip f">auto-rollback</span>
+  </div>
+</header>
+
+<section id="why">
+<h2><span class="n">01</span>Why this matters for the JD</h2>
+<p>The JD's "CI/CD &amp; productionization" line names <strong>testing, rollback and observability</strong>, and the preferred list asks for <strong>prompt versioning and eval dashboards</strong>. In design reviews the question you'll get is "what stops a bad prompt from reaching 50k users, and how fast can you undo it?" Today gives you a defensible answer and a working pipeline to point at.</p>
+</section>
+
+<section id="concept">
+<h2><span class="n">02</span>Concept brief</h2>
+<h3>What is different from classic CI/CD</h3>
+<ul>
+<li><strong>Four things change behaviour, not one.</strong> Code, prompt template, model (and its provider-side snapshot), and retrieval config (chunking, embedding model, index, top-k, reranker). Each needs its own version id, and a release is the <em>tuple</em> of all four. Log that tuple on every trace.</li>
+<li><strong>Tests are statistical.</strong> Same input, different output. You gate on <em>rates over a golden set</em> (pass rate ≥ floor, no more than X% drop vs production) rather than on single assertions. Pin <code>temperature=0</code> and a seed in CI to reduce noise, but never assume determinism across provider updates.</li>
+<li><strong>Evals cost money and time.</strong> A 300-case LLM-as-judge suite on a hosted model can cost more than the build. So you tier them: cheap deterministic checks on every PR, the full judge suite nightly or pre-release, and online evals on live traffic.</li>
+<li><strong>The model can change under you.</strong> A provider alias like <code>*-latest</code> is an unversioned dependency. Pin dated snapshots, and run the nightly live eval to catch drift you didn't ship.</li>
+<li><strong>Rollback should not need a build.</strong> If prompts live in a registry and the app resolves an alias (<code>production → v7</code>) at runtime with a short cache TTL, rollback is a pointer move. Code and model-serving changes still use blue-green or canary.</li>
+</ul>
+
+<figure class="fig">
+<svg viewBox="0 0 980 330" role="img" aria-label="GenAI delivery pipeline: PR checks, merge, nightly live eval, progressive deploy with online analysis, and rollback paths">
+  <defs>
+    <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker>
+    <marker id="arf" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--fail)"/></marker>
+  </defs>
+  <text x="20" y="26" font-family="IBM Plex Mono, monospace" font-size="12" fill="var(--accent)" letter-spacing="1.2">PULL REQUEST · minutes · ~free</text>
+  <text x="520" y="26" font-family="IBM Plex Mono, monospace" font-size="12" fill="var(--accent)" letter-spacing="1.2">RELEASE · hours · real traffic</text>
+  <line x1="500" y1="14" x2="500" y2="316" stroke="var(--line)" stroke-dasharray="4 4"/>
+  <g font-family="IBM Plex Sans, sans-serif" font-size="13" fill="var(--ink)">
+    <rect x="20" y="44" width="140" height="62" rx="8" fill="var(--surface)" stroke="var(--line)"/>
+    <text x="34" y="68" font-weight="600">Change</text><text x="34" y="88" fill="var(--muted)" font-size="12">prompt · model · RAG cfg</text>
+    <rect x="190" y="44" width="130" height="62" rx="8" fill="var(--pass-soft)" stroke="var(--pass)"/>
+    <text x="204" y="68" font-weight="600">Unit + schema</text><text x="204" y="88" fill="var(--muted)" font-size="12">pytest, no LLM</text>
+    <rect x="350" y="44" width="130" height="62" rx="8" fill="var(--pass-soft)" stroke="var(--pass)"/>
+    <text x="364" y="68" font-weight="600">Eval gate</text><text x="364" y="88" fill="var(--muted)" font-size="12">replay / small judge</text>
+    <rect x="520" y="44" width="130" height="62" rx="8" fill="var(--warn-soft)" stroke="var(--warn)"/>
+    <text x="534" y="68" font-weight="600">Full eval</text><text x="534" y="88" fill="var(--muted)" font-size="12">live, LLM-as-judge</text>
+    <rect x="680" y="44" width="130" height="62" rx="8" fill="var(--surface)" stroke="var(--line)"/>
+    <text x="694" y="68" font-weight="600">Staging</text><text x="694" y="88" fill="var(--muted)" font-size="12">shadow traffic</text>
+    <rect x="840" y="44" width="120" height="62" rx="8" fill="var(--accent-soft)" stroke="var(--accent)"/>
+    <text x="854" y="68" font-weight="600">Progressive</text><text x="854" y="88" fill="var(--muted)" font-size="12">5% → 25% → 100%</text>
+  </g>
+  <g stroke="var(--muted)" stroke-width="1.5" fill="none">
+    <line x1="160" y1="75" x2="186" y2="75" marker-end="url(#ar)"/>
+    <line x1="320" y1="75" x2="346" y2="75" marker-end="url(#ar)"/>
+    <line x1="480" y1="75" x2="516" y2="75" marker-end="url(#ar)"/>
+    <line x1="650" y1="75" x2="676" y2="75" marker-end="url(#ar)"/>
+    <line x1="810" y1="75" x2="836" y2="75" marker-end="url(#ar)"/>
+  </g>
+  <g stroke="var(--fail)" stroke-width="1.5" fill="none" stroke-dasharray="5 4">
+    <path d="M415 106 V150 H90 V110" marker-end="url(#arf)"/>
+    <path d="M900 106 V196 H760" marker-end="url(#arf)"/>
+  </g>
+  <text x="140" y="168" font-family="IBM Plex Mono, monospace" font-size="12" fill="var(--fail)">fail → PR blocked, report posted as comment</text>
+  <rect x="560" y="176" width="200" height="56" rx="8" fill="var(--fail-soft)" stroke="var(--fail)"/>
+  <text x="574" y="199" font-family="IBM Plex Sans, sans-serif" font-size="13" font-weight="600" fill="var(--ink)">Rollback</text>
+  <text x="574" y="218" font-family="IBM Plex Sans, sans-serif" font-size="12" fill="var(--muted)">alias → previous version</text>
+  <text x="776" y="226" font-family="IBM Plex Mono, monospace" font-size="11.5" fill="var(--fail)">online metric breach</text>
+  <g font-family="IBM Plex Sans, sans-serif" font-size="12.5" fill="var(--muted)">
+    <text x="20" y="262">Release unit = (code sha, prompt version, model snapshot, retrieval config). Every trace carries all four ids.</text>
+    <text x="20" y="284">Online analysis on the canary: thumbs-down rate, groundedness sample, refusal rate, p95 latency, tokens/request, error rate.</text>
+    <text x="20" y="306">Prompt-only changes skip the image build: they promote by moving an alias in the registry.</text>
+  </g>
+</svg>
+<figcaption>Gates get more expensive and more realistic left to right. The cheap ones run on every PR; the costly ones run before or during release.</figcaption>
+</figure>
+
+<h3>The three layers of evaluation in a pipeline</h3>
+<ol>
+<li><strong>Deterministic checks</strong> (every PR, milliseconds): JSON schema validity, required fields, citation ids exist in the retrieved set, abstention string present when it should be, banned-phrase and PII regex, token-count budget. These catch most breakages and never flake.</li>
+<li><strong>Model-graded checks</strong> (pre-merge on a sample, or nightly on the full set): faithfulness, answer relevance, context precision via RAGAS/DeepEval/promptfoo <code>llm-rubric</code>. Pin the judge model and version its rubric too, or your metric moves when the judge changes.</li>
+<li><strong>Online checks</strong> (during canary): user feedback, sampled judge scores on live traces (Langfuse/Phoenix from Day 27), latency and cost per request. These drive automated promotion or rollback through an analysis step such as an Argo Rollouts <code>AnalysisTemplate</code>.</li>
+</ol>
+
+<h3>Cloud and watsonx equivalents</h3>
+<div class="tbl"><table>
+<thead><tr><th>Concern</th><th>watsonx</th><th>Azure</th><th>AWS</th><th>GCP</th></tr></thead>
+<tbody>
+<tr><td>Prompt versions</td><td>Prompt template assets in projects, promoted to deployment spaces</td><td>Prompty files in repo; AI Foundry prompt flow</td><td>Bedrock Prompt Management (versions + aliases)</td><td>Vertex AI prompt management</td></tr>
+<tr><td>Offline eval</td><td>watsonx.governance evaluations</td><td>Azure AI Foundry evaluation SDK, callable from Actions/DevOps</td><td>Bedrock model and RAG evaluation jobs</td><td>Vertex Gen AI evaluation service</td></tr>
+<tr><td>Progressive deploy</td><td>OpenShift + Argo Rollouts / OpenShift GitOps</td><td>AKS + Argo/Flagger, or Container Apps revisions with traffic split</td><td>EKS + Argo, or ECS/CodeDeploy blue-green</td><td>GKE + Argo, or Cloud Run traffic split</td></tr>
+<tr><td>Monitoring for rollback</td><td>watsonx.governance monitors (quality, drift)</td><td>Azure Monitor + AI Foundry tracing</td><td>CloudWatch + Bedrock invocation logs</td><td>Cloud Monitoring + Vertex logging</td></tr>
+</tbody></table></div>
+</section>
+
+<section id="tradeoffs">
+<h2><span class="n">03</span>Trade-offs &amp; decision table</h2>
+<h3>Which eval to run where</h3>
+<div class="tbl"><table>
+<thead><tr><th>Option</th><th>Pick when</th><th>Failure mode</th><th>Cost / latency</th></tr></thead>
+<tbody>
+<tr><td>Deterministic asserts</td><td>Always, on every PR. Structured output, citations, abstention, PII.</td><td>Passes answers that are well-formed but wrong.</td><td>Free, seconds.</td></tr>
+<tr><td>Record / replay cassettes</td><td>PR checks without a live model or API key; reproducible diffs.</td><td>Stale cassettes hide provider drift; contributors forget to re-record.</td><td>Free in CI; one live run per prompt change.</td></tr>
+<tr><td>Live small-set eval</td><td>Prompt or retrieval change that cassettes can't cover; 20–50 cases.</td><td>Flaky at threshold edges; needs secrets in CI.</td><td>Cents to a few dollars, 1–5 min.</td></tr>
+<tr><td>LLM-as-judge full suite</td><td>Nightly and pre-release; faithfulness and relevance at scale.</td><td>Judge bias (length, self-preference), judge version drift.</td><td>Highest; budget it per run and cap concurrency.</td></tr>
+<tr><td>Shadow traffic</td><td>Model swap or major retrieval change; compare on real queries.</td><td>Doubles inference spend; must not write side effects (tool calls!).</td><td>2× tokens for the shadowed share.</td></tr>
+<tr><td>Canary + online analysis</td><td>Any user-facing change with enough traffic for a signal.</td><td>Low traffic gives noisy metrics; slow-burning quality issues slip past.</td><td>Normal cost; release takes hours.</td></tr>
+</tbody></table></div>
+
+<h3>Where prompts live</h3>
+<div class="tbl"><table>
+<thead><tr><th>Option</th><th>Pick when</th><th>Failure mode</th><th>Rollback speed</th></tr></thead>
+<tbody>
+<tr><td>In code (git only)</td><td>Small team, prompts change with code, strict review needed.</td><td>Every prompt tweak needs a deploy; domain experts can't edit.</td><td>Minutes (redeploy).</td></tr>
+<tr><td>Registry with aliases</td><td>Langfuse, MLflow Prompt Registry, Bedrock Prompt Management, watsonx prompt assets.</td><td>Edits bypass CI unless the registry is wired to the gate; runtime dependency on registry.</td><td>Seconds (move alias), bounded by client cache TTL.</td></tr>
+<tr><td>Hybrid: git is source of truth, CI syncs to registry</td><td>Enterprise default. Review in PRs, runtime resolution by alias.</td><td>Two systems can disagree if someone edits in the UI.</td><td>Seconds, with a git audit trail.</td></tr>
+</tbody></table></div>
+
+<h3>Deployment strategy for model-serving and app code</h3>
+<div class="tbl"><table>
+<thead><tr><th>Strategy</th><th>Pick when</th><th>Failure mode</th><th>GenAI-specific cost</th></tr></thead>
+<tbody>
+<tr><td>Blue-green</td><td>Self-hosted model swap (vLLM image + weights), clean cutover, instant switch back.</td><td>Session or conversation state tied to the old stack; caches are cold on green.</td><td>Two full GPU pools during the switch. Expensive for large models.</td></tr>
+<tr><td>Canary</td><td>App, prompt or API-model changes with steady traffic.</td><td>Need sticky routing so one conversation doesn't flip between versions.</td><td>Small extra capacity.</td></tr>
+<tr><td>Feature flag / alias</td><td>Prompt and routing changes, per-tenant rollout.</td><td>Flag sprawl; untested flag combinations.</td><td>None.</td></tr>
+</tbody></table></div>
+<div class="callout warn"><p><strong>Rollback trap:</strong> rolling back the prompt but not the index. If a release re-chunked or re-embedded the corpus, the old prompt now runs against new retrieval. Keep the previous index (or a versioned alias such as an Elastic/Azure AI Search index alias) until the release is confirmed, and roll the tuple back together.</p></div>
+</section>
+
+<section id="exercise">
+<h2><span class="n">04</span>Hands-on exercise · 75–90 min</h2>
+<p><strong>Build an eval-gated prompt release pipeline.</strong> You'll version two prompts for an IT ticket-triage task (structured JSON with citations and abstention), gate the candidate against a production baseline on an 8-case golden set, wire it into GitHub Actions with record/replay, and practise promotion and rollback by alias. Everything runs locally on a 3B model; it fits in 6 GB VRAM.</p>
+
+<h3>Setup (PowerShell)</h3>
+<div class="code"><div class="bar"><span>PowerShell</span><button class="copy" type="button">Copy</button></div><pre># Ollama for Windows: https://ollama.com/download  (native, no WSL2 needed)
+ollama pull qwen2.5:3b          # ~1.9 GB, fits in 6 GB VRAM
+
+mkdir genai-eval-gate; cd genai-eval-gate
+mkdir prompts, data, tests, baselines, cassettes, .github\workflows
+py -3.13 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+python -m pip install &quot;ollama&gt;=0.6&quot; &quot;pytest&gt;=9&quot;</pre></div>
+<p>Then create the files below (same folder layout). The registry holds both versions; <code>v2</code> adds an explicit abstention rule and a priority definition.</p>
+
+<div class="code"><div class="bar"><span>prompts/registry.json</span><button class="copy" type="button">Copy</button></div><pre>{
+  &quot;ticket_triage&quot;: {
+    &quot;aliases&quot;: {
+      &quot;production&quot;: &quot;v1&quot;,
+      &quot;candidate&quot;: &quot;v2&quot;
+    },
+    &quot;versions&quot;: {
+      &quot;v1&quot;: {
+        &quot;model&quot;: &quot;qwen2.5:3b&quot;,
+        &quot;system&quot;: &quot;You triage IT support tickets. Use ONLY the context passages. Reply as JSON.&quot;,
+        &quot;template&quot;: &quot;Context:\n{context}\n\nTicket: {ticket}\n\nReturn category (one of: access, network, hardware, software, unknown), priority (P1-P4), a one-sentence answer, and cited_ids (ids of passages you used).&quot;
+      },
+      &quot;v2&quot;: {
+        &quot;model&quot;: &quot;qwen2.5:3b&quot;,
+        &quot;system&quot;: &quot;You triage IT support tickets for an enterprise helpdesk. Use ONLY the context passages below. If the context does not answer the ticket, set category to \&quot;unknown\&quot;, answer exactly \&quot;I don&#x27;t have enough information to answer.\&quot; and cited_ids to []. Never invent passage ids.&quot;,
+        &quot;template&quot;: &quot;Context passages (id: text):\n{context}\n\nTicket: {ticket}\n\nReturn JSON with: category (access|network|hardware|software|unknown), priority (P1 = outage for many users, P4 = how-to question), answer (one sentence, grounded in the passages), cited_ids (list of passage ids used).&quot;
+      }
+    }
+  }
+}</pre></div>
+<div class="code"><div class="bar"><span>data/golden.jsonl — 8 cases, 2 of them must abstain</span><button class="copy" type="button">Copy</button></div><pre>{&quot;id&quot;: &quot;g01&quot;, &quot;ticket&quot;: &quot;I can&#x27;t log in to the VPN since my password reset this morning.&quot;, &quot;context&quot;: {&quot;kb12&quot;: &quot;After a password reset, VPN tokens are re-synced within 30 minutes. Sign out of the VPN client and sign in again.&quot;, &quot;kb40&quot;: &quot;Printers on floor 3 use the PRN-03 queue.&quot;}, &quot;expect&quot;: {&quot;category&quot;: &quot;access&quot;, &quot;cited&quot;: [&quot;kb12&quot;]}}
+{&quot;id&quot;: &quot;g02&quot;, &quot;ticket&quot;: &quot;Whole Pune office has no Wi-Fi, 200 people affected.&quot;, &quot;context&quot;: {&quot;kb07&quot;: &quot;Site-wide Wi-Fi outages are P1. Raise a bridge with the network on-call and check the WLC dashboard.&quot;, &quot;kb12&quot;: &quot;After a password reset, VPN tokens are re-synced within 30 minutes.&quot;}, &quot;expect&quot;: {&quot;category&quot;: &quot;network&quot;, &quot;priority&quot;: &quot;P1&quot;, &quot;cited&quot;: [&quot;kb07&quot;]}}
+{&quot;id&quot;: &quot;g03&quot;, &quot;ticket&quot;: &quot;My laptop battery swells and the trackpad is lifting.&quot;, &quot;context&quot;: {&quot;kb21&quot;: &quot;Swollen batteries are a safety hazard. Stop using the device and book a hardware swap at the IT desk.&quot;, &quot;kb40&quot;: &quot;Printers on floor 3 use the PRN-03 queue.&quot;}, &quot;expect&quot;: {&quot;category&quot;: &quot;hardware&quot;, &quot;cited&quot;: [&quot;kb21&quot;]}}
+{&quot;id&quot;: &quot;g04&quot;, &quot;ticket&quot;: &quot;How do I install Python 3.13 from the company portal?&quot;, &quot;context&quot;: {&quot;kb33&quot;: &quot;Developer tools, including Python, are installed from Software Center &gt; Developer &gt; Python. Pick the 3.13 package.&quot;, &quot;kb07&quot;: &quot;Site-wide Wi-Fi outages are P1.&quot;}, &quot;expect&quot;: {&quot;category&quot;: &quot;software&quot;, &quot;priority&quot;: &quot;P4&quot;, &quot;cited&quot;: [&quot;kb33&quot;]}}
+{&quot;id&quot;: &quot;g05&quot;, &quot;ticket&quot;: &quot;What is the cafeteria menu for Friday?&quot;, &quot;context&quot;: {&quot;kb40&quot;: &quot;Printers on floor 3 use the PRN-03 queue.&quot;, &quot;kb21&quot;: &quot;Swollen batteries are a safety hazard.&quot;}, &quot;expect&quot;: {&quot;category&quot;: &quot;unknown&quot;, &quot;abstain&quot;: true}}
+{&quot;id&quot;: &quot;g06&quot;, &quot;ticket&quot;: &quot;Teams keeps crashing when I share my screen.&quot;, &quot;context&quot;: {&quot;kb35&quot;: &quot;If Teams crashes during screen share, clear the Teams cache (%appdata%\\Microsoft\\Teams) and update the GPU driver.&quot;, &quot;kb12&quot;: &quot;VPN tokens re-sync after a password reset.&quot;}, &quot;expect&quot;: {&quot;category&quot;: &quot;software&quot;, &quot;cited&quot;: [&quot;kb35&quot;]}}
+{&quot;id&quot;: &quot;g07&quot;, &quot;ticket&quot;: &quot;Can you approve my travel reimbursement?&quot;, &quot;context&quot;: {&quot;kb33&quot;: &quot;Developer tools are installed from Software Center.&quot;, &quot;kb07&quot;: &quot;Site-wide Wi-Fi outages are P1.&quot;}, &quot;expect&quot;: {&quot;category&quot;: &quot;unknown&quot;, &quot;abstain&quot;: true}}
+{&quot;id&quot;: &quot;g08&quot;, &quot;ticket&quot;: &quot;I need access to the finance SharePoint site for the Q3 audit.&quot;, &quot;context&quot;: {&quot;kb15&quot;: &quot;SharePoint access requests go through the Access Portal. The site owner approves within one business day.&quot;, &quot;kb35&quot;: &quot;Clear the Teams cache if it crashes.&quot;}, &quot;expect&quot;: {&quot;category&quot;: &quot;access&quot;, &quot;cited&quot;: [&quot;kb15&quot;]}}</pre></div>
+<div class="code"><div class="bar"><span>llm.py — live / replay / mock providers</span><button class="copy" type="button">Copy</button></div><pre>&quot;&quot;&quot;Provider layer: live Ollama, record/replay cassettes, and a mock for gate-logic tests.
+
+LLM_MODE=live    -&gt; call Ollama, and write every response to cassettes/ (record)
+LLM_MODE=replay  -&gt; read cassettes/ only; a missing entry is a hard error (CI default)
+LLM_MODE=mock    -&gt; deterministic fake answers, for unit-testing the gate itself
+&quot;&quot;&quot;
+import hashlib, json, os, time
+from pathlib import Path
+
+CASSETTES = Path(__file__).parent / &quot;cassettes&quot;
+
+SCHEMA = {
+    &quot;type&quot;: &quot;object&quot;,
+    &quot;properties&quot;: {
+        &quot;category&quot;: {&quot;type&quot;: &quot;string&quot;, &quot;enum&quot;: [&quot;access&quot;, &quot;network&quot;, &quot;hardware&quot;, &quot;software&quot;, &quot;unknown&quot;]},
+        &quot;priority&quot;: {&quot;type&quot;: &quot;string&quot;, &quot;enum&quot;: [&quot;P1&quot;, &quot;P2&quot;, &quot;P3&quot;, &quot;P4&quot;]},
+        &quot;answer&quot;: {&quot;type&quot;: &quot;string&quot;},
+        &quot;cited_ids&quot;: {&quot;type&quot;: &quot;array&quot;, &quot;items&quot;: {&quot;type&quot;: &quot;string&quot;}},
+    },
+    &quot;required&quot;: [&quot;category&quot;, &quot;priority&quot;, &quot;answer&quot;, &quot;cited_ids&quot;],
+}
+
+
+def _key(model: str, messages: list[dict]) -&gt; str:
+    raw = json.dumps({&quot;model&quot;: model, &quot;messages&quot;: messages, &quot;schema&quot;: SCHEMA}, sort_keys=True)
+    return hashlib.sha256(raw.encode()).hexdigest()[:16]
+
+
+def chat(model: str, messages: list[dict], case: dict | None = None) -&gt; dict:
+    &quot;&quot;&quot;Return {&quot;content&quot;: str, &quot;latency_ms&quot;: float, &quot;in_tokens&quot;: int, &quot;out_tokens&quot;: int}.&quot;&quot;&quot;
+    mode = os.getenv(&quot;LLM_MODE&quot;, &quot;replay&quot;)
+    key = _key(model, messages)
+    path = CASSETTES / f&quot;{key}.json&quot;
+
+    if mode == &quot;replay&quot;:
+        if not path.exists():
+            raise RuntimeError(f&quot;No cassette {path.name}. Run once with LLM_MODE=live and commit cassettes/.&quot;)
+        return json.loads(path.read_text(encoding=&quot;utf-8&quot;))
+
+    if mode == &quot;mock&quot;:
+        exp = (case or {}).get(&quot;expect&quot;, {})
+        body = {
+            &quot;category&quot;: exp.get(&quot;category&quot;, &quot;unknown&quot;),
+            &quot;priority&quot;: exp.get(&quot;priority&quot;, &quot;P3&quot;),
+            &quot;answer&quot;: &quot;I don&#x27;t have enough information to answer.&quot; if exp.get(&quot;abstain&quot;) else &quot;See the cited passage.&quot;,
+            &quot;cited_ids&quot;: exp.get(&quot;cited&quot;, []),
+        }
+        return {&quot;content&quot;: json.dumps(body), &quot;latency_ms&quot;: 120.0, &quot;in_tokens&quot;: 180, &quot;out_tokens&quot;: 40}
+
+    import ollama  # live mode only
+    t0 = time.perf_counter()
+    resp = ollama.chat(model=model, messages=messages, format=SCHEMA,
+                       options={&quot;temperature&quot;: 0, &quot;seed&quot;: 42, &quot;num_ctx&quot;: 4096})
+    out = {
+        &quot;content&quot;: resp.message.content,
+        &quot;latency_ms&quot;: round((time.perf_counter() - t0) * 1000, 1),
+        &quot;in_tokens&quot;: resp.prompt_eval_count or 0,
+        &quot;out_tokens&quot;: resp.eval_count or 0,
+    }
+    CASSETTES.mkdir(exist_ok=True)
+    path.write_text(json.dumps(out, indent=2), encoding=&quot;utf-8&quot;)
+    return out</pre></div>
+<div class="code"><div class="bar"><span>eval_gate.py — score, compare, exit non-zero on regression</span><button class="copy" type="button">Copy</button></div><pre>&quot;&quot;&quot;Eval gate: score a prompt version on the golden set and compare to the production baseline.
+
+Exit code 0 = gate passed, 1 = regression (blocks the PR / deployment).
+Usage:  python eval_gate.py --prompt ticket_triage --alias candidate
+        python eval_gate.py --prompt ticket_triage --alias production --write-baseline
+&quot;&quot;&quot;
+import argparse, json, statistics, sys
+from pathlib import Path
+from llm import chat
+
+ROOT = Path(__file__).parent
+ABSTAIN = &quot;i don&#x27;t have enough information&quot;
+# Price card per 1M tokens, so the gate also reports cost. Local Ollama is free; these
+# placeholder numbers stand in for whatever hosted model you would run in production.
+PRICE_IN, PRICE_OUT = 0.15, 0.60
+
+GATE = {
+    &quot;min_pass_rate&quot;: 0.80,        # absolute floor
+    &quot;max_pass_drop&quot;: 0.05,        # vs production baseline
+    &quot;min_schema_rate&quot;: 1.00,      # structured output must never break
+    &quot;max_p95_ratio&quot;: 1.30,        # latency budget vs baseline
+    &quot;max_cost_ratio&quot;: 1.25,       # cost budget vs baseline
+}
+
+
+def load_prompt(name: str, alias: str) -&gt; tuple[str, dict]:
+    reg = json.loads((ROOT / &quot;prompts&quot; / &quot;registry.json&quot;).read_text(encoding=&quot;utf-8&quot;))[name]
+    version = reg[&quot;aliases&quot;].get(alias, alias)  # accept an alias or a raw version id
+    return version, reg[&quot;versions&quot;][version]
+
+
+def score_case(case: dict, raw: str) -&gt; dict:
+    exp = case[&quot;expect&quot;]
+    try:
+        out = json.loads(raw)
+        schema_ok = all(k in out for k in (&quot;category&quot;, &quot;priority&quot;, &quot;answer&quot;, &quot;cited_ids&quot;))
+    except json.JSONDecodeError:
+        return {&quot;schema_ok&quot;: False, &quot;passed&quot;: False, &quot;reason&quot;: &quot;invalid JSON&quot;}
+    if not schema_ok:
+        return {&quot;schema_ok&quot;: False, &quot;passed&quot;: False, &quot;reason&quot;: &quot;missing keys&quot;}
+
+    cited = set(out[&quot;cited_ids&quot;])
+    checks = {
+        &quot;category&quot;: out[&quot;category&quot;] == exp[&quot;category&quot;],
+        &quot;no_invented_ids&quot;: cited &lt;= set(case[&quot;context&quot;]),          # groundedness, cheap form
+    }
+    if exp.get(&quot;abstain&quot;):
+        checks[&quot;abstained&quot;] = ABSTAIN in out[&quot;answer&quot;].lower() and not cited
+    else:
+        checks[&quot;cites_expected&quot;] = set(exp.get(&quot;cited&quot;, [])) &lt;= cited
+    if &quot;priority&quot; in exp:
+        checks[&quot;priority&quot;] = out[&quot;priority&quot;] == exp[&quot;priority&quot;]
+    failed = [k for k, v in checks.items() if not v]
+    return {&quot;schema_ok&quot;: True, &quot;passed&quot;: not failed, &quot;reason&quot;: &quot;, &quot;.join(failed) or &quot;ok&quot;}
+
+
+def run(name: str, alias: str) -&gt; dict:
+    version, p = load_prompt(name, alias)
+    cases = [json.loads(l) for l in (ROOT / &quot;data&quot; / &quot;golden.jsonl&quot;).read_text(encoding=&quot;utf-8&quot;).splitlines() if l.strip()]
+    rows = []
+    for c in cases:
+        ctx = &quot;\n&quot;.join(f&quot;{k}: {v}&quot; for k, v in c[&quot;context&quot;].items())
+        messages = [{&quot;role&quot;: &quot;system&quot;, &quot;content&quot;: p[&quot;system&quot;]},
+                    {&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: p[&quot;template&quot;].format(context=ctx, ticket=c[&quot;ticket&quot;])}]
+        r = chat(p[&quot;model&quot;], messages, case=c)
+        rows.append({&quot;id&quot;: c[&quot;id&quot;], **score_case(c, r[&quot;content&quot;]), **{k: r[k] for k in (&quot;latency_ms&quot;, &quot;in_tokens&quot;, &quot;out_tokens&quot;)}})
+
+    lat = sorted(r[&quot;latency_ms&quot;] for r in rows)
+    p95 = lat[min(len(lat) - 1, round(0.95 * (len(lat) - 1)))]
+    cost = sum(r[&quot;in_tokens&quot;] * PRICE_IN + r[&quot;out_tokens&quot;] * PRICE_OUT for r in rows) / 1e6
+    return {
+        &quot;prompt&quot;: name, &quot;version&quot;: version, &quot;model&quot;: p[&quot;model&quot;], &quot;n&quot;: len(rows),
+        &quot;pass_rate&quot;: round(sum(r[&quot;passed&quot;] for r in rows) / len(rows), 3),
+        &quot;schema_rate&quot;: round(sum(r[&quot;schema_ok&quot;] for r in rows) / len(rows), 3),
+        &quot;p95_latency_ms&quot;: p95, &quot;median_latency_ms&quot;: statistics.median(lat),
+        &quot;cost_per_1k_requests_usd&quot;: round(cost / len(rows) * 1000, 4),
+        &quot;rows&quot;: rows,
+    }
+
+
+def gate(cand: dict, base: dict | None) -&gt; list[str]:
+    fails = []
+    if cand[&quot;pass_rate&quot;] &lt; GATE[&quot;min_pass_rate&quot;]:
+        fails.append(f&quot;pass_rate {cand[&#x27;pass_rate&#x27;]} &lt; floor {GATE[&#x27;min_pass_rate&#x27;]}&quot;)
+    if cand[&quot;schema_rate&quot;] &lt; GATE[&quot;min_schema_rate&quot;]:
+        fails.append(f&quot;schema_rate {cand[&#x27;schema_rate&#x27;]} &lt; {GATE[&#x27;min_schema_rate&#x27;]}&quot;)
+    if base:
+        if base[&quot;pass_rate&quot;] - cand[&quot;pass_rate&quot;] &gt; GATE[&quot;max_pass_drop&quot;]:
+            fails.append(f&quot;pass_rate dropped {base[&#x27;pass_rate&#x27;]} -&gt; {cand[&#x27;pass_rate&#x27;]}&quot;)
+        if cand[&quot;p95_latency_ms&quot;] &gt; base[&quot;p95_latency_ms&quot;] * GATE[&quot;max_p95_ratio&quot;]:
+            fails.append(f&quot;p95 latency {cand[&#x27;p95_latency_ms&#x27;]}ms &gt; {GATE[&#x27;max_p95_ratio&#x27;]}x baseline&quot;)
+        if base[&quot;cost_per_1k_requests_usd&quot;] and cand[&quot;cost_per_1k_requests_usd&quot;] &gt; base[&quot;cost_per_1k_requests_usd&quot;] * GATE[&quot;max_cost_ratio&quot;]:
+            fails.append(f&quot;cost/1k ${cand[&#x27;cost_per_1k_requests_usd&#x27;]} &gt; {GATE[&#x27;max_cost_ratio&#x27;]}x baseline&quot;)
+    return fails
+
+
+def report_md(cand: dict, base: dict | None, fails: list[str]) -&gt; str:
+    def b(k): return base[k] if base else &quot;-&quot;
+    lines = [f&quot;## Eval gate: `{cand[&#x27;prompt&#x27;]}` {cand[&#x27;version&#x27;]} ({cand[&#x27;model&#x27;]})&quot;,
+             f&quot;**{&#x27;FAILED&#x27; if fails else &#x27;PASSED&#x27;}**&quot;, &quot;&quot;,
+             &quot;| metric | baseline | candidate |&quot;, &quot;|---|---|---|&quot;]
+    for k in (&quot;pass_rate&quot;, &quot;schema_rate&quot;, &quot;p95_latency_ms&quot;, &quot;cost_per_1k_requests_usd&quot;):
+        lines.append(f&quot;| {k} | {b(k)} | {cand[k]} |&quot;)
+    lines += [&quot;&quot;, &quot;| case | passed | reason |&quot;, &quot;|---|---|---|&quot;]
+    lines += [f&quot;| {r[&#x27;id&#x27;]} | {&#x27;yes&#x27; if r[&#x27;passed&#x27;] else &#x27;no&#x27;} | {r[&#x27;reason&#x27;]} |&quot; for r in cand[&quot;rows&quot;]]
+    if fails:
+        lines += [&quot;&quot;, &quot;### Blocking&quot;, *[f&quot;- {f}&quot; for f in fails]]
+    return &quot;\n&quot;.join(lines)
+
+
+if __name__ == &quot;__main__&quot;:
+    ap = argparse.ArgumentParser()
+    ap.add_argument(&quot;--prompt&quot;, default=&quot;ticket_triage&quot;)
+    ap.add_argument(&quot;--alias&quot;, default=&quot;candidate&quot;)
+    ap.add_argument(&quot;--write-baseline&quot;, action=&quot;store_true&quot;)
+    a = ap.parse_args()
+
+    res = run(a.prompt, a.alias)
+    base_path = ROOT / &quot;baselines&quot; / f&quot;{a.prompt}.json&quot;
+    if a.write_baseline:
+        base_path.write_text(json.dumps(res, indent=2), encoding=&quot;utf-8&quot;)
+        print(f&quot;Baseline written for {res[&#x27;version&#x27;]}: pass_rate={res[&#x27;pass_rate&#x27;]}&quot;)
+        sys.exit(0)
+
+    base = json.loads(base_path.read_text(encoding=&quot;utf-8&quot;)) if base_path.exists() else None
+    fails = gate(res, base)
+    md = report_md(res, base, fails)
+    (ROOT / &quot;eval_report.md&quot;).write_text(md, encoding=&quot;utf-8&quot;)
+    print(md)
+    sys.exit(1 if fails else 0)</pre></div>
+<div class="code"><div class="bar"><span>promote.py — promotion and rollback are the same pointer move</span><button class="copy" type="button">Copy</button></div><pre>&quot;&quot;&quot;Move a prompt alias. Rollback is the same operation pointed backwards: no rebuild, no redeploy.
+
+python promote.py ticket_triage production v2      # promote
+python promote.py ticket_triage production v1      # roll back
+&quot;&quot;&quot;
+import json, sys
+from datetime import datetime, timezone
+from pathlib import Path
+
+REG = Path(__file__).parent / &quot;prompts&quot; / &quot;registry.json&quot;
+name, alias, version = sys.argv[1:4]
+reg = json.loads(REG.read_text(encoding=&quot;utf-8&quot;))
+if version not in reg[name][&quot;versions&quot;]:
+    sys.exit(f&quot;Unknown version {version}&quot;)
+old = reg[name][&quot;aliases&quot;].get(alias)
+reg[name][&quot;aliases&quot;][alias] = version
+REG.write_text(json.dumps(reg, indent=2), encoding=&quot;utf-8&quot;)
+with open(REG.parent / &quot;CHANGELOG.log&quot;, &quot;a&quot;, encoding=&quot;utf-8&quot;) as f:   # audit trail
+    f.write(f&quot;{datetime.now(timezone.utc).isoformat()} {name} {alias}: {old} -&gt; {version}\n&quot;)
+print(f&quot;{name}:{alias} {old} -&gt; {version}&quot;)</pre></div>
+<div class="code"><div class="bar"><span>tests/test_gate.py — test the gate, not just the prompt</span><button class="copy" type="button">Copy</button></div><pre>&quot;&quot;&quot;Tests for the gate itself (LLM_MODE=mock), so a broken scorer can&#x27;t silently pass bad prompts.&quot;&quot;&quot;
+import json, os, sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parents[1]))
+os.environ[&quot;LLM_MODE&quot;] = &quot;mock&quot;
+import eval_gate as g
+
+CASE = {&quot;context&quot;: {&quot;kb1&quot;: &quot;x&quot;}, &quot;expect&quot;: {&quot;category&quot;: &quot;access&quot;, &quot;cited&quot;: [&quot;kb1&quot;]}}
+
+def test_invalid_json_fails():
+    assert g.score_case(CASE, &quot;not json&quot;)[&quot;schema_ok&quot;] is False
+
+def test_invented_citation_fails():
+    raw = json.dumps({&quot;category&quot;: &quot;access&quot;, &quot;priority&quot;: &quot;P3&quot;, &quot;answer&quot;: &quot;a&quot;, &quot;cited_ids&quot;: [&quot;kb1&quot;, &quot;kb99&quot;]})
+    assert g.score_case(CASE, raw)[&quot;passed&quot;] is False
+
+def test_mock_run_passes_gate():
+    res = g.run(&quot;ticket_triage&quot;, &quot;candidate&quot;)
+    assert res[&quot;pass_rate&quot;] == 1.0 and g.gate(res, res) == []
+
+def test_regression_is_blocked():
+    res = g.run(&quot;ticket_triage&quot;, &quot;candidate&quot;)
+    worse = {**res, &quot;pass_rate&quot;: 0.7}
+    assert any(&quot;dropped&quot; in f or &quot;floor&quot; in f for f in g.gate(worse, res))</pre></div>
+<div class="code"><div class="bar"><span>.github/workflows/eval-gate.yml</span><button class="copy" type="button">Copy</button></div><pre>name: eval-gate
+on:
+  pull_request:
+    paths: [&quot;prompts/**&quot;, &quot;data/**&quot;, &quot;eval_gate.py&quot;, &quot;llm.py&quot;, &quot;cassettes/**&quot;]
+  schedule:
+    - cron: &quot;30 20 * * *&quot;        # nightly live run, 02:00 IST
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    env:
+      LLM_MODE: ${{ github.event_name == &#x27;pull_request&#x27; &amp;&amp; &#x27;replay&#x27; || &#x27;live&#x27; }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: &quot;3.13&quot;
+      - run: python -m pip install pytest ollama
+      - name: Unit-test the gate
+        run: python -m pytest -q tests
+      - name: Start Ollama (live runs only)
+        if: env.LLM_MODE == &#x27;live&#x27;
+        run: |
+          curl -fsSL https://ollama.com/install.sh | sh
+          ollama serve &amp; sleep 5
+          ollama pull qwen2.5:3b
+      - name: Run eval gate
+        id: gate
+        run: python eval_gate.py --prompt ticket_triage --alias candidate
+      - name: Post report on the PR
+        if: always() &amp;&amp; github.event_name == &#x27;pull_request&#x27;
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh pr comment ${{ github.event.pull_request.number }} --body-file eval_report.md --edit-last --create-if-none</pre></div>
+
+<h3>Run it</h3>
+<div class="code"><div class="bar"><span>PowerShell</span><button class="copy" type="button">Copy</button></div><pre># 1. Test the gate logic itself (no model needed)
+python -m pytest -q tests
+
+# 2. Dry run of the whole flow with the mock provider
+$env:LLM_MODE = &quot;mock&quot;
+python eval_gate.py --alias production --write-baseline
+python eval_gate.py --alias candidate
+
+# 3. Real run on your GPU: records cassettes as it goes
+Remove-Item baselines\*.json -ErrorAction SilentlyContinue
+$env:LLM_MODE = &quot;live&quot;
+python eval_gate.py --alias production --write-baseline   # baseline = v1
+python eval_gate.py --alias candidate                     # gate v2 against it
+echo &quot;exit code: $LASTEXITCODE&quot;                            # 0 = pass, 1 = blocked
+
+# 4. Replay: what CI runs on a PR. Same result, no GPU, no network
+$env:LLM_MODE = &quot;replay&quot;
+python eval_gate.py --alias candidate
+
+# 5. Promote, then roll back (a pointer move, no rebuild)
+python promote.py ticket_triage production v2
+python promote.py ticket_triage production v1
+Get-Content prompts\CHANGELOG.log</pre></div>
+
+<h3>Expected output</h3>
+<p>The mock run and pytest are deterministic (I ran them before sending this): four tests pass, and the gate prints a <code>PASSED</code> table with <code>pass_rate 1.0</code>. The live run varies by model. With <code>qwen2.5:3b</code>, expect <code>v1</code> to miss one or both abstain cases (g05, g07), because it has no abstention rule. <code>v2</code> should match or beat it. A typical report looks like this:</p>
+<div class="code"><div class="bar"><span>eval_report.md (live, illustrative)</span><button class="copy" type="button">Copy</button></div><pre>Baseline written for v1: pass_rate=0.75
+## Eval gate: `ticket_triage` v2 (qwen2.5:3b)
+**PASSED**
+
+| metric | baseline | candidate |
+|---|---|---|
+| pass_rate | 0.75 | 1.0 |
+| schema_rate | 1.0 | 1.0 |
+| p95_latency_ms | 1840.2 | 1712.6 |
+| cost_per_1k_requests_usd | 0.0702 | 0.0815 |
+
+| case | passed | reason |
+|---|---|---|
+| g01 | yes | ok |
+| g05 | yes | ok |
+...
+exit code: 0</pre></div>
+<p>Laptop latency for a 3B model on an RTX 3050 is usually a few hundred ms to ~2 s per case. The first call is slower while the model loads. If the gate fails on latency only, that is load noise; run it again with the model already warm, which is also the lesson about latency gates on shared CI runners.</p>
+
+<h3>Stretch goals</h3>
+<ol>
+<li><strong>Make the gate catch a real regression.</strong> Add a <code>v3</code> that drops the "never invent passage ids" line and asks for "at least two citations". Run it live. The <code>no_invented_ids</code> check should fail, the job should exit 1, and the report should name the failing cases. Then add a promptfoo config with an <code>llm-rubric</code> faithfulness assertion that uses Ollama as the judge, and compare what each tool catches.</li>
+<li><strong>Runtime alias resolution with rollback SLO.</strong> Wrap the triage call in a small FastAPI service (Day 24) that resolves <code>production</code> from the registry with a 30 s cache. Promote <code>v2</code>, send traffic, roll back to <code>v1</code>, and measure how long until every response carries <code>prompt_version=v1</code> in its trace metadata. That number is your rollback SLO.</li>
+</ol>
+<div class="callout"><p><strong>Windows notes.</strong> Ollama runs natively on Windows, so no WSL2 is needed for the exercise. Running the workflow locally with <code>act</code> needs Docker Desktop with the WSL2 backend. The CI live job installs Ollama on the Ubuntu runner with CPU only, so a 3B model there takes a few minutes. Use <code>qwen2.5:0.5b</code> for the nightly job if time matters, and keep a separate baseline per model.</p></div>
+</section>
+
+<section id="repos">
+<h2><span class="n">05</span>GitHub repos to study</h2>
+<div class="grid2">
+<div class="card"><h4><a href="https://github.com/promptfoo/promptfoo">promptfoo/promptfoo</a></h4><p>Read <code>examples/</code> for YAML eval configs with <code>assert</code> types, and the <a href="https://promptfoo.dev/docs/integrations/github-action">GitHub Action</a> that posts before/after prompt diffs on PRs. Acquired by OpenAI in March 2026; check the licence and roadmap before you standardise on it.</p></div>
+<div class="card"><h4><a href="https://github.com/confident-ai/deepeval">confident-ai/deepeval</a></h4><p>Pytest-native LLM tests (<code>assert_test</code>, <code>deepeval test run</code>). Read how metrics set thresholds and how <code>GEval</code> builds a judge rubric. This is the closest match to your QA-automation background.</p></div>
+<div class="card"><h4><a href="https://github.com/mlflow/mlflow">mlflow/mlflow</a></h4><p>Look at <code>mlflow/genai/</code>: the Prompt Registry (immutable versions plus mutable aliases) and <code>mlflow.genai.evaluate</code> with scorers. A good reference for the registry data model.</p></div>
+<div class="card"><h4><a href="https://github.com/argoproj/argo-rollouts">argoproj/argo-rollouts</a></h4><p>Study <code>examples/</code> for blue-green with <code>prePromotionAnalysis</code> and canary steps with Prometheus-backed <code>AnalysisTemplate</code>s. Swap the HTTP error-rate query for a groundedness or thumbs-down metric.</p></div>
+</div>
+</section>
+
+<section id="read">
+<h2><span class="n">06</span>Read / watch</h2>
+<ul>
+<li><a href="https://deepeval.com/docs/evaluation-unit-testing-in-ci-cd">DeepEval: Unit Testing in CI/CD</a>. How to structure LLM tests so they run in GitHub Actions, with thresholds and per-test-case reporting.</li>
+<li><a href="https://langfuse.com/docs/prompt-management/features/prompt-version-control">Langfuse: Prompt Version Control</a>. The version and label model (<code>production</code>, <code>staging</code>), client-side caching and how rollback works in practice.</li>
+<li><a href="https://argo-rollouts.readthedocs.io/en/latest/features/bluegreen/">Argo Rollouts: Blue-Green</a>, then the <a href="https://argo-rollouts.readthedocs.io/en/latest/features/analysis/">Analysis</a> page. Preview vs active services, auto-promotion and analysis-driven abort.</li>
+</ul>
+</section>
+
+<section id="interview">
+<h2><span class="n">07</span>Interview questions</h2>
+<div class="qs">
+<details open><summary>Your LLM evals are non-deterministic. How do you build a CI gate that doesn't flake?</summary><div class="ans">
+<p>Separate determinism by layer. Every PR runs deterministic checks (schema, citation validity, abstention, PII) plus replayed responses, which can't flake. Model-graded evals gate on aggregate rates over a golden set with a tolerance band (for example "no more than 3 points below production"), not on single cases. For borderline results I re-run the failing subset n times and use majority or a confidence interval. Temperature 0 and pinned model snapshots reduce noise but don't remove it. The full judge suite runs nightly, where a flake costs a ticket rather than a blocked merge.</p></div></details>
+<details><summary>What exactly do you version in a GenAI release, and why?</summary><div class="ans">
+<p>The tuple: code commit, prompt version, model id with dated snapshot, and retrieval config (embedding model, chunker settings, index version, top-k, reranker). Plus judge model and rubric version for the evals themselves. Any one of these can change behaviour on its own, so each gets an immutable id and every trace logs all of them. Without that, "quality dropped on Tuesday" can't be traced to a cause, and rollback is guesswork.</p></div></details>
+<details><summary>A business analyst wants to edit prompts in a UI without waiting for a deploy. How do you allow that safely?</summary><div class="ans">
+<p>Use a registry with aliases, but make edits create new immutable versions that start under a <code>candidate</code> label. A webhook or scheduled job runs the eval gate against that version, and only a pass, plus an approver in a protected environment, moves the <code>production</code> alias. Git stays the audit record (CI syncs registry to repo, or the reverse). The app resolves the alias with a short cache TTL, so rollback is moving the pointer back. RBAC separates who can edit from who can promote.</p></div></details>
+<details><summary>Blue-green or canary for swapping a self-hosted 70B model for a newer one?</summary><div class="ans">
+<p>For a weights swap, blue-green gives the cleanest cutover and instant switch-back, but it needs two full GPU pools for the duration. That's the expensive part, so I keep the overlap short and plan GPU quota for it. If the GPU budget can't cover that, I'd run canary at the gateway level (LiteLLM or an API gateway routes 5% to the new pool) with sticky routing per conversation. Either way, shadow traffic first in staging to compare outputs, warm the KV and prefix caches on the new pool, and use online analysis on refusal rate, groundedness samples, latency and error rate to drive promotion or abort.</p></div></details>
+<details><summary>How would you prevent "eval overfitting", where the golden set keeps passing but users complain?</summary><div class="ans">
+<p>Treat the golden set as a living dataset: sample production traces weekly (stratified by intent and by low-feedback scores), have SMEs label them, and add them to the set. Keep a hidden holdout that prompt authors can't see. Track online metrics (thumbs-down, escalation rate) next to offline scores on one dashboard; if they diverge, the eval set has gone stale. Rotate in adversarial and prompt-injection cases from red-teaming, and re-baseline the judge against human labels each quarter.</p></div></details>
+</div>
+</section>
+
+<section id="adr">
+<h2><span class="n">08</span>Architect's lens</h2>
+<p><strong>ADR-026: Prompt release and rollback mechanism for the enterprise knowledge assistant</strong> · Status: Accepted</p>
+<div class="adr">
+<div class="k">Context</div><div><p>Prompts change weekly and are edited by both engineers and domain SMEs. Each rebuild and redeploy of the app takes about 25 minutes. A bad prompt last quarter caused 40 minutes of ungrounded answers before the rollback finished. Compliance requires an audit trail of every production prompt.</p></div>
+<div class="k">Options</div><div><p><strong>A.</strong> Prompts in code, shipped with the image (canary deploy). <strong>B.</strong> Registry-only, edited in the UI, alias resolved at runtime. <strong>C.</strong> Hybrid: git is the source of truth, CI runs the eval gate and syncs approved versions to the registry; the app resolves the <code>production</code> alias with a 30 s TTL.</p></div>
+<div class="k">Decision</div><div><p><strong>C.</strong> PR checks run deterministic and replayed evals. Merging creates a registry version labelled <code>candidate</code>. Promotion to <code>production</code> needs the nightly live eval to pass and approval in a GitHub protected environment. Rollback is moving the alias back, which is available to on-call without a deploy.</p></div>
+<div class="k">Consequences</div><div><p>Rollback drops from ~25 min to under 1 min (TTL-bound). The app now depends at runtime on the registry, so we keep a last-known-good prompt bundled in the image as a fallback. UI edits are disabled in production projects so the two sources can't drift. Retrieval-config changes still go through image deploys and are out of scope for this mechanism. We'll revisit that when index aliases are in place.</p></div>
+</div>
+</section>
+
+<section id="tomorrow">
+<h2><span class="n">09</span>Tomorrow</h2>
+<div class="tomorrow">Day 27: GenAI observability with Langfuse, LangSmith, Arize Phoenix and the OpenTelemetry GenAI semantic conventions, plus eval dashboards and cost tracking. Today's trace metadata (the release tuple) is what you'll instrument.</div>
+</section>
+
+<section>
+<h2>Sources</h2>
+<ul class="sources">
+<li><a href="https://promptfoo.dev/docs/integrations/github-action">https://promptfoo.dev/docs/integrations/github-action</a></li>
+<li><a href="https://github.com/promptfoo/promptfoo">https://github.com/promptfoo/promptfoo</a></li>
+<li><a href="https://github.com/promptfoo/promptfoo/releases">https://github.com/promptfoo/promptfoo/releases</a></li>
+<li><a href="https://www.npmjs.com/package/promptfoo">https://www.npmjs.com/package/promptfoo</a></li>
+<li><a href="https://finance.yahoo.com/news/openai-acquires-promptfoo-secure-ai-174904138.html">https://finance.yahoo.com/news/openai-acquires-promptfoo-secure-ai-174904138.html</a></li>
+<li><a href="https://github.com/confident-ai/deepeval">https://github.com/confident-ai/deepeval</a></li>
+<li><a href="https://pypi.org/project/deepeval/">https://pypi.org/project/deepeval/</a></li>
+<li><a href="https://deepeval.com/docs/evaluation-unit-testing-in-ci-cd">https://deepeval.com/docs/evaluation-unit-testing-in-ci-cd</a></li>
+<li><a href="https://deepeval.com/changelog/changelog-2026">https://deepeval.com/changelog/changelog-2026</a></li>
+<li><a href="https://github.com/mlflow/mlflow">https://github.com/mlflow/mlflow</a></li>
+<li><a href="https://mlflow.org/docs/latest/genai/prompt-registry/manage-prompt-lifecycles-with-aliases/">https://mlflow.org/docs/latest/genai/prompt-registry/manage-prompt-lifecycles-with-aliases/</a></li>
+<li><a href="https://langfuse.com/docs/prompt-management/features/prompt-version-control">https://langfuse.com/docs/prompt-management/features/prompt-version-control</a></li>
+<li><a href="https://github.com/argoproj/argo-rollouts">https://github.com/argoproj/argo-rollouts</a></li>
+<li><a href="https://github.com/argoproj/argo-rollouts/releases">https://github.com/argoproj/argo-rollouts/releases</a></li>
+<li><a href="https://argo-rollouts.readthedocs.io/en/latest/features/bluegreen/">https://argo-rollouts.readthedocs.io/en/latest/features/bluegreen/</a></li>
+<li><a href="https://argo-rollouts.readthedocs.io/en/latest/features/analysis/">https://argo-rollouts.readthedocs.io/en/latest/features/analysis/</a></li>
+<li><a href="https://pypi.org/project/ollama/">https://pypi.org/project/ollama/</a></li>
+<li><a href="https://ollama.com/download">https://ollama.com/download</a></li>
+</ul>
+</section>
+</main>
+</div>
+
+<script>
+document.querySelectorAll('.copy').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    const pre=btn.closest('.code').querySelector('pre');
+    const done=()=>{btn.textContent='Copied';btn.classList.add('done');setTimeout(()=>{btn.textContent='Copy';btn.classList.remove('done')},1600)};
+    const fallback=()=>{const r=document.createRange();r.selectNodeContents(pre);const s=getSelection();s.removeAllRanges();s.addRange(r);btn.textContent='Press Ctrl+C'};
+    try{navigator.clipboard.writeText(pre.innerText).then(done,fallback)}catch(e){fallback()}
+  });
+});
+</script>
+
+</body></html>
