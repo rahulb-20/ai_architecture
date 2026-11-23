@@ -7,7 +7,7 @@ It runs **fully offline out of the box**: no API keys, GPU, Docker or model down
 ```powershell
 git clone https://github.com/rahulb-20/ai_architecture.git; cd ai_architecture
 .\tasks.ps1 setup      # venv + install (Windows). On macOS/Linux: make setup
-.\tasks.ps1 check      # lint, type-check, 119 tests, golden-set eval gate
+.\tasks.ps1 check      # lint, type-check, tests, golden-set eval gate
 .\tasks.ps1 ask "How many annual leave days can be carried forward?"
 .\tasks.ps1 serve      # API + Swagger UI at http://127.0.0.1:8000/docs
 ```
