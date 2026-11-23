@@ -80,6 +80,7 @@ def build_container(settings: Settings | None = None, *, tracer: Tracer | None =
                                                 min_term_coverage=s.min_term_coverage))
     rag = RagService(retriever, gateway, default_registry(), cache, tracer, InputGuard(), OutputGuard())
     ingestion = IngestionService(store, embedder, cache, tracer, s.chunk_tokens, s.chunk_overlap)
+    rag.output_guard.keep_source_values = s.output_keep_source_pii   # policy switch, see ADR-0006
 
     tickets: list[dict[str, Any]] = []
     registry = ToolRegistry()

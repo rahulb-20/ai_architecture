@@ -3,7 +3,7 @@
 Lets the whole stack (API, RAG, agent, evals, CI) run with zero network access and
 zero cost. It is *extractive*: it answers by quoting the context sentence that best
 overlaps the question and cites it, which is exactly the behaviour a grounded RAG
-prompt asks a real model for. Swap it out with `AIARCH_LLM_PROVIDERS`.
+prompt asks a real model for. Swap it out with `AIARCH_LLM_ROUTES`.
 """
 from __future__ import annotations
 

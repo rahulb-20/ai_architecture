@@ -86,7 +86,7 @@ class RagService:
             if text == "INSUFFICIENT_CONTEXT":
                 return answer(AnswerStatus.ABSTAINED, ABSTAIN_TEXT, [], ["model_abstained"])
             try:
-                out = self.output_guard(text, n_sources=len(hits))
+                out = self.output_guard(text, n_sources=len(hits), sources=[h.chunk.text for h in hits])
             except GuardrailViolation as e:
                 sp.set("guard.output_blocked", e.rule)
                 return answer(AnswerStatus.ABSTAINED, ABSTAIN_TEXT, [], [e.rule])
