@@ -15,6 +15,7 @@ Use this before taking the boilerplate past a pilot.
 ## Resilience
 - [ ] At least two LLM routes in different regions or providers, each passing the eval gate on its own
 - [ ] Breaker thresholds and timeouts tuned from load tests; `/readyz` wired to the load balancer
+- [ ] Vector store and cache moved out of process (for example pgvector and Redis) before running more than one worker or replica; the image ships with one worker because the in-memory defaults are per process
 - [ ] DEGRADED mode reviewed with the business; DR game-day scheduled
 
 ## Quality

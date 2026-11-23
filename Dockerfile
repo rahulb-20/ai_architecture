@@ -20,4 +20,8 @@ USER app
 EXPOSE 8000
 HEALTHCHECK --interval=15s --timeout=3s --start-period=10s --retries=3 \
   CMD python -c "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/healthz',timeout=2).status==200 else 1)"
-CMD ["uvicorn", "aiarch.api.app:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "2"]
+# One worker on purpose: the default vector store and semantic cache live in process memory, so
+# each extra worker would hold its own copy and a document ingested through /v1/documents would
+# be visible to only one of them. Scale with replicas or workers only after both are external
+# (see docs/guides/production-checklist.md).
+CMD ["uvicorn", "aiarch.api.app:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1"]
