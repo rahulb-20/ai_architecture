@@ -42,5 +42,14 @@ class StaleDocumentVersion(AiArchError):
         self.doc_id, self.current, self.attempted = doc_id, current, attempted
 
 
+class PlannerOutputInvalid(AiArchError):
+    """The LLM planner's reply was not a usable plan. `reason` is a fixed code ("malformed",
+    "tool_not_allowed", "empty_plan"); the model's text is never carried, so it cannot leak into logs."""
+
+    def __init__(self, reason: str) -> None:
+        super().__init__(reason)
+        self.reason = reason
+
+
 class ToolNotAllowed(AiArchError):
     """An agent tried to call a tool outside its allowlist."""

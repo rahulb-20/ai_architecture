@@ -8,8 +8,10 @@ Rails, all enforced here rather than in the prompt:
 - tool output is wrapped as data and size-capped before going back to the planner
 - every step is a span, so a run can be replayed from traces
 
-The planner is a port: `LLMPlanner` uses the gateway with JSON-schema output;
-`RulePlanner` is the offline default so the agent runs and tests without a model.
+The planner is a port, chosen by the `agent_planner` setting (`AIARCH_AGENT_PLANNER`):
+`rule` (default) is `RulePlanner`, which is offline so the agent runs and tests without a model;
+`llm` is `LLMPlanner`, which asks the gateway for JSON-schema output and refuses any reply that
+is not a valid plan for the caller's tools (fail closed, see ADR-0009).
 When NOT to use this: if the task is a fixed sequence, write a pipeline instead.
 """
 from __future__ import annotations
@@ -20,7 +22,15 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any, Protocol
 
-from aiarch.domain.errors import AllProvidersFailed, GuardrailViolation, ToolNotAllowed
+from pydantic import BaseModel, ConfigDict, ValidationError
+
+from aiarch.domain.errors import (
+    AllProvidersFailed,
+    BudgetExceeded,
+    GuardrailViolation,
+    PlannerOutputInvalid,
+    ToolNotAllowed,
+)
 from aiarch.domain.models import Principal
 from aiarch.ports import LLMRequest, Message, Tracer
 from aiarch.services.agents.tools import Tool, ToolRegistry
@@ -73,7 +83,22 @@ _STEP_SCHEMA = {
 }
 
 
+class _Plan(BaseModel):
+    """The shape a model reply must have. Strict, so a wrong type is refused rather than coerced;
+    extra keys are ignored because they cannot change what executes."""
+
+    model_config = ConfigDict(strict=True, extra="ignore")
+
+    tool: str | None = None
+    args: dict[str, Any] | None = None
+    final: str | None = None
+
+
 class LLMPlanner:
+    """Model output is untrusted: a reply is accepted only if it names a tool from the list given
+    for this caller or carries a non-empty final answer. Anything else raises `PlannerOutputInvalid`;
+    there is no repair or re-ask. `ToolRegistry.call` remains the enforcing permission check."""
+
     def __init__(self, gateway: ModelGateway) -> None:
         self.gateway = gateway
 
@@ -86,17 +111,25 @@ class LLMPlanner:
                 Message("user", f"GOAL: {goal}\n{obs}")]
         r = self.gateway.generate(LLMRequest(messages=msgs, json_schema=_STEP_SCHEMA, max_output_tokens=300))
         try:
-            d = json.loads(r.response.text)
-            return Step(d.get("tool"), d.get("args") or {}, d.get("final"))
-        except (json.JSONDecodeError, AttributeError):
-            return Step(None, final="I could not plan this request.")
+            plan = _Plan.model_validate_json(r.response.text)
+        except ValidationError:
+            # `from None`: the pydantic error quotes the model's text, which must not travel with ours
+            raise PlannerOutputInvalid("malformed") from None
+        if plan.tool is not None:
+            if plan.tool not in {t.name for t in tools}:
+                raise PlannerOutputInvalid("tool_not_allowed")
+            return Step(plan.tool, plan.args or {})
+        if plan.final is None or not plan.final.strip():
+            raise PlannerOutputInvalid("empty_plan")
+        return Step(None, final=plan.final)
 
 
 @dataclass
 class AgentResult:
     final: str
     steps: list[Observation]
-    stopped_reason: str  # "final" | "max_steps" | "approval_denied" | "planner_unavailable" | "blocked"
+    # "final" | "max_steps" | "approval_denied" | "planner_unavailable" | "planner_invalid" | "blocked"
+    stopped_reason: str
 
 
 @dataclass
@@ -122,8 +155,12 @@ class Agent:
             for i in range(self.max_steps):
                 try:
                     step = self.planner.next_step(goal, tools, history)
-                except AllProvidersFailed:
+                except (AllProvidersFailed, BudgetExceeded) as e:
+                    sp.set("agent.planner_error", type(e).__name__)
                     return AgentResult("The assistant is temporarily unavailable.", history, "planner_unavailable")
+                except PlannerOutputInvalid as e:
+                    sp.set("agent.planner_error", e.reason)
+                    return AgentResult("I could not plan this request.", history, "planner_invalid")
                 if step.tool is None:
                     sp.set("agent.steps", i)
                     return AgentResult(step.final or "", history, "final")

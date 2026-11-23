@@ -7,6 +7,7 @@ from __future__ import annotations
 import json
 import os
 from pathlib import Path
+from typing import Literal
 
 from pydantic import BaseModel, Field
 
@@ -39,6 +40,7 @@ class Settings(BaseModel):
     min_dense_score: float = 0.30              # calibrate per embedder (see services/retrieval.py)
     min_term_coverage: float = 0.6
     max_input_tokens: int = 12_000
+    agent_planner: Literal["rule", "llm"] = "rule"   # "llm" needs a real model route; the fake cannot plan
     prices_file: Path = ROOT / "config" / "prices.json"
     api_keys: list[str] = Field(default_factory=list)   # empty = auth disabled (local only)
     seed_folder: Path | None = ROOT / "data" / "sample_docs"

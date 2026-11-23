@@ -19,7 +19,7 @@ from aiarch.adapters.vectorstore.memory import InMemoryVectorStore
 from aiarch.config import LLMRouteConfig, Settings
 from aiarch.domain.models import Principal
 from aiarch.ports import AnswerCache, Embedder, LLMClient, Tracer
-from aiarch.services.agents.agent import Agent, RulePlanner
+from aiarch.services.agents.agent import Agent, LLMPlanner, Planner, RulePlanner
 from aiarch.services.agents.tools import ToolRegistry, calculator_tool, kb_search_tool, ticket_tool
 from aiarch.services.cost import PriceBook
 from aiarch.services.gateway import ModelGateway, Route
@@ -91,7 +91,8 @@ def build_container(settings: Settings | None = None, *, tracer: Tracer | None =
         return [{"doc_id": h.chunk.doc_id, "text": h.chunk.text[:300]} for h in retriever.retrieve(q, p)[:3]]
 
     registry.register(kb_search_tool(_search))
-    agent = Agent(registry, RulePlanner(), tracer, input_guard=rag.input_guard)   # same guard as /v1/ask
+    planner: Planner = LLMPlanner(gateway) if s.agent_planner == "llm" else RulePlanner()
+    agent = Agent(registry, planner, tracer, input_guard=rag.input_guard)   # same guard as /v1/ask
 
     c = Container(s, tracer, embedder, store, cache, gateway, ingestion, rag, agent, tickets)
     if seed and s.seed_folder and s.seed_folder.exists():
