@@ -35,7 +35,8 @@ class Settings(BaseModel):
     chunk_tokens: int = 220
     chunk_overlap: int = 30
     k_final: int = 5
-    min_dense_score: float = 0.12
+    min_dense_score: float = 0.30              # calibrate per embedder (see services/retrieval.py)
+    min_term_coverage: float = 0.6
     max_input_tokens: int = 12_000
     prices_file: Path = ROOT / "config" / "prices.json"
     api_keys: list[str] = Field(default_factory=list)   # empty = auth disabled (local only)
