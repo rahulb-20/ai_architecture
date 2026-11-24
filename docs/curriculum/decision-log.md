@@ -692,3 +692,23 @@ Decision
 
 Consequences
 :   + Low cost for the long tail, contractual isolation where it's needed, and erasure that is provable per store. Memory shares the transactional, backup and RLS story with checkpoints. − Two storage technologies to operate. Promotion between tiers needs tooling and monitoring. Shared-tier erasure depends on compaction timing. The extraction model's accuracy has to be evaluated continuously.
+
+## Day 46 — [Revision Drill: Multi-Agent & GenAI Observability](revision-drills/day-46-multi-agent-and-genai-observability/README.md)
+
+Title
+:   Trace schema and cost control for agent teams
+
+Status
+:   Proposed · 2026-11-24
+
+Context
+:   Several teams are building agent workflows on different frameworks (LangGraph, OpenAI Agents SDK, watsonx Orchestrate). Finance wants cost per conversation and per agent. Compliance forbids prompt and response text in the monitoring platform. The OpenTelemetry GenAI conventions are in Development status and attribute names have changed before.
+
+Options
+:   (A) Each team uses its framework's native tracing and backend. (B) One schema: OpenTelemetry GenAI conventions at a pinned version, emitted through a shared instrumentation module, normalised in the Collector, backend replaceable. (C) Structured logs only, with cost computed from provider invoices.
+
+Decision
+:   B. Every model call sits under exactly one `invoke_agent` span and every run under one `invoke_workflow` span that carries conversation ID, tenant and outcome. Our own attributes use the `app.` namespace. Content capture is off; content goes to a regional store and spans hold references. Metrics come from 100% of spans, traces are tail-sampled. Token and handoff budgets are enforced in the orchestrator, and a CI check fails any scenario trace with an unattributed model call, a repeated edge above the threshold or a cost above budget.
+
+Consequences
+:   + One cost and reliability view across frameworks, a backend that can be swapped, and a compliance position that holds by default. Loops are bounded by design and detected by test. − We own an instrumentation module and Collector transforms, and must track spec changes until the conventions stabilise. Framework auto-instrumentation will not match our schema exactly, so some spans need mapping. Debugging without content is slower until the reference store and its access process exist.

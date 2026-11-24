@@ -73,6 +73,7 @@ Offline copies of the original interactive packs are in [`archive/html/`](archiv
 | 42 | [Revision Drill: Fine-tuning vs RAG & Model Serving](revision-drills/day-42-fine-tuning-vs-rag-and-model-serving/README.md) | Optional exercise (45–60 min): a gateway you can reason about |  |
 | 43 | [Revision Drill: Multi-tenant Vector DBs & Agent Memory](revision-drills/day-43-multi-tenant-vector-dbs-and-agent-memory/README.md) | Exercise (60–75 min): isolation you can prove, memory you can fix |  |
 | 44 | [Revision: K8s + CI/CD for GenAI](revision-drills/day-44-k8s-and-ci-cd-for-genai/README.md) | Drill + lab files |  |
+| 46 | [Revision Drill: Multi-Agent & GenAI Observability](revision-drills/day-46-multi-agent-and-genai-observability/README.md) | Lab (60 min): find the money in a multi-agent trace |  |
 
 ## Cross-day indexes
 

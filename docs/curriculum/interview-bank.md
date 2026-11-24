@@ -1914,3 +1914,81 @@ Split them. An embedding change invalidates the whole index, because vectors fro
 **Q8 Your provider retires the model snapshot you depend on in 60 days. How does your CI/CD absorb it, and what does "rollback" mean here? Day 26 · rollback**
 
 You can't roll back a provider. So: always pin dated snapshots, never floating aliases. Keep the candidate model in the routing layer (LiteLLM or an AI gateway) and run it in **shadow** on mirrored traffic, scoring offline. Re-baseline the golden set and fix prompt drift, then canary. "Rollback" means routing back to the previous model while it still exists, or to a **pre-qualified fallback** (a second provider or a self-hosted model that already passed the eval gate). Track deprecation dates in the ADR log with an owner.
+
+## Day 46 — [Revision Drill: Multi-Agent & GenAI Observability](revision-drills/day-46-multi-agent-and-genai-observability/README.md)
+
+**Q1 A team proposes six specialised agents for an HR policy copilot. How do you decide whether it should be multi-agent at all? (Day 18 · when not to)**
+
+Start from the task, not the framework. Multi-agent earns its cost when three things hold: the work splits into parts that are largely independent, the combined context would not fit or would degrade in one window, and the value per task covers roughly 15× the tokens of a chat. HR policy Q&A fails all three: one retrieval, one answer, low value per request, and a latency SLO. So the default is one agent with good tools and a retrieval step. "Specialisation" is usually better expressed as tools, prompts selected by a router, or skills loaded on demand.
+
+I would ask the team for a single-agent baseline on the golden set first. If six agents do not beat it by an agreed margin at an acceptable cost per resolved question, the extra coordination surface is not justified.
+
+Trap: arguing from org-chart analogy ("a researcher, a writer, a reviewer"). Roles are not a reason; context isolation and parallelism are.
+
+**Q2 Compare supervisor, handoff (swarm) and agents-as-tools. Where does the context live in each, and what does that cost? (Day 18 · patterns)**
+
+- **Supervisor (router):** a central agent picks the next worker each turn. Context sits in shared state that the supervisor re-reads on every decision. Easy to govern and trace. Costs an extra model call per hop, and the supervisor becomes the most expensive component, as the lab shows.
+- **Handoff / swarm:** the active agent transfers control directly to a peer, and the conversation history travels with it. Fewer calls and lower latency, good for conversational triage. Control flow is decided by whichever agent is active, so loops and "who owns this" bugs are harder to bound.
+- **Agents-as-tools (sub-agents):** the lead agent calls a worker like a function. The worker gets a brief, runs in its own context and returns a condensed result. Best context isolation and the easiest to parallelise. The risk is the brief: whatever the lead did not write down, the worker does not know.
+
+In a review I pick by where state must live: shared and audited (supervisor), conversational (handoff), or isolated and summarised (sub-agents).
+
+**Q3 Two parallel sub-agents each draft half of a migration plan and the halves contradict each other. Why does this happen, and how do you redesign? (Day 18 · failure modes)**
+
+Each agent made implicit decisions (naming, ordering, assumptions about the target schema) that the other never saw. This is Cognition's point that actions carry implicit decisions, and it is MAST's inter-agent misalignment category. More prompt text in the brief reduces it but cannot remove it.
+
+Redesign so that **writes are single-threaded**. Parallel agents gather facts and return findings with sources. One writer produces the plan with all findings in its context. A reviewer with a clean context then checks the plan against the requirements. If parallel writing is unavoidable, fix the shared decisions first in an explicit contract (interfaces, naming, constraints) and give every writer the same contract.
+
+**Q4 Finance says the agent service cost 12× the forecast last month. You have traces. Walk me through finding where the money went. (Day 18 + 27 · cost attribution)**
+
+Work from the span tree, top down.
+
+1. Group workflow spans by tenant, route and outcome. Is it volume, or cost per conversation? Look at the p99, because agent cost is heavy-tailed and a few runaway conversations often carry the bill.
+2. Inside the expensive traces, roll every `chat` span up to its nearest `invoke_agent` ancestor and price it by `gen_ai.request.model`. This usually points at the supervisor: it runs on the largest model and its input grows with every hop.
+3. Look at the path. Repeated edges between the same two agents mean a loop. Repeated tool calls with the same arguments mean retries without backoff or a tool error the agent keeps re-trying.
+4. Check input versus output tokens and cache-read tokens. Growth in input with flat output is transcript accumulation, which is fixed with isolation or summarisation, not with a cheaper model.
+
+Then separate observation from control: add per-conversation token and handoff budgets in the orchestrator, and alert on cost per resolved task.
+
+Trap: answering "switch to a smaller model". That treats the price, not the shape.
+
+**Q5 The OpenTelemetry GenAI conventions are still marked Development. Do you build on them? (Day 27 · standards)**
+
+Yes, with guard rails. The alternative is a vendor's private schema, which is a harder lock-in than an unstable open one. What I do about the instability:
+
+- Pin the semconv version in one instrumentation module, and record it as a resource attribute. No service sets `gen_ai.*` attributes directly.
+- Keep our own attributes under a separate namespace (`app.tenant`, `app.outcome`) so a rename upstream never collides with ours.
+- Normalise in the OpenTelemetry Collector. A transform processor can map old names to new ones (the `gen_ai.system` to `gen_ai.provider.name` rename is the example) so dashboards survive an upgrade.
+- Build dashboards and alerts on a small set of derived metrics, not on raw attribute names scattered through queries.
+
+I would also say plainly that auto-instrumentation libraries lag the spec, so mixed attribute names across services are normal for a while.
+
+**Q6 Compliance says no prompts or responses in telemetry. Engineers say they cannot debug agents without them. Design it. (Day 27 · privacy)**
+
+Split structure from content. Spans always carry structure: operation, agent, model, tokens, latency, tool name, error type, outcome, conversation ID. That is enough for cost, loops, latency and error analysis, and it is what the default `NO_CONTENT` setting gives you.
+
+Content goes to a separate store in the same region as the data, encrypted, with its own retention and access control, and the span holds only a reference. Access is by role and is audited; a debugging session opens a specific conversation for a stated reason. Mask PII before content is written, not at read time. Capture content for a sampled fraction, plus every conversation with a thumbs-down, an error or a guardrail block, because those are the ones engineers need.
+
+Two details reviewers ask about: erasure requests must reach the content store (key it by user and conversation), and tool arguments and results count as content too.
+
+**Q7 50,000 users, each agent run emits around 40 spans. What is your sampling strategy? (Day 27 · scale)**
+
+Head sampling alone is wrong for agents, because the interesting traces (loops, errors, expensive runs) are rare and you only know they are interesting at the end. So:
+
+- Compute metrics from **100%** of spans in the Collector before any sampling: tokens, cost, latency, error and block rates by route, model and tenant. Billing and SLOs never depend on sampled data.
+- **Tail-sample** traces: keep every trace with an error, a guardrail block, a budget breach, a cost or duration above a threshold, or user feedback. Keep a small random share of the rest as a baseline.
+- Tail sampling needs all spans of a trace on the same collector, so use a load-balancing layer keyed on trace ID, and size the decision window for long agent runs. A two-minute run does not fit a ten-second window.
+
+For very long-running agents, add a per-conversation summary record so you can still answer questions when the full trace was dropped.
+
+**Q8 How do you evaluate a multi-agent system in production? What is the unit of evaluation? (Day 18 + 27 · evals)**
+
+Three units, each catching different failures.
+
+- **End state:** did the task succeed, judged against the user's goal? This is the number the business sees. It says nothing about why.
+- **Trajectory:** was the path reasonable? Number of hops, tool choice, repeated edges, whether verification ran. Deterministic checks on the span tree are cheap and catch most regressions.
+- **Step:** was each decision right? Router accuracy against labelled examples, groundedness of each worker's output against its retrieved context, tool-argument validity.
+
+Attach scores to spans, not only to traces, so the trace view shows which step failed; Phoenix now surfaces eval badges on the tree for this reason. Use the MAST categories as failure labels so that review of bad traces produces counts you can trend. Run step and trajectory checks on sampled production traces, and the same checks in CI on a fixed set of scenarios.
+
+Trap: one LLM-judge score for the whole conversation. It hides compensating errors and cannot be acted on.
