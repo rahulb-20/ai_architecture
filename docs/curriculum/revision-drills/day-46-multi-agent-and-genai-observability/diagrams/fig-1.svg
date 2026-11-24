@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 780 402" role="img" aria-label="Trace tree of a supervisor team: one workflow span, agent spans beneath it, model and tool calls beneath each agent" font-family="Inter, Segoe UI, Arial, sans-serif">
+<rect x="0" y="0" width="780" height="402" fill="#ffffff"/>
+<text x="16" y="24" font-size="12" fill="#5a6675" letter-spacing="0.6">SPAN</text>
+<text x="300" y="24" font-size="12" fill="#5a6675" letter-spacing="0.6">TIME →</text>
+<line x1="16" y1="34" x2="764" y2="34" stroke="#dde2e8" stroke-width="1"/>
+<text x="16" y="59" font-size="13" fill="#17202b" font-family="JetBrains Mono, Consolas, monospace">invoke_workflow helpdesk_team</text>
+<rect x="300.0" y="47" width="460.0" height="16" rx="3" fill="#51607a"/>
+<text x="34" y="85" font-size="13" fill="#17202b" font-family="JetBrains Mono, Consolas, monospace">invoke_agent supervisor</text>
+<rect x="304.6" y="73" width="55.2" height="16" rx="3" fill="#0b6e6e"/>
+<text x="52" y="111" font-size="13" fill="#17202b" font-family="JetBrains Mono, Consolas, monospace">chat fake-large</text>
+<rect x="309.2" y="99" width="46.0" height="16" rx="3" fill="#b4631a"/>
+<text x="34" y="137" font-size="13" fill="#17202b" font-family="JetBrains Mono, Consolas, monospace">invoke_agent researcher</text>
+<rect x="369.0" y="125" width="119.6" height="16" rx="3" fill="#0b6e6e"/>
+<text x="52" y="163" font-size="13" fill="#17202b" font-family="JetBrains Mono, Consolas, monospace">execute_tool kb_search</text>
+<rect x="373.6" y="151" width="36.8" height="16" rx="3" fill="#7a4fb0"/>
+<text x="52" y="189" font-size="13" fill="#17202b" font-family="JetBrains Mono, Consolas, monospace">chat fake-small</text>
+<rect x="419.6" y="177" width="64.4" height="16" rx="3" fill="#b4631a"/>
+<text x="34" y="215" font-size="13" fill="#17202b" font-family="JetBrains Mono, Consolas, monospace">invoke_agent supervisor</text>
+<rect x="497.8" y="203" width="55.2" height="16" rx="3" fill="#0b6e6e"/>
+<text x="52" y="241" font-size="13" fill="#17202b" font-family="JetBrains Mono, Consolas, monospace">chat fake-large</text>
+<rect x="502.4" y="229" width="46.0" height="16" rx="3" fill="#b4631a"/>
+<text x="34" y="267" font-size="13" fill="#17202b" font-family="JetBrains Mono, Consolas, monospace">invoke_agent writer</text>
+<rect x="562.2" y="255" width="119.6" height="16" rx="3" fill="#0b6e6e"/>
+<text x="52" y="293" font-size="13" fill="#17202b" font-family="JetBrains Mono, Consolas, monospace">chat fake-small</text>
+<rect x="566.8" y="281" width="110.4" height="16" rx="3" fill="#b4631a"/>
+<text x="34" y="319" font-size="13" fill="#17202b" font-family="JetBrains Mono, Consolas, monospace">invoke_agent supervisor</text>
+<rect x="691.0" y="307" width="59.8" height="16" rx="3" fill="#0b6e6e"/>
+<text x="52" y="345" font-size="13" fill="#17202b" font-family="JetBrains Mono, Consolas, monospace">chat fake-large</text>
+<rect x="695.6" y="333" width="50.6" height="16" rx="3" fill="#b4631a"/>
+<rect x="16" y="367" width="14" height="12" rx="2" fill="#51607a"/>
+<text x="36" y="378" font-size="12" fill="#5a6675">workflow (your code routes)</text>
+<rect x="234.2" y="367" width="14" height="12" rx="2" fill="#0b6e6e"/>
+<text x="254.2" y="378" font-size="12" fill="#5a6675">agent</text>
+<rect x="307.2" y="367" width="14" height="12" rx="2" fill="#b4631a"/>
+<text x="327.2" y="378" font-size="12" fill="#5a6675">model call (tokens, cost)</text>
+<rect x="512.2" y="367" width="14" height="12" rx="2" fill="#7a4fb0"/>
+<text x="532.2" y="378" font-size="12" fill="#5a6675">tool call</text>
+</svg>
