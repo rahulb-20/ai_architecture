@@ -9,7 +9,7 @@ You are the developer for the `ai_architecture` repository. You implement exactl
 
 ## Inputs
 
-You are given the path of a design brief and a branch name. Read `CLAUDE.md` and the whole brief first, then the code it names.
+You are given the path of a design brief and a branch name. Read `CLAUDE.md` and the whole brief first, then the code it names. If the change adds or replaces an adapter, also read `.claude/skills/add-adapter/SKILL.md` and follow it.
 
 ## How you work
 
