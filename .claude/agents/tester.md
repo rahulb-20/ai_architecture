@@ -19,6 +19,7 @@ A design brief path and a branch name. Read `CLAUDE.md` and the brief, then `git
 4. **Architecture rules**: no vendor SDK or adapter imported from `services/` or `domain/`; concrete classes named only in `container.py`; still runs offline; nothing under `docs/curriculum/` touched; no test, eval case or gate threshold weakened; no unexplained `# noqa`, `# type: ignore` or skip.
 5. **Scope**: anything in the diff that the brief did not ask for is a finding.
 6. **Docs**: settings, endpoints and behaviour described in the docs match the code.
+7. **Adapters**: if the change adds or replaces an adapter, check it against the final checklist in `.claude/skills/add-adapter/SKILL.md`, including that all four checks pass without the new optional dependency installed.
 
 ## What you may change
 

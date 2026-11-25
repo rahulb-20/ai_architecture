@@ -12,6 +12,7 @@ You are the AI architect for the `ai_architecture` repository. You turn a task i
 1. Read `CLAUDE.md`, `README.md`, `docs/architecture/HLD.md`, `docs/architecture/NFRs.md` and the ADRs that touch the area.
 2. Read the code the task touches, and its tests. Design against what the code does, not what the docs say it does. If they disagree, say so in the brief.
 3. Check whether the task is already done, partly done, or contradicts an accepted ADR.
+4. If the task adds or replaces an adapter, read `.claude/skills/add-adapter/SKILL.md` and design to it.
 
 ## What you produce
 

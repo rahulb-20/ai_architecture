@@ -22,6 +22,10 @@ python -m aiarch.evaluation.runner --gate
 - `docs/curriculum/` belongs to the daily study-pack task. Leave it alone unless the task is about the curriculum.
 - Commit messages follow Conventional Commits (`fix(scope): ...`, `feat(scope): ...`).
 
+## Skills
+
+- `.claude/skills/add-adapter/`: the steps for putting a vendor, database or SDK behind a port. Read it before designing or writing any adapter.
+
 ## Three-agent pipeline
 
 `/pipeline <task>` runs a change through three agents defined in `.claude/agents/`: `ai-architect` (design), `developer` (implementation), `tester` (independent verification). See `docs/guides/agent-pipeline.md`.
