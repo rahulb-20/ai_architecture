@@ -1992,3 +1992,95 @@ Three units, each catching different failures.
 Attach scores to spans, not only to traces, so the trace view shows which step failed; Phoenix now surfaces eval badges on the tree for this reason. Use the MAST categories as failure labels so that review of bad traces produces counts you can trend. Run step and trajectory checks on sampled production traces, and the same checks in CI on a fixed set of scenarios.
 
 Trap: one LLM-judge score for the whole conversation. It hides compensating errors and cannot be acted on.
+
+## Day 47 — [Revision Drill: Guardrails & Cloud Architectures](revision-drills/day-47-guardrails-and-cloud-architectures/README.md)
+
+**Q1 Your agent reads customer emails and can call tools. Security asks you to "add a prompt-injection filter". Why is that not a sufficient design, and what do you propose? (Day 21 · indirect injection)**
+
+A filter is a classifier, and a classifier has a miss rate that an attacker can search for. Prompt Guard 2 documents adaptive attacks as a limitation, sees 512 tokens at a time, and returns a binary label. A paraphrased instruction inside a long attachment passes it. So detection reduces volume; it cannot be the control.
+
+The design that holds is structural:
+
+- **Taint by provenance.** If any content in context came from an attacker-reachable source (email, web, upload), the run is tainted whether or not a detector fired.
+- **Least agency on tainted runs.** Tools with side effects or egress need human approval, or are unavailable. Read-only internal tools stay available.
+- **Break the three-way combination** of private data, untrusted content and an outbound channel. Remove any one and exfiltration has no path. An egress allowlist is usually the cheapest to remove.
+- **Output rail** for links and images that carry data out through the client.
+
+Trap: promising a detection rate. Promise which actions are impossible, and for which runs.
+
+**Q2 Place the guardrails on the request path and give each a latency budget. Which ones fail open? (Day 21 · placement)**
+
+Five positions: input (classify, mask, topic and jailbreak checks), retrieval (screen chunks, record provenance), tool call (authorise before execution), output (PII, links, groundedness), and asynchronous review of sampled traffic.
+
+Budget by mechanism. Regex and deterministic policy cost microseconds. A small classifier costs tens of milliseconds on a GPU and more on CPU. An LLM-judge rail costs a full model call, so it belongs off the hot path or on a sampled share. Run independent input rails in parallel with each other and, where the risk allows, in parallel with the first model tokens, cancelling the stream if a rail fires. Output rails on a stream work on buffered chunks, which adds a few hundred milliseconds to first visible text.
+
+Fail behaviour is a per-rail decision recorded in the design: authorisation, residency routing and egress rules **fail closed**. A topical or tone rail can fail open with an alert. A rail that fails open silently is a rail that is off.
+
+**Q3 A team has 40 Colang flows on NeMo Guardrails. Release 0.25.0 deprecates the Colang runtimes. What do you tell them? (Day 21 · tooling risk)**
+
+First the facts: `LLMRails` and Colang 1.0 and 2.x are deprecated with removal no earlier than 0.27.0, and the supported direction is `IORails`, per-tool checks and a hooks server in front of tool execution. Nothing breaks today.
+
+Then the plan. Pin the version. Inventory the 40 flows by what they actually do: most are input or output checks that map to rails, some are dialogue control that belongs in the orchestrator (a LangGraph node), and a few are tool authorisation that belongs in a gate. Before migrating anything, capture behaviour as a test set of allowed and blocked cases, because that test set is the real specification and survives any library.
+
+The lesson for the design review: keep policy in data and code you own (allowlists, schemas, a policy engine), and use a guardrail library for detectors and plumbing. A vendor DSL as the system of record for policy is a migration waiting to happen.
+
+**Q4 Where does PII masking go, and what does it break? (Day 21 · PII)**
+
+Mask before anything leaves your trust boundary: before the model call, before retrieval queries go to a managed search service, and before content is written to logs or traces. Masking only the output protects the screen and nothing else.
+
+What it breaks, and the fix for each:
+
+- **The task needs the value.** Use reversible tokenisation: replace with a stable placeholder, keep the mapping in a regional vault, and re-insert after the output rail for the authorised user.
+- **Coherence.** Two mentions of one person must get the same placeholder, or the model loses the thread.
+- **Recall on local formats.** Presidio's defaults are weak on PAN, Aadhaar, GSTIN and Indian phone formats, so add pattern recognisers with checksum validation and measure them on your own data.
+- **Precision.** A masker that treats every long number as an ID destroys invoices and policy numbers. Track false positives as a quality metric alongside misses.
+
+Under DPDP and GDPR, masking reduces exposure but masked text with a re-identification key is still personal data. Say that before the lawyer does.
+
+**Q5 A CISO asks: "If we use a Data Zone deployment on Azure or a geographic profile on Bedrock, does our data stay in the country?" Answer precisely. (Day 22 · residency)**
+
+Separate three things: where data is stored, where inference is processed, and what exceptions exist.
+
+- **Storage.** On Azure, data at rest stays in the designated geography for every deployment type. On Bedrock, logs, knowledge bases and configuration stay in the source Region, and model inputs and outputs are not stored by default.
+- **Processing.** A Data Zone is a multi-country zone (US, EU or APAC), so "EU" is a real answer for an EU requirement and "APAC" is not an answer for an India-only requirement. Regional deployments on Azure process within the chosen geography. A Bedrock geographic profile stays in its geography, and the `in.` profiles route only between Mumbai and Hyderabad. Global options on both clouds process anywhere.
+- **Exceptions.** Abuse monitoring: on Bedrock, flagged content for some models is retained or reviewed, and with cross-Region inference it is stored in the destination Region. Zone membership can change without notice on Azure.
+
+So the answer is: country-level processing needs a regional deployment or an in-country geographic profile, verified per model, and evidenced from logs (`inferenceRegion` in CloudTrail). I would put the chosen scope per data class in an ADR, because it is also a capacity and price decision: wider scopes have more quota and often lower prices.
+
+**Q6 Your organisation's SCP denies every Region except ap-south-1. A team switches to an `in.` inference profile and gets AccessDenied. Explain, and fix it without opening the account up. (Day 22 · IAM)**
+
+With cross-Region inference the call arrives in the source Region, and Bedrock may serve it from a destination Region. Policy has to allow both ends. The SCP blocks ap-south-2, which is a destination of the `in.` profile.
+
+Fix, narrowly:
+
+- Allow Bedrock invocation in ap-south-2 as well, or add an exception conditioned on `bedrock:InferenceProfileArn` equal to the approved `in.` profile ARN. The exception does not bypass the Region restriction on the originating call.
+- In the identity policy, allow the inference-profile ARN in the source Region, and the foundation-model ARN in the source and every destination Region with the same profile condition.
+- Keep `global.` profiles blocked by not granting their ARNs. Global profiles appear with `aws:RequestedRegion` set to `unspecified`, so a team that later needs them must have that value allowed explicitly, which makes it a visible decision.
+
+Then prove it: a CloudTrail query on `inferenceRegion` should show only ap-south-1 and ap-south-2, and a Config rule or CI check on IAM should fail any policy that grants a `global.` profile.
+
+**Q7 "We use a private endpoint, so we are compliant." What is wrong with that sentence, and what does the full network and identity design look like? (Day 22 · network)**
+
+A private endpoint controls the path from your network to the service. It says nothing about where the service processes the request, what the service retains, or what your own workload can reach on the internet. Three separate controls are being collapsed into one.
+
+The full design:
+
+- **Inbound to the model:** private endpoint or interface endpoint, public network access disabled on the resource, private DNS so SDKs resolve to the private address.
+- **Processing scope:** the deployment type or inference profile, as in Q5. On Bedrock the cross-Region hop runs on the AWS network managed by the service, not through your VPC.
+- **Outbound from the workload:** no default route to the internet. Tools reach external systems through an egress proxy or firewall with an FQDN allowlist. This is the control that stops exfiltration by a hijacked agent.
+- **Identity:** managed identity or IAM roles per workload, no long-lived keys, per-tool credentials scoped to the calling user where the downstream system supports it.
+- **Data:** customer-managed keys where policy requires, content logging off by default, diagnostic logs to a regional workspace.
+
+Trap: forgetting the retrieval and observability paths. A private model endpoint with a public vector database or a SaaS tracing backend in another region fails the same audit.
+
+**Q8 A business sponsor says: "The EU AI Act was delayed, so governance work can wait until 2027." You have two minutes and no jargon. (Day 21 + 22 · regulation)**
+
+"Part of it moved, and it is not the part that applies to us most. The delay covers the heavy obligations for high-risk systems, such as hiring or credit decisions: those now start in December 2027. Our assistant is not in that category unless we let it make those decisions.
+
+Three things already apply. People must be told when they are talking to an AI, since August 2026. We must support AI literacy for staff who use these systems. And the model providers we buy from have had their own duties since August 2025, which is why we ask them for documentation.
+
+In India, the data protection rules become fully enforceable in May 2027. That includes telling customers what we collect, honouring erasure, and reporting a breach in detail within 72 hours. Those need design work now: where data is processed, what we log, and how we delete.
+
+So the work that continues is cheap and structural: know which system is in which risk class, keep personal data in region, keep an audit trail. The work that can wait is the formal conformity paperwork for systems we have not built."
+
+For the architect: keep a register that maps each use case to its risk class and data classes. The delay changes dates in that register, not its existence.

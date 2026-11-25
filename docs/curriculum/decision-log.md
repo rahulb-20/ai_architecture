@@ -712,3 +712,23 @@ Decision
 
 Consequences
 :   + One cost and reliability view across frameworks, a backend that can be swapped, and a compliance position that holds by default. Loops are bounded by design and detected by test. − We own an instrumentation module and Collector transforms, and must track spec changes until the conventions stabilise. Framework auto-instrumentation will not match our schema exactly, so some spans need mapping. Debugging without content is slower until the reference store and its access process exist.
+
+## Day 47 — [Revision Drill: Guardrails & Cloud Architectures](revision-drills/day-47-guardrails-and-cloud-architectures/README.md)
+
+Title
+:   Guardrails as a platform enforcement point with provenance-based taint
+
+Status
+:   Proposed · 2026-11-25
+
+Context
+:   Several teams are shipping agents that read outside content (email, web, uploads) and call tools. Each team has added its own detector library. Residency rules differ by tenant and data class, and model capacity is cheaper and larger on wider processing scopes. A guardrail library we depend on has just deprecated its policy language.
+
+Options
+:   (A) Each application embeds a guardrail library and its own rules. (B) A shared enforcement point in the gateway and orchestrator: classification and masking, residency routing by data class, provenance tagging of context, a tool gate with an egress allowlist and approval on tainted runs, and an output rail; detectors are pluggable inputs to it. (C) Rely on the cloud provider's managed guardrail service and network controls alone.
+
+Decision
+:   B. Policy lives in versioned data and code we own, keyed by tenant and data class. A run is tainted by the source of its context, not by a detector verdict. Authorisation, routing and egress rules fail closed; when no compliant deployment exists the request queues or is refused and never falls back to a wider scope. Detectors (Prompt Guard, managed services, Granite Guardian) are replaceable and are measured on our own adversarial set in CI.
+
+Consequences
+:   + One place to audit, one adversarial test set, and security properties that do not depend on a classifier's miss rate. Library or vendor changes touch a plug-in, not policy. Residency becomes a routing rule that also optimises cost. − The platform team owns a critical path component with its own latency budget and on-call. Tainted runs need an approval experience, and approval fatigue is a real risk if too many actions are held. Some requests will be refused for lack of compliant capacity, which needs a product answer. Applications lose the freedom to tune rules locally.
