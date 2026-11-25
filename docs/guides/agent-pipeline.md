@@ -31,6 +31,10 @@ In a Claude Code session on this repo:
 
 The run ends with an open pull request. Nothing is merged by an agent; the last step is yours.
 
+## Scheduled runs
+
+A scheduled task can run the pipeline unattended. It takes the first unchecked item in [`docs/backlog.md`](../backlog.md), does one item per run, and never starts a new one while a pipeline pull request is still open. Reorder or edit the backlog to steer it. It does not merge.
+
 ## What it does not do
 
 - It does not replace CI. The agents run the same four checks locally, and CI runs them again plus the container build.
