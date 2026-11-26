@@ -75,6 +75,7 @@ Offline copies of the original interactive packs are in [`archive/html/`](archiv
 | 44 | [Revision: K8s + CI/CD for GenAI](revision-drills/day-44-k8s-and-ci-cd-for-genai/README.md) | Drill + lab files |  |
 | 46 | [Revision Drill: Multi-Agent & GenAI Observability](revision-drills/day-46-multi-agent-and-genai-observability/README.md) | Lab (60 min): find the money in a multi-agent trace |  |
 | 47 | [Revision Drill: Guardrails & Cloud Architectures](revision-drills/day-47-guardrails-and-cloud-architectures/README.md) | Lab (60 min): build the enforcement point, then switch half of it off |  |
+| 48 | [Revision Drill: Security & Governance + Containerizing](revision-drills/day-48-security-governance-and-containerizing/README.md) | Lab (60 min): pass the review, then switch the controls off |  |
 
 ## Cross-day indexes
 

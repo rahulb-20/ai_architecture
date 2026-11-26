@@ -2084,3 +2084,107 @@ In India, the data protection rules become fully enforceable in May 2027. That i
 So the work that continues is cheap and structural: know which system is in which risk class, keep personal data in region, keep an audit trail. The work that can wait is the formal conformity paperwork for systems we have not built."
 
 For the architect: keep a register that maps each use case to its risk class and data classes. The delay changes dates in that register, not its existence.
+
+## Day 48 — [Revision Drill: Security & Governance + Containerizing](revision-drills/day-48-security-governance-and-containerizing/README.md)
+
+**Q1 The 2026 OWASP LLM Top 10 reordered the list. What changes in your architecture review checklist? (Day 28 · standards)**
+
+Three changes.
+
+1. **Excessive Agency is now third.** I review tool scopes and approval steps before I review output filtering. For each tool: whose identity it runs under, what the largest action is, and what a prompt-injected call could do.
+2. **Unbounded Consumption moved from tenth to sixth.** Cost and capacity limits become a security control with an owner: a per-tenant token budget, an output cap, a concurrency limit and a stream deadline, enforced at the gateway.
+3. **Improper Output Handling fell to tenth but did not go away.** Model output is still untrusted input to whatever consumes it: a browser, a SQL engine, an SSE parser.
+
+The titles also changed: System Prompt Leakage is gone and Hidden Context Exposure is new. My rule is unchanged by the name: nothing in the context window is secret from the user, so no credentials or authorisation rules live there.
+
+Trap: reciting ten titles. The interviewer wants the two or three design consequences.
+
+**Q2 Your platform runs LiteLLM as the model gateway. It was compromised twice this year. What do you change? (Day 28 + 24 · supply chain)**
+
+I separate "how did it get in" from "what did it hold".
+
+**Intake.** Pin the package by version and hash and the image by digest. Refuse anything younger than a few days unless security approves. Pull through an internal mirror so we have a copy and a record. Either rule alone would have kept us out of both incidents, because both bad releases were removed within about three hours.
+
+**Build.** Pin CI actions by commit SHA. The job that scans or tests has no publishing secrets. Release credentials are short-lived.
+
+**Blast radius.** The gateway holds every provider key, so I assume it will be compromised once. Keys are per provider and per environment, mounted at run time, with spend limits at the provider. Egress is an allowlist of provider endpoints. Logs hold no credentials.
+
+**Response.** An SBOM per image so "are we affected" takes minutes. A rehearsed rotation runbook, because both advisories said the same thing: rotate everything the host could reach.
+
+Then the honest part: hashes and signatures would not have flagged either release. The October build was signed by the real workflow. I would also ask whether we need a general-purpose gateway or a thin adapter for two providers.
+
+**Q3 A team lead says: "We sign our images and scan them, so supply chain is covered." Respond. (Day 24 · image trust)**
+
+Signing and scanning answer two narrow questions. A signature says which identity produced the image. A scan says which known CVEs are in it. Neither says the code is what we intended.
+
+What I add:
+
+- **Provenance checked at admission.** The cluster accepts only images built by our workflow, from our repository, on a protected branch. The October attacker ran the workflow against a lookalike repository; a check on the source repository would have caught that where the signature alone did not.
+- **Digests, not tags, in manifests.** Tags are pointers that someone can move.
+- **Controls on who can drive the pipeline.** Two-person approval for release, no long-lived maintainer tokens on laptops, alerts when branch protection changes.
+- **Treat the scanner as a dependency.** Pin it, and run it with no secrets it does not need. In March the scanner was the way in.
+
+One line for the lead: signing proves origin, scanning proves known flaws, and we still need to control what is allowed to move.
+
+**Q4 During every rolling deploy about 3% of chat streams are cut mid-answer. Diagnose and fix. (Day 24 · streaming)**
+
+A stream lasts 20 to 60 seconds. The pod is being killed while streams are open.
+
+Likely causes, in the order I would check them:
+
+1. **The app never gets the signal.** Shell-form `CMD` makes a shell PID 1, and it may not forward SIGTERM. Use the exec form.
+2. **Traffic still arrives after SIGTERM.** Kubernetes removes the pod from endpoints and sends SIGTERM at the same time, and the load balancer lags. Add a `preStop` sleep of a few seconds and fail readiness as soon as shutdown starts.
+3. **The grace period is shorter than a stream.** `terminationGracePeriodSeconds` defaults to 30. Set it above preStop plus the longest stream you allow, and set Uvicorn's `--timeout-graceful-shutdown` just below it.
+4. **A proxy times out or buffers.** Idle timeouts at the ingress cut quiet streams. Keep-alive comments fix that; FastAPI's native SSE sends one every 15 seconds.
+
+Then make the remaining cuts harmless: give each event an `id`, let the client reconnect with `Last-Event-ID`, and replay from a short buffer. Measure with a metric for streams that ended without a `done` event, split by cause.
+
+Trap: raising the grace period alone. Without the readiness change, new streams keep landing on a dying pod.
+
+**Q5 Where do provider API keys live at run time, and how do you rotate one without dropping traffic? (Day 28 · secrets)**
+
+Not in the image, not in a build argument, not in a plain environment variable in the manifest.
+
+In order of preference:
+
+1. **No key at all.** Workload identity to the cloud provider's model service (IAM role for Bedrock, managed identity for Azure, a service ID for watsonx). Nothing to steal that outlives the pod.
+2. **A vault, mounted as a file.** A CSI driver or agent writes the secret to a tmpfs path and refreshes it. The app reads the file on each use or on change, so rotation needs no restart.
+3. **Environment variables from a secret store** only when a library insists. They leak through crash dumps, debug endpoints and child processes, and they need a restart to change.
+
+Rotation without downtime means two valid keys for a while: create the new key, publish it, wait until every pod has picked it up, revoke the old one. The app must retry once on a 401 after re-reading the file. I rehearse this quarterly, because both LiteLLM advisories told every user to rotate everything, and a team that has never done it will take days.
+
+**Q6 Users in different departments share one RAG assistant. How do you guarantee nobody gets an answer built from a document they cannot open? (Day 28 · RBAC)**
+
+Authorisation happens at retrieval, with the user's identity, before the model sees anything.
+
+- **Identity reaches the retriever.** The API validates the token and passes the user's groups down. The retriever does not run as a service account that can see everything.
+- **Filter inside the search.** Each chunk carries ACL metadata from the source system, and the vector query filters on it. Filtering after top-k leaks through ranking and returns short result sets.
+- **ACLs go stale.** Permissions change in SharePoint before the index hears of it. I sync on change events, set a maximum staleness, and for sensitive collections re-check the top results against the source at query time.
+- **Caches are scoped.** A semantic cache keyed only on the question serves one user's answer to another. Key it on the permission scope, or do not cache restricted content.
+- **Test it.** A canary document only one test user may read, queried by another user in CI and in production.
+
+Trap: telling the model "only answer from documents the user may see". The model is not an access control system.
+
+**Q7 Design the audit log for an AI assistant. Compliance wants to prove who asked what. Security says stored prompts are a breach waiting to happen. (Day 28 · audit)**
+
+Both are right, so I split the record in two.
+
+**The audit record** is small and kept long: who, when, tenant, which model and prompt version, which documents were retrieved (IDs), which tools ran with what decision, token counts, and a hash of the prompt and of the response. No content and no credentials. It is append-only and tamper-evident: each record carries the hash of the previous one, and the chain head is anchored somewhere the application cannot write.
+
+**The content record** is optional per use case: encrypted with a key per tenant, in the tenant's region, short retention, access through a logged break-glass process. The hash in the audit record proves that a retrieved transcript is the one that was served.
+
+Never logged anywhere: Authorization headers, provider keys, tool credentials. Scrub them at the logging library, not by convention. The October incident is the argument: LiteLLM suspects the stolen tokens were read out of application logs.
+
+Erasure requests then touch the content store only; the audit trail keeps its integrity without holding personal data in the clear.
+
+**Q8 The steering committee asks why the team wants three sprints for "pipeline hardening" instead of features. Two minutes, no jargon. (Day 24 + 28 · stakeholder)**
+
+"Our assistant is built from parts we did not write, the same way a car maker buys brakes. This year a part that we and most of the industry use was tampered with twice at the supplier. For a few hours each time, anyone who took the newest delivery also took a copy of a thief's tool, and it sent their passwords out.
+
+We were not hit in March or in October. I would like that to be by design.
+
+The three sprints buy four things. We stop taking deliveries the day they are made and wait a few days, which is how long these attacks took to be found. We keep a parts list for everything we ship, so when the next warning comes we can say in minutes whether we are affected. We make sure the part that talks to the AI providers holds only the keys it needs and can only call those providers, so a thief who gets in finds little and cannot send it anywhere. And we practise changing all the keys, so it takes an hour.
+
+The cost of not doing it: both warnings told every affected company to change every password that system could reach. For us that is a week of outage-level work, plus a customer notification."
+
+For the architect: bring one number, the time to answer "are we affected" today. If it is days, the case makes itself.
