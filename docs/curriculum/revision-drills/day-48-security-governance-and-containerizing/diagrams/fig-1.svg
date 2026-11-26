@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 768 322" role="img" aria-labelledby="f1t f1d" font-family="Inter, Segoe UI, Arial, sans-serif">
+<title id="f1t">Four stages from dependency to runtime, the 2026 incident that entered at each, and the control that limits it</title>
+<desc id="f1d">Dependencies: LiteLLM 1.82.7 and 1.82.8 on PyPI, limited by lockfile, cooldown and mirror. CI pipeline: Trivy action tags repointed, limited by SHA pinning and keeping publish secrets out of scan jobs. Registry: LiteLLM image tags repointed in October, limited by deploying by digest with admission checks. Runtime: tokens read from logs, limited by metadata-only logs, egress allowlist and scoped secrets.</desc>
+<rect x="0" y="0" width="768" height="322" style="fill:#ffffff"/>
+<text x="20" y="22" font-size="11" font-weight="600" letter-spacing="0.8" style="fill:#a8480c">WHERE IT BROKE IN 2026</text>
+<text x="20" y="134" font-size="11" font-weight="600" letter-spacing="0.8" style="fill:#5b6876">STAGE</text>
+<text x="20" y="208" font-size="11" font-weight="600" letter-spacing="0.8" style="fill:#0b6e69">CONTROL THAT LIMITS IT</text>
+<g font-size="12">
+<g>
+<rect x="20" y="30" width="170" height="80" rx="4" style="fill:#fdf0e4;stroke:#a8480c" stroke-dasharray="4 3"/>
+<text x="32" y="52" font-weight="600" style="fill:#17212b">LiteLLM on PyPI, 24 Mar</text>
+<text x="32" y="72" style="fill:#17212b">1.82.7 and 1.82.8 carried</text>
+<text x="32" y="90" style="fill:#17212b">a stealer for about 3 hours</text>
+<rect x="20" y="142" width="170" height="42" rx="4" style="fill:#eef2f6;stroke:#c3ccd6"/>
+<text x="105" y="168" text-anchor="middle" font-size="13" font-weight="600" style="fill:#17212b">Dependencies</text>
+<rect x="20" y="216" width="170" height="92" rx="4" style="fill:#e3f3f1;stroke:#0b6e69"/>
+<text x="32" y="240" style="fill:#17212b">Lockfile with hashes</text>
+<text x="32" y="262" style="fill:#17212b">Cooldown on new releases</text>
+<text x="32" y="284" style="fill:#17212b">Internal mirror</text>
+</g>
+<g>
+<rect x="206" y="30" width="170" height="80" rx="4" style="fill:#fdf0e4;stroke:#a8480c" stroke-dasharray="4 3"/>
+<text x="218" y="52" font-weight="600" style="fill:#17212b">Trivy action, 19 Mar</text>
+<text x="218" y="72" style="fill:#17212b">76 of 77 tags repointed,</text>
+<text x="218" y="90" style="fill:#17212b">runner secrets dumped</text>
+<rect x="206" y="142" width="170" height="42" rx="4" style="fill:#eef2f6;stroke:#c3ccd6"/>
+<text x="291" y="168" text-anchor="middle" font-size="13" font-weight="600" style="fill:#17212b">CI pipeline</text>
+<rect x="206" y="216" width="170" height="92" rx="4" style="fill:#e3f3f1;stroke:#0b6e69"/>
+<text x="218" y="240" style="fill:#17212b">Actions pinned by SHA</text>
+<text x="218" y="262" style="fill:#17212b">No publish secrets in</text>
+<text x="218" y="278" style="fill:#17212b">scan or test jobs</text>
+<text x="218" y="298" style="fill:#17212b">Short-lived tokens</text>
+</g>
+<g>
+<rect x="392" y="30" width="170" height="80" rx="4" style="fill:#fdf0e4;stroke:#a8480c" stroke-dasharray="4 3"/>
+<text x="404" y="52" font-weight="600" style="fill:#17212b">LiteLLM images, 21 Oct</text>
+<text x="404" y="72" style="fill:#17212b">latest and main-stable</text>
+<text x="404" y="90" style="fill:#17212b">repointed, and signed</text>
+<rect x="392" y="142" width="170" height="42" rx="4" style="fill:#eef2f6;stroke:#c3ccd6"/>
+<text x="477" y="168" text-anchor="middle" font-size="13" font-weight="600" style="fill:#17212b">Registry</text>
+<rect x="392" y="216" width="170" height="92" rx="4" style="fill:#e3f3f1;stroke:#0b6e69"/>
+<text x="404" y="240" style="fill:#17212b">Deploy by digest</text>
+<text x="404" y="262" style="fill:#17212b">Admission checks signer</text>
+<text x="404" y="278" style="fill:#17212b">identity and provenance</text>
+<text x="404" y="298" style="fill:#17212b">Promote after a soak</text>
+</g>
+<g>
+<rect x="578" y="30" width="170" height="80" rx="4" style="fill:#fdf0e4;stroke:#a8480c" stroke-dasharray="4 3"/>
+<text x="590" y="52" font-weight="600" style="fill:#17212b">Tokens read from logs</text>
+<text x="590" y="72" style="fill:#17212b">of an exposed internal</text>
+<text x="590" y="90" style="fill:#17212b">deployment (suspected)</text>
+<rect x="578" y="142" width="170" height="42" rx="4" style="fill:#eef2f6;stroke:#c3ccd6"/>
+<text x="663" y="168" text-anchor="middle" font-size="13" font-weight="600" style="fill:#17212b">Runtime</text>
+<rect x="578" y="216" width="170" height="92" rx="4" style="fill:#e3f3f1;stroke:#0b6e69"/>
+<text x="590" y="240" style="fill:#17212b">Metadata-only logs</text>
+<text x="590" y="262" style="fill:#17212b">Egress allowlist</text>
+<text x="590" y="284" style="fill:#17212b">Mounted, scoped secrets</text>
+</g>
+</g>
+<g style="stroke:#5b6876;fill:#5b6876" stroke-width="1.5">
+<line x1="190" y1="163" x2="200" y2="163"/><path d="M206 163 l-7 -4 v8 z" stroke="none"/>
+<line x1="376" y1="163" x2="386" y2="163"/><path d="M392 163 l-7 -4 v8 z" stroke="none"/>
+<line x1="562" y1="163" x2="572" y2="163"/><path d="M578 163 l-7 -4 v8 z" stroke="none"/>
+</g>
+</svg>

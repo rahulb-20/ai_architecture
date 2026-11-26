@@ -732,3 +732,23 @@ Decision
 
 Consequences
 :   + One place to audit, one adversarial test set, and security properties that do not depend on a classifier's miss rate. Library or vendor changes touch a plug-in, not policy. Residency becomes a routing rule that also optimises cost. − The platform team owns a critical path component with its own latency budget and on-call. Tainted runs need an approval experience, and approval fatigue is a real risk if too many actions are held. Some requests will be refused for lack of compliant capacity, which needs a product answer. Applications lose the freedom to tune rules locally.
+
+## Day 48 — [Revision Drill: Security & Governance + Containerizing](revision-drills/day-48-security-governance-and-containerizing/README.md)
+
+Title
+:   Intake policy for third-party code and images in GenAI services
+
+Status
+:   Proposed · 2026-11-26
+
+Context
+:   Our services depend on fast-moving open-source AI libraries and on public base images. In 2026 a widely used gateway library shipped malicious releases twice, and a widely used scanner action was repointed to malicious code. Each bad artifact was withdrawn within hours. Teams currently install the latest versions at build time and deploy images by tag.
+
+Options
+:   (A) Keep tracking latest and rely on vulnerability scanning in CI. (B) Controlled intake: lockfiles with hashes, a cooldown on new releases, an internal mirror, CI actions pinned by SHA, images deployed by digest, provenance verified at admission, and a daily bot that proposes updates. (C) Vendor or fork critical dependencies and build everything from reviewed source in an isolated environment.
+
+Decision
+:   B for all services, with C reserved for the model gateway if a second review shows we use a small part of it. The cooldown is three days by default and security can waive it for an urgent fix. Scan and test jobs carry no publishing or cloud credentials.
+
+Consequences
+:   + Short-lived malicious releases do not reach builds, and a moved tag cannot change what runs. We can answer "are we affected" from SBOMs in minutes. Updates become small, reviewed changes. − Fixes arrive up to three days later unless waived, and someone owns the waiver process. The mirror and admission policy are new platform components with their own availability needs. None of this detects a malicious release that stays hidden for longer than the cooldown, so egress limits and scoped keys remain necessary.
