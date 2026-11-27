@@ -752,3 +752,23 @@ Decision
 
 Consequences
 :   + Short-lived malicious releases do not reach builds, and a moved tag cannot change what runs. We can answer "are we affected" from SBOMs in minutes. Updates become small, reviewed changes. − Fixes arrive up to three days later unless waived, and someone owns the waiver process. The mirror and admission policy are new platform components with their own availability needs. None of this detects a malicious release that stays hidden for longer than the cooldown, so egress limits and scoped keys remain necessary.
+
+## Day 49 — [Revision Drill: Tool Calling & LangChain Core](revision-drills/day-49-tool-calling-and-langchain-core/README.md)
+
+Title
+:   Retries and idempotency for agent tool calls
+
+Status
+:   Proposed · 2026-11-27
+
+Context
+:   Our agents call back-end tools that write: refunds, emails, ticket updates. Tool calls time out, and some timeouts happen after the write. Today the model sees the error and decides whether to call again. We have had duplicate writes, and our eval counts a run as passed when the agent finishes.
+
+Options
+:   (A) Leave retries to the model and tell it in the prompt not to repeat writes. (B) A tool contract registry declares each tool's effect class. The executor owns timeouts and retries. Every write carries an idempotency key derived from task, tool and arguments, and back ends deduplicate on it. (C) Run every multi-step write flow in a durable workflow engine with compensation steps, and let the agent only choose which workflow to start.
+
+Decision
+:   B for all agent tools. C for flows that move money across more than one system, where partial completion needs compensation. Retries apply to reads and keyed writes only. When retries run out on a write, the result is "unknown" and goes to reconciliation. The eval definition of success changes to: finished, and no duplicate or orphaned write.
+
+Consequences
+:   + a lost reply no longer causes a second write. Retry behaviour is the same for every model and provider, so failover does not change it. The contract table becomes a reviewable LLD artifact. − every back end that accepts writes must store keys for the task-resume window, and some need changes to do it. Tools that cannot be made idempotent stay behind human approval. The registry is a new thing to own. Not solved: a valid call with the wrong meaning. That stays with outcome evals and approvals.

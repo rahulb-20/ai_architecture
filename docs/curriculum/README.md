@@ -76,6 +76,7 @@ Offline copies of the original interactive packs are in [`archive/html/`](archiv
 | 46 | [Revision Drill: Multi-Agent & GenAI Observability](revision-drills/day-46-multi-agent-and-genai-observability/README.md) | Lab (60 min): find the money in a multi-agent trace |  |
 | 47 | [Revision Drill: Guardrails & Cloud Architectures](revision-drills/day-47-guardrails-and-cloud-architectures/README.md) | Lab (60 min): build the enforcement point, then switch half of it off |  |
 | 48 | [Revision Drill: Security & Governance + Containerizing](revision-drills/day-48-security-governance-and-containerizing/README.md) | Lab (60 min): pass the review, then switch the controls off |  |
+| 49 | [Revision Drill: Tool Calling & LangChain Core](revision-drills/day-49-tool-calling-and-langchain-core/README.md) | Lab (60–75 min): measure retries and duplicate writes, then build the loop |  |
 
 ## Cross-day indexes
 

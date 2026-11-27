@@ -2188,3 +2188,116 @@ The three sprints buy four things. We stop taking deliveries the day they are ma
 The cost of not doing it: both warnings told every affected company to change every password that system could reach. For us that is a week of outage-level work, plus a customer notification."
 
 For the architect: bring one number, the time to answer "are we affected" today. If it is days, the case makes itself.
+
+## Day 49 — [Revision Drill: Tool Calling & LangChain Core](revision-drills/day-49-tool-calling-and-langchain-core/README.md)
+
+**Q1 Strict mode is on everywhere and tool calls still fail in production. What does strict guarantee, and what does it leave to you? (Day 16 · contracts)**
+
+Strict mode guarantees shape. Anthropic states it as: the tool input follows the input schema and the tool name is valid. OpenAI states that calls adhere to the function schema instead of being best effort.
+
+It leaves four things to me.
+
+1. **Meaning.** `order_id: "ORD-10423"` is valid and wrong if the customer said 10422. No schema catches that. Outcome evals and approvals do.
+2. **Business rules.** A schema can cap an amount at 500. It cannot know this customer already had a refund. The back end must check.
+3. **Coverage gaps.** Strict uses a subset of JSON Schema. On Anthropic it cannot be combined with programmatic tool calling. OpenAI notes that for fine-tuned models strict is disabled when several functions are called in one turn. Ollama's docs describe no enforcement at all.
+4. **Trust.** A constrained model is still an untrusted caller. The server validates every call again, because the request may not have come from the model I think it did.
+
+So the design rule is: strict decoding lowers the repair rate, and server-side validation is what makes the call safe. In the lab, turning strict on moves pass^1 from 0.83 to 0.87. The remaining failures are wrong-meaning calls and tool faults.
+
+**Q2 The agent retried a payment call that timed out and the customer was refunded twice. Fix the design. (Day 16 · side effects)**
+
+The timeout was ambiguous. The write happened and the reply was lost. A retry without identity is a second write.
+
+- **Classify every tool** in the contract: read, idempotent write, non-idempotent write, irreversible. Retry policy follows the class.
+- **Idempotency key on every write.** Derive it from the task id, the tool name and the logical arguments, so each retry of the same call carries the same key. A random key per attempt protects nothing.
+- **The back end deduplicates.** It stores key and result, and returns the first result on a repeat. Only the system of record can do this. The orchestrator cannot.
+- **The executor owns retries.** The model never sees "timeout, try again?" for a write. If it did, it may reissue the call with slightly different arguments, which defeats the key.
+- **When retries run out, report unknown.** The agent says "I could not confirm the refund" and a reconciliation job resolves it. It does not say "failed".
+
+Lab numbers: adding repair and retries without keys lifts the pass rate and produces 87 duplicate writes per 1,000 runs. Adding keys takes that to zero.
+
+**Q3 The assistant has 60 tools. Tool-selection accuracy is falling and cost per task is rising. What are the options? (Day 16 · catalogue size)**
+
+Every turn pays for every definition, and both OpenAI and Google now recommend an active set of roughly 20 or fewer.
+
+| Option | When it fits | New failure mode |
+|---|---|---|
+| Route first, then bind 5 to 10 tools for that intent | Intents are few and stable | Misroute means the right tool is not there |
+| Provider tool search with deferred loading | Large or changing catalogue, single provider | Search miss. On Anthropic a deferred tool cannot carry `cache_control` |
+| LLM tool selector before the main call | You need it to be provider-neutral | One more model call per turn |
+| Sub-agents that each own a tool group | Domains are separable | Handoff loss, more turns |
+| Fewer, coarser tools | The 60 are thin wrappers over a few APIs | Bigger arguments, harder schemas |
+| Prompt caching of the tool prefix | Catalogue is stable within a session | Any change to the tool list invalidates the cache |
+
+I would start with the cheapest pair: cache the prefix and route by intent. In part C of the lab, with illustrative prices, caching the 60 definitions cuts cost per task to about a third, and loading only 6 definitions with caching takes it to about 18%. I would add a metric before changing anything: tool recall, meaning how often the tool the task needed was in the active set.
+
+**Q4 When do you allow parallel tool calls and when do you switch them off? (Day 16 · latency)**
+
+Allow them for independent reads. Three lookups in one turn save two model turns. In part C the p95 budget goes from 22.8 s sequential to 16.2 s with three reads in parallel, which is the difference between missing and meeting a 20 s target.
+
+Switch them off, or serialise in the executor, when:
+
+- calls are writes with an order dependency (create the refund, then email the receipt number);
+- two calls touch the same record;
+- an approval step sits between them.
+
+Mechanics: OpenAI's `parallel_tool_calls: false` gives zero or one call per turn. Anthropic has `disable_parallel_tool_use`. Each call has its own id and every result must come back in the next turn, including failures. Plan for partial failure: two reads succeed and one times out. The executor returns two results and one typed error. It does not fail the batch.
+
+One more control: even with parallel calls allowed, the executor caps concurrency per back end so one model turn cannot open 15 connections to the same API.
+
+**Q5 You abstract providers behind LangChain. Where does the abstraction leak, and can you fail over to another provider in the middle of a task? (Day 15 + 16 · multi-provider)**
+
+It holds for the common path: `bind_tools`, tool-call dicts on `AIMessage`, `ToolMessage` results, and `content_blocks` for text, reasoning and tool calls on the five integrations that support it.
+
+It leaks in four places.
+
+1. **Strict semantics differ.** Different schema subsets, different behaviour with parallel calls. I write tool schemas to the intersection and test each provider.
+2. **Reasoning state is provider-specific.** OpenAI reasoning items and Gemini thought signatures must be returned as received. A transcript that contains them cannot be replayed to another vendor as is.
+3. **Provider-side tools** such as tool search and code execution do not exist on the other side.
+4. **Prompts are tuned per model.** A fallback model with the primary's prompt is an untested system.
+
+So failover happens at a task or checkpoint boundary. I keep a canonical transcript (user turns, tool calls, tool results, no vendor reasoning blocks) and replay it to the fallback. Writes already made are safe because of idempotency keys. `with_fallbacks` or `ModelFallbackMiddleware` is fine for a single call. For a multi-turn task I want the gateway or orchestrator to make the decision, and I narrow the exceptions that trigger it. The fallback has its own eval run in CI.
+
+**Q6 LCEL, LangGraph or `create_agent`: what do you use for what, and what do you avoid? (Day 15 · framework choice)**
+
+- **LCEL pipe** for a fixed, linear path: prompt, model, parser, or retrieve then answer. You get streaming, batch and async for free. I avoid encoding branching and loops in it. Once there is a cycle or shared state, it is the wrong tool.
+- **`create_agent` with middleware** for a standard tool loop. Limits, retries, approvals and PII handling are configuration I can review in one place.
+- **LangGraph directly** when the control flow is the product: explicit states, checkpoints, human approval that resumes after hours, different retry rules for different nodes.
+- **Plain Python** for a single call with a schema. A framework adds nothing there.
+
+What I avoid: anything from `langchain-classic` in new code, default-width `with_retry` and `with_fallbacks`, and letting framework types cross into the domain layer. In a hexagonal design the framework sits in an adapter behind a port. LangChain shipped `langchain` 1.5.2 nine days ago and `langchain-core` 1.8.5 two days ago, so I pin exact versions, upgrade on a schedule, and keep the offline eval gate as the upgrade test.
+
+**Q7 The product owner asks for "a 99% reliable agent". Turn that into requirements you can test. (Day 16 · NFRs)**
+
+First I fix the unit and the definition. The unit is a task. Success means the outcome was verified in the system of record with no duplicate write. A reply that sounds right does not count.
+
+Then the maths. Per-task success is the product of per-step success. A 95% task target over six tool calls needs 99.15% per call. A 99% call gives 94.1% per task and a 97% call gives 83.3%. So 99% per task over six calls needs about 99.83% per call, which I would not sign without measured evidence.
+
+Then consistency. The tau-bench paper measured pass^k, the chance that k runs of the same task all succeed. Its abstract reports gpt-4o succeeding on under 50% of tasks, with pass^8 under 25% in the retail domain. In the lab the best configuration has pass^1 of 0.87 and pass^8 of 0.44. A user who repeats a task daily experiences something closer to pass^k.
+
+The NFR table I would write:
+
+| SLI | Target | Measured by |
+|---|---|---|
+| Verified task success, 28 days | at least 95% | Outcome check against the system of record |
+| Duplicate writes | 0 | Back-end dedupe hits versus ledger |
+| Schema-invalid tool calls | under 1% of calls | Executor counter |
+| End-to-end p95 | at most 20 s | Trace root span |
+| Cost per task | at most the agreed figure | Token usage per trace |
+| pass^4 on the golden set | at least 0.6, tracked per release | CI eval, 4 trials per case |
+
+With 6,000 tasks a day, a 95% target is an error budget of 8,400 failed tasks per 28 days. The budget policy says what stops when it is spent, for example write tools go behind approval.
+
+**Q8 The CFO asks why the agent costs three times the estimate. Two minutes, no jargon. (Day 16 · stakeholder)**
+
+"The estimate assumed one question and one answer. The agent works in steps. For a refund it looks up the order, the customer and the policy, makes the refund, sends the email and updates the ticket. That is six steps and a summary.
+
+At every step it re-reads everything: its instructions, the conversation so far, and the manual for every tool it has. We gave it 60 tools. So for each refund it reads the full manual seven times, and we pay by the word.
+
+Two changes fix most of it. First, we hand it only the six pages of the manual this job needs. Second, the provider gives a large discount for text it has already read in the same session, and we were not using it. On our model those two together bring the cost to about a fifth of today's.
+
+There is a third cost, retries. When a step fails the agent tries again, and each try is another full read. We now count those and cap them.
+
+What I need from you is agreement on a cost per completed refund, so we manage to that number and not to a monthly invoice."
+
+For the architect: bring cost per task split into definitions, context, output and retries. The split shows which lever to pull.
