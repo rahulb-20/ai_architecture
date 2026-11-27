@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 780 300" role="img" aria-label="One tool call passes five control points between the model and the back end" font-family="Inter, system-ui, sans-serif">
+  <defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#566173"/></marker></defs>
+  <rect x="0" y="0" width="780" height="300" fill="#ffffff"/>
+  <g font-size="13" font-weight="600" fill="#18202c" text-anchor="middle">
+    <rect x="12" y="50" width="128" height="62" rx="6" fill="#f3f5f9" stroke="#c5ccd8"/><text x="76" y="78">Model turn</text>
+    <rect x="170" y="50" width="128" height="62" rx="6" fill="#f3f5f9" stroke="#c5ccd8"/><text x="234" y="78">Validate</text>
+    <rect x="328" y="50" width="128" height="62" rx="6" fill="#f3f5f9" stroke="#1d5bb8" stroke-width="2"/><text x="392" y="78">Executor</text>
+    <rect x="486" y="50" width="128" height="62" rx="6" fill="#f3f5f9" stroke="#c5ccd8"/><text x="550" y="78">Back end</text>
+    <rect x="644" y="50" width="124" height="62" rx="6" fill="#f3f5f9" stroke="#c5ccd8"/><text x="706" y="78">Shape result</text>
+  </g>
+  <g font-size="11" fill="#566173" text-anchor="middle">
+    <text x="76" y="96">emits name + args</text>
+    <text x="234" y="96">schema, authz</text>
+    <text x="392" y="96">timeout, retry, key</text>
+    <text x="550" y="96">dedupes by key</text>
+    <text x="706" y="96">trim, type errors</text>
+  </g>
+  <g stroke="#566173" stroke-width="1.5" fill="none" marker-end="url(#ah)">
+    <path d="M140 81H168"/><path d="M298 81H326"/><path d="M456 81H484"/><path d="M614 81H642"/>
+    <path d="M706 112V150H76V114"/>
+    <path d="M234 50V22H76V48" stroke-dasharray="4 3"/>
+  </g>
+  <text x="155" y="16" font-size="11" fill="#566173" text-anchor="middle">invalid args: error back to the model</text>
+  <text x="392" y="168" font-size="11" fill="#566173" text-anchor="middle">result or typed error becomes the next turn's input</text>
+  <g font-size="11" fill="#18202c">
+    <text x="12" y="204" font-weight="600">What each point stops</text>
+    <text x="12" y="226">Validate</text><text x="110" y="226" fill="#566173">malformed arguments, calls the user is not allowed to make. Strict decoding moves this left into the model.</text>
+    <text x="12" y="246">Executor</text><text x="110" y="246" fill="#566173">hung calls, transient failures. It owns retries, so the model never decides to repeat a write.</text>
+    <text x="12" y="266">Back end</text><text x="110" y="266" fill="#566173">duplicate writes when a reply is lost. Only the system of record can do this.</text>
+    <text x="12" y="286">Nothing</text><text x="110" y="286" fill="#566173">a valid call with the wrong meaning (right shape, wrong order id). Evals and approvals cover that.</text>
+  </g>
+</svg>
