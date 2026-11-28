@@ -77,6 +77,7 @@ Offline copies of the original interactive packs are in [`archive/html/`](archiv
 | 47 | [Revision Drill: Guardrails & Cloud Architectures](revision-drills/day-47-guardrails-and-cloud-architectures/README.md) | Lab (60 min): build the enforcement point, then switch half of it off |  |
 | 48 | [Revision Drill: Security & Governance + Containerizing](revision-drills/day-48-security-governance-and-containerizing/README.md) | Lab (60 min): pass the review, then switch the controls off |  |
 | 49 | [Revision Drill: Tool Calling & LangChain Core](revision-drills/day-49-tool-calling-and-langchain-core/README.md) | Lab (60–75 min): measure retries and duplicate writes, then build the loop |  |
+| 50 | [Revision Drill: LangGraph State & Architect Deliverables](revision-drills/day-50-langgraph-state-and-architect-deliverables/README.md) | Lab (60–75 min): kill a run, resume it, then price the DR tier |  |
 
 ## Cross-day indexes
 
