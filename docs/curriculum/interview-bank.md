@@ -2301,3 +2301,121 @@ There is a third cost, retries. When a step fails the agent tries again, and eac
 What I need from you is agreement on a cost per completed refund, so we manage to that number and not to a monthly invoice."
 
 For the architect: bring cost per task split into definitions, context, output and retries. The split shows which lever to pull.
+
+## Day 50 — [Revision Drill: LangGraph State & Architect Deliverables](revision-drills/day-50-langgraph-state-and-architect-deliverables/README.md)
+
+**Q1 Three retrievers run in parallel and the graph throws InvalidUpdateError in production. It passed every test. Why, and what is the design rule? (Day 17 · state)**
+
+Nodes scheduled in the same super-step run in parallel and their writes are applied together at the end of the step. A plain state key holds a last-value channel that accepts one write per step. The tests ran with one source enabled, so there was one writer. Production enabled three.
+
+The rule: any key that more than one node can write in the same step needs a reducer, declared in the schema as `Annotated[list[str], operator.add]` or a custom function. Three things follow.
+
+1. **Do not depend on arrival order.** Parallel results merge in an order you should treat as arbitrary. If order matters, write `(rank, item)` and sort in the next node.
+2. **Reducers must be deterministic.** A resume replays writes through the reducer. A reducer that calls the clock or a random source gives a different state after recovery.
+3. **Design for a partial step.** If one branch fails, the step fails. The checkpointer keeps the writes of the branches that finished (that is what the `writes` table is for), so a resume does not run them again. The failed branch does run again, from its first line.
+
+In the review I show the state schema as a table: key, type, reducer, which nodes write it. A key with two writers and no reducer is a defect you can find on paper.
+
+**Q2 Which durability mode do you choose, and what does each one cost? (Day 17 · durability)**
+
+I choose per run, by what the run does.
+
+| Mode | When it persists | Killed mid-run in the lab | Use it for |
+|---|---|---|---|
+| `exit` | Once, when the graph exits | Nothing saved. All 4 completed steps ran again | Short read-only requests where a retry from the client is acceptable |
+| `async` (default) | In the background while the next step runs | Resumed at the killed node, 1 step re-ran | Most interactive work |
+| `sync` | Before the next step starts | Resumed at the killed node, 1 step re-ran | Steps before an irreversible write, human approval, anything audited |
+
+The costs. `exit` wrote 1 checkpoint for a 5-step run where the other two wrote 7, so it is the cheapest on storage and gives up mid-run recovery and time travel. `sync` adds a database write to every step's latency. On a local SQLite file that is lost in the noise. On a network Postgres it is a round trip per step, so measure it. `async` has a window: if the process dies while a checkpoint is still being written, the step it describes runs again.
+
+The part people miss is that the idempotency column mattered more than the mode column. Under `sync` the lab still filed two tickets, because the node was killed after its write and before its return. Durability decides how much work you redo. Idempotency keys decide whether redoing it is safe. Put one side effect in one node, and key it.
+
+**Q3 Product wants token streaming from an agent that contains subgraphs, behind the API gateway. What do you stream, and what breaks? (Day 17 · streaming)**
+
+Three kinds of events, because they serve three needs. `messages` for tokens, which is what makes time to first token short. `updates` for step boundaries, so the UI can show "searching policy wiki". `custom` for progress inside a long node, written with `get_stream_writer()`. I ask for `version="v2"` so every chunk has the same shape, `type`, `ns`, `data`, and the gateway code does not branch on which modes are on. I set `subgraphs=True`, because without it the parent's `messages` stream carries no tokens from a nested agent.
+
+In the lab the first event arrived after 0.15 s and the answer after 0.76 s. That gap is the argument for two SLOs: p95 time to first event, and p95 time to final answer.
+
+What breaks:
+
+- **Buffering.** A proxy or gateway that buffers responses turns a stream into one late blob. Test through the real ingress path.
+- **Idle timeouts.** A node that thinks for 40 seconds emits nothing. Send progress events or heartbeats.
+- **Output guardrails.** You cannot take back a token the user has read. Either check in windows and accept a short delay, or stream only the final node and check before it starts.
+- **Reconnects.** The stream is not the record. The checkpoint is. A client that drops reconnects with the thread ID and reads the current state.
+- **Cost attribution.** Stream events are not usage records. Take token counts from the model response metadata in the trace.
+
+**Q4 The checkpoint database is growing far faster than the conversations. Explain it and fix it. (Day 17 · state growth)**
+
+A plain reducer channel stores its whole value in every checkpoint, and there is a checkpoint for every super-step. A list that grows by a fixed amount per turn therefore costs storage that grows with the square of the turn count. In the lab a 20-turn thread held 36 KB of live state and 1,530 KB of history across 80 checkpoints, which is 42 times the state.
+
+Fixes, cheapest first:
+
+1. **Keep less in state.** Store document IDs and offsets, not retrieved passages. The lab's state is mostly retrieved text. This also reduces what you have to protect and delete.
+2. **Set retention.** Prune to the latest checkpoint once a thread is idle, and delete threads when the retention period ends. In the lab pruning took the thread to 36.8 KB. `PostgresSaver` has `prune` and `delete_thread`. For SQLite I wrote the SQL.
+3. **Choose `exit` for runs that do not need mid-run recovery.** One checkpoint per run.
+4. **`DeltaChannel`.** 98 KB against 1,530 KB in the lab. It is beta, and pruning a thread that uses it needs care. I would trial it and not put it in a regulated workload yet.
+
+What you give up with pruning is time travel and the step-by-step record. If audit needs that record, it belongs in the trace store with its own retention, not in the operational database.
+
+At 50k employees the lab's model puts 30 days of threads at about 70 GB with everything kept, 15 GB with `DeltaChannel` and 6 GB pruned, on the stated assumptions. The byte count is small. What matters is that every byte is replicated, backed up, and in scope for a deletion request.
+
+**Q5 The sponsor asks for 99.9% availability. What do you say? (Day 29 · NFRs)**
+
+I ask what "available" means, then I do the multiplication in front of them.
+
+A request passes through the gateway, the agent service, the checkpoint database, vector search and the model endpoint. With 99.95% on the first three and 99.9% on the last two, the product is 99.65%. That is 151 minutes down in 30 days. 99.9% allows 43. Adding a second model route lifts it to 99.75%, 108 minutes. So the target is not reachable by buying a better SLA on one component.
+
+Three ways to close the gap, and I price each:
+
+- **Redundancy on every serial dependency**, which is a multi-zone or multi-region design.
+- **Degraded modes that count as available.** If vector search is down, answer from cache or say "search is unavailable, here is what I can do". If the checkpoint database is down, serve stateless single-turn answers. This needs the sponsor to agree what a degraded success is.
+- **Narrow the promise.** 99.9% for chat answers in business hours, 99.5% for agent actions that write.
+
+Two cautions I state out loud. SLAs are refund terms, not forecasts, and failures are correlated, so the product is an optimistic bound. And the SLI must be defined on outcomes: a 200 response with an ungrounded answer is not a success.
+
+**Q6 Define RTO and RPO for an agent platform. Which data set is the hard one? (Day 29 · DR)**
+
+RTO is how long until users are served again. RPO is how much recent data you accept losing. For an agent platform there is no single pair. I give one per data set, as in the table above.
+
+- Code, prompts and tool contracts: RPO zero, because Git is the source of truth. RTO is pipeline time.
+- Threads and memory: RPO equals replication lag. This is the true state.
+- Vector index: it is derived, so RPO is not the question. Rebuild time is. Re-embedding a large corpus can take hours, so either replicate the index or write the rebuild time into the RTO.
+- Audit and traces: usually the tightest RPO, because you need them to explain the incident.
+- Model capacity: not data, and the most common surprise. If region B has no quota for the model, or the fine-tuned model is not deployed there, the standby cannot answer.
+
+The hard one is runs in flight. After failover they resume from the last replicated checkpoint, which may be older than the last tool call. Every write tool they already called is called again. So the DR design depends on the idempotency design from Q2.
+
+On managed services: Microsoft's Foundry page says the service "doesn't provide automatic failover or disaster recovery", and that thread history depends on Cosmos DB, AI Search and Storage that you configure. Bedrock cross-Region inference spreads inference across Regions for capacity. You still call it from your source Region and your state stays where you put it, so I do not count it as DR.
+
+**Q7 Finance wants to cut the warm-standby line. Defend it or drop it. (Day 29 · cost and decisions)**
+
+I run the numbers first, and with the lab's assumptions they do not defend it on expected loss.
+
+| Tier | Standby cost a year | Expected outage loss a year | Total |
+|---|---|---|---|
+| Backup and restore | 12,000 | 17,820 | 29,820 |
+| Pilot light | 36,000 | 5,940 | 41,940 |
+| Warm standby | 108,000 | 1,485 | 109,485 |
+| Active/active | 240,000 | 99 | 240,099 |
+
+One regional event every three years at 9,000 an hour does not pay for a 108,000 standby. Warm standby beats backup and restore only when an hour of outage costs about 53,000 or more.
+
+So the standby is paid for by the requirement, RTO 60 minutes and RPO 15, not by the arithmetic. That changes the conversation. I take three options back to whoever owns the requirement:
+
+1. Keep the requirement and the cost, and record that the requirement is the cost driver.
+2. Relax RTO to 2 hours. Pilot light then meets it at about 42,000.
+3. Keep RTO 60 for read-only chat through a stateless degraded mode in region B, and accept 2 hours for agent actions.
+
+Then I write the ADR. Expected loss is not the only input: a regulator, a contract or a reputational risk can justify the standby. But that reason should be written down by the person who owns it, not assumed by the architect.
+
+**Q8 Explain to a non-technical sponsor what a user sees when the region fails mid-conversation. Two minutes. (Day 29 · stakeholder)**
+
+"Think of the assistant as a clerk who writes each step in a notebook as they go. We keep a copy of that notebook in a second office, and the copy is a few minutes behind.
+
+If the first office goes dark, the clerk in the second office picks up the copy. A user who was chatting sees a pause of up to half an hour while we switch. When they come back, the conversation is there, but the last few minutes may be missing, so they might need to repeat their last question.
+
+If the assistant was in the middle of doing something, like raising a ticket, the second clerk starts that step again. We have built the ticket system so that asking twice creates one ticket, not two.
+
+There are two numbers to agree. How long the pause can be, and how many minutes of conversation we can afford to lose. Shorter and fewer both cost more, because we keep more of the second office running all the time. With today's choices that is 30 minutes and 5 minutes. I can show you what 2 hours or 2 minutes would cost."
+
+For the architect: the two numbers are RTO and RPO, and you never needed to say either.

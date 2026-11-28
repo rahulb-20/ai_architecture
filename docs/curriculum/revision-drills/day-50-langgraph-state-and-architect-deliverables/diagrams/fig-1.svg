@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 780 336" role="img" aria-label="A five-step run is killed inside file_ticket. Exit durability reruns four steps, async and sync rerun one. Across regions, replication lag is the RPO." font-family="IBM Plex Sans, system-ui, sans-serif">
+  <defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#566273"/></marker></defs>
+  <rect x="0" y="0" width="780" height="336" fill="#ffffff"/>
+  <text x="12" y="20" font-size="12" fill="#566273">One request, five steps, one process</text>
+  <g font-size="13" font-weight="600" fill="#17202b" text-anchor="middle">
+    <rect x="12" y="32" width="140" height="46" rx="6" fill="#f6f7f9" stroke="#dde2ea"/><text x="82" y="60">classify</text>
+    <rect x="166" y="32" width="140" height="46" rx="6" fill="#f6f7f9" stroke="#dde2ea"/><text x="236" y="60">lookup_user</text>
+    <rect x="320" y="32" width="140" height="46" rx="6" fill="#f6f7f9" stroke="#dde2ea"/><text x="390" y="60">check_policy</text>
+    <rect x="474" y="32" width="140" height="46" rx="6" fill="#fff3e0" stroke="#a15c00" stroke-width="2"/><text x="544" y="60">file_ticket</text>
+    <rect x="628" y="32" width="140" height="46" rx="6" fill="#f6f7f9" stroke="#dde2ea" stroke-dasharray="4 3"/><text x="698" y="60" fill="#566273">notify</text>
+  </g>
+  <g stroke="#566273" stroke-width="1.5" fill="none" marker-end="url(#ah)">
+    <path d="M152 55H165"/><path d="M306 55H319"/><path d="M460 55H473"/><path d="M614 55H627"/>
+  </g>
+  <g fill="#0f62fe">
+    <circle cx="159" cy="94" r="5"/><circle cx="313" cy="94" r="5"/><circle cx="467" cy="94" r="5"/>
+  </g>
+  <text x="544" y="98" font-size="12" font-weight="600" fill="#a15c00" text-anchor="middle">killed after its write</text>
+  <circle cx="17" cy="118" r="5" fill="#0f62fe"/>
+  <text x="28" y="122" font-size="12" fill="#566273">checkpoint written after a step (async and sync). With exit, none is written until the run ends.</text>
+
+  <rect x="12" y="140" width="602" height="28" rx="4" fill="#fff3e0" stroke="#a15c00"/>
+  <text x="22" y="159" font-size="12.5" fill="#17202b"><tspan font-weight="600">exit:</tspan> nothing was saved. The client resends and four steps run again.</text>
+  <rect x="474" y="178" width="140" height="28" rx="4" fill="#e5edff" stroke="#0f62fe"/>
+  <text x="464" y="197" font-size="12.5" fill="#17202b" text-anchor="end"><tspan font-weight="600">async, sync:</tspan> resume at file_ticket. One step runs again.</text>
+  <text x="544" y="197" font-size="12" fill="#0f62fe" text-anchor="middle" font-weight="600">1 step</text>
+  <text x="12" y="228" font-size="12" fill="#566273">In every case file_ticket runs twice. Only an idempotency key stops the second ticket.</text>
+
+  <line x1="12" y1="244" x2="768" y2="244" stroke="#dde2ea"/>
+  <rect x="12" y="260" width="230" height="46" rx="6" fill="#f6f7f9" stroke="#dde2ea"/>
+  <text x="127" y="280" font-size="13" font-weight="600" fill="#17202b" text-anchor="middle">Region A</text>
+  <text x="127" y="297" font-size="11.5" fill="#566273" text-anchor="middle">checkpoint database (primary)</text>
+  <rect x="538" y="260" width="230" height="46" rx="6" fill="#f6f7f9" stroke="#dde2ea"/>
+  <text x="653" y="280" font-size="13" font-weight="600" fill="#17202b" text-anchor="middle">Region B</text>
+  <text x="653" y="297" font-size="11.5" fill="#566273" text-anchor="middle">replica, minutes behind</text>
+  <path d="M242 283H537" stroke="#566273" stroke-width="1.5" fill="none" marker-end="url(#ah)"/>
+  <text x="390" y="275" font-size="12.5" font-weight="600" fill="#0f62fe" text-anchor="middle">replication lag = RPO</text>
+  <text x="390" y="300" font-size="11.5" fill="#566273" text-anchor="middle">runs resume from the last replicated checkpoint</text>
+  <text x="12" y="326" font-size="12" fill="#566273">Same picture at a larger scale: the further behind the copy, the more steps and tool calls run again.</text>
+</svg>

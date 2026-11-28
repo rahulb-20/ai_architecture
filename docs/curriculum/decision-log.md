@@ -772,3 +772,23 @@ Decision
 
 Consequences
 :   + a lost reply no longer causes a second write. Retry behaviour is the same for every model and provider, so failover does not change it. The contract table becomes a reviewable LLD artifact. − every back end that accepts writes must store keys for the task-resume window, and some need changes to do it. Tools that cannot be made idempotent stay behind human approval. The registry is a new thing to own. Not solved: a valid call with the wrong meaning. That stays with outcome evals and approvals.
+
+## Day 50 — [Revision Drill: LangGraph State & Architect Deliverables](revision-drills/day-50-langgraph-state-and-architect-deliverables/README.md)
+
+Title
+:   Durability and DR tier for stateful agents
+
+Status
+:   Proposed · 2026-11-28
+
+Context
+:   Our agents run on LangGraph with a Postgres checkpointer in one region. Threads can wait days for a human approval, and two tools write to core systems. The business has asked for RTO 60 minutes and RPO 15 minutes. We keep every checkpoint for ever, and the checkpoint database is the fastest-growing store we own. On our assumptions the expected yearly loss from regional outages is lower than the cost of any standby above backup and restore.
+
+Options
+:   (A) Single region with backup and restore. Default `async` durability everywhere. (B) Warm standby: cross-region replica of checkpoints and memory, a small always-on stack, tested model quota in the second region. `sync` durability on steps before a write and on approval interrupts, `async` elsewhere, `exit` for read-only requests. Idempotency keys on every write tool. Prune to the latest checkpoint after 24 idle hours and delete threads at 30 days. (C) Active/active in two regions with a fencing mechanism per thread.
+
+Decision
+:   B. The requirement, not the expected loss, is the reason, and the ADR names the owner of that requirement. Failover is started by a named role, not by a health check. A failover test runs every quarter and its measured RTO replaces the planning figure. `DeltaChannel` is not adopted while it is in beta.
+
+Consequences
+:   + A pod loss costs one step of rework and a region loss costs at most the replication lag. Duplicate writes are prevented by keys, so a resume is safe under every durability mode. Storage is bounded by retention. − About 45% more platform run cost on our assumptions. Steps on `sync` pay a database round trip. Pruning removes time travel, so step-level audit must come from the trace store. Two regions can both believe they own a thread during a partial failure unless the old primary is fenced, and that step is manual. Not solved: 99.9% availability. The composite of our dependencies is about 99.65% in one region, and that needs degraded modes, which is a separate decision.
